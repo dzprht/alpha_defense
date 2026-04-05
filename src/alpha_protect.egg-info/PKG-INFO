@@ -1,3 +1,15 @@
+Metadata-Version: 2.4
+Name: alpha-protect
+Version: 0.1.0
+Summary: Clean Architecture backend skeleton for Alfa Defence anti-fraud platform
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi<1.0,>=0.115
+Requires-Dist: uvicorn[standard]<1.0,>=0.30
+Requires-Dist: pydantic<3.0,>=2.7
+Requires-Dist: pytest<9.0,>=8.2
+Requires-Dist: httpx<1.0,>=0.27
+
  Кейс 7. «Альфа Защита»
 Разработать концепцию проекта и прототип системы под рабочим названием «Альфа Защита», которая используя комплекс технологий (AI, Big Data, Alfa ID и открытые API), сможет в режиме, близком к реальному времени, предотвращать финансовые мошенничества с переводом средств. 
 Ключевые цели системы:
