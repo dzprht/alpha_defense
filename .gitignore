@@ -1,0 +1,28 @@
+.serena
+
+# Runtime data and local secrets
+var/
+.env
+.env.*
+!.env.example
+
+# Python build and local caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Frontend dependencies, builds and test output
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Local operating-system metadata
+.DS_Store
