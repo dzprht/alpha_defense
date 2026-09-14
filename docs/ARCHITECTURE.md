@@ -2,6 +2,8 @@
 
 Статус: проектирование, версия 1.0 от 2026-09-13. Источник требований: [TASK.md](../TASK.md). Документ задает устройство будущего кода; он не описывает уже работающую систему.
 
+Порядок выполнения конкретных задач, отметки готовности и журнал передачи ведутся в [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). Настоящий документ остается источником архитектурных контрактов.
+
 ## Навигация
 
 - [Суть проекта и границы](#scope)
@@ -64,6 +66,8 @@
 <a id="dependency-rule"></a>
 
 ## 2. Стек и чистая архитектура
+
+<a id="stack"></a>
 
 ### 2.1. Технологические решения
 
@@ -130,6 +134,7 @@ alpha_defense/
 ├── README.md
 ├── docs/
 │   ├── ARCHITECTURE.md
+│   ├── IMPLEMENTATION_PLAN.md
 │   ├── decisions/
 │   ├── research/
 │   └── presentation/
@@ -254,6 +259,8 @@ alpha_defense/
 └── scripts/
 ```
 
+<a id="supporting-directories"></a>
+
 ### 3.1. Владельцы каталогов вне бизнес-фичей
 
 | Путь | Что сюда помещать | Формат / результат |
@@ -284,6 +291,8 @@ alpha_defense/
 
 Локальные БД, загруженные файлы и экспорты будут находиться в `var/` (создается во время запуска, исключается из Git). Сценарные screenshots находятся только в `fixtures/screenshots/`; web получает их через контролируемый media endpoint. `apps/web/public/` предназначен для общей статики, не для приватных вложений.
 
+<a id="naming"></a>
+
 ### 3.2. Правила имен и размера файлов
 
 - Python-пакеты/файлы/поля JSON — `snake_case`; TypeScript components — `PascalCase.tsx`, hooks — `useName.ts`, URL-пути — `kebab-case`.
@@ -299,6 +308,8 @@ alpha_defense/
 
 В таблицах пути domain/application приведены относительно `apps/backend/src/alpha_defense/`. Файлы перечислены как будущая спецификация; код сейчас не создается.
 
+<a id="feature-identity"></a>
+
 ### 4.1. Identity: пользователь, согласия и доверие к источнику звонка
 
 **Пути:** `domain/identity/`, `application/identity/`. Будущие файлы: `user.py`, `consent.py`, `call_verification.py`; `start_session.py`, `update_consent.py`, `verify_call.py`, `dto.py`.
@@ -310,6 +321,8 @@ alpha_defense/
 Аутентификация через Alfa ID и доверие к **конкретному звонку** — два разных порта. CallVerification включает связь с user/call/session, issuer, issued_at, expires_at, nonce, verification_status и reason_code. `verified` возможен лишь при подходящем доверенном доказательстве; совпадение caller ID или вход в приложение этого не доказывают. В демо доказательство синтетическое и имеет provenance mock.
 
 Публичное описание Alfa ID говорит об авторизации в сервисах; считать его готовым API защиты от спуфинга оснований в TASK нет. [Описание Alfa ID](https://alfabank.ru/everyday/alfa-id/), [введение Alfa API](https://developers.alfabank.ru/products/alfa-api/documentation/articles/specification/specification). Доступность и контракт аттестации звонка требуют отдельной проверки при интеграции.
+
+<a id="feature-communications"></a>
 
 ### 4.2. Communications: прием и нормализация наблюдений
 
@@ -323,6 +336,8 @@ alpha_defense/
 
 Нормализованный телефон хранится в E.164, если формат разрешим, иначе отдельно raw + `normalization_status=invalid`. URL сохраняется как исходный и нормализованный; host lowercase/IDNA, fragment исключен из ключа, path/query не уничтожаются целиком. Домены и URL являются разными типами индикаторов. Правила нормализации версионируются.
 
+<a id="feature-detection"></a>
+
 ### 4.3. Detection: сигналы, объединение свидетельств и оценка риска
 
 **Пути:** `domain/detection/`, `application/detection/`. Файлы: `signal.py`, `assessment.py`, `risk_policy.py`; `assess_observation.py`, `assess_transfer_context.py`, `dto.py`.
@@ -333,6 +348,8 @@ alpha_defense/
 
 Сигналы: давление/срочность/секретность, просьба раскрыть код, «безопасный счет», подмена личности, подозрительная ссылка/визуальное сходство, действующий индикатор из реестра, новый получатель, необычная сумма, связь получателя с известной сетью. Сигнал хранит code, evidence_ref, strength, source, applicability. Не складывать повтор одного утверждения из нескольких источников как независимые доказательства.
 
+<a id="feature-incidents"></a>
+
 ### 4.4. Incidents: контекст, корреляция и временная линия
 
 **Пути:** `domain/incidents/`, `application/incidents/`. Файлы: `incident.py`, `correlation_policy.py`; `attach_observation.py`, `get_incident.py`, `resolve_incident.py`, `dto.py`.
@@ -342,6 +359,8 @@ alpha_defense/
 Корреляция производится backend только внутри одного user + demo session/исследовательского trial. Приоритет: явный проверенный conversation_id/call_id → совпадение нормализованного индикатора или получателя → временное окно при наличии дополнительной связи. Одна близость времени не объединяет все контакты человека в одну атаку.
 
 MVP-окно связи контакта с переводом — 30 минут до check, в пределах одной сессии; основание корреляции сохраняется. Поступившее позднее наблюдение может привести к новой оценке, но не меняет задним числом прежнюю версию или факт уже завершенного перевода.
+
+<a id="feature-protection"></a>
 
 ### 4.5. Protection: предупреждения и действия против ресурса
 
@@ -355,6 +374,8 @@ MVP-окно связи контакта с переводом — 30 минут
 
 Warning содержит severity, assessment_id, причины, рекомендацию, delivery_status, response и policy_version. Закрытие диалога не является согласием на перевод и не снимает удержание. Текст предупреждения строится по утвержденным кодам рекомендаций; UI не вставляет HTML из анализа.
 
+<a id="feature-transfers"></a>
+
 ### 4.6. Transfers: проверка намерения и исполнение в симуляторе банка
 
 **Пути:** `domain/transfers/`, `application/transfers/`. Файлы: `transfer_intent.py`, `transfer_check.py`, `decision_policy.py`, `transfer_execution.py`; `create_transfer.py`, `check_transfer.py`, `confirm_transfer.py`, `cancel_transfer.py`, `reconcile_execution.py`, `dto.py`.
@@ -364,6 +385,8 @@ Warning содержит severity, assessment_id, причины, рекомен
 Сумму, получателя и валюту связывает fingerprint намерения. Любое изменение создает новую revision, делает предыдущий check непригодным и требует проверки заново. Проверка также привязана к версии контекста инцидента, профиля и политики, а не только к введенным реквизитам.
 
 MVP fake bank владеет собственной книгой синтетических операций: предотвращение отправки и изменение симулируемого статуса происходят на backend. UI не может «заблокировать» перевод только сменой цвета. MVP hold — немонетарный gate по transfer_id + revision, не резервирование средств. Его подтверждение имеет scope=demo_gate. Реальное банковское удержание — другая capability, для которой до подключения отдельно определяются срок, освобождение и возможное резервирование.
+
+<a id="feature-threats"></a>
 
 ### 4.7. Threats: реестр и сетевой контекст
 
@@ -375,6 +398,8 @@ MVP fake bank владеет собственной книгой синтети�
 
 Обновление: fetch → schema validation → нормализация → устранение дубликатов → проверка версии/источника → атомарное переключение активного snapshot. Плохой пакет не заменяет последний валидный. Графовые признаки читаются из подготовленного снимка, а не рассчитываются по всей истории на горячем пути.
 
+<a id="feature-education"></a>
+
 ### 4.8. Education: объяснение и мок-ассистент
 
 **Пути:** `domain/education/`, `application/education/`. Файлы: `recommendation.py`, `education_card.py`; `get_guidance.py`, `list_cards.py`, `get_card.py`, `dto.py`.
@@ -382,6 +407,8 @@ MVP fake bank владеет собственной книгой синтети�
 **Вход:** reason_codes, текущий риск/полнота и разрешенные действия. **Выход:** GuidanceView: краткая классификация, объяснение, рекомендации и ссылки на карточки; EducationCard. Ассистент в MVP — структурированное представление этих результатов; свободного LLM-чата и выполнения команд модели нет.
 
 Карточка содержит code, locale, version, title, summary, body, source_links, reviewed_at. Рекомендация «позвонить в банк» использует отдельно настроенный доверенный контакт, а не номер из подозрительного сообщения. Если контакта нет, текст предлагает открыть официальный банковский канал без выдуманного номера.
+
+<a id="feature-research"></a>
 
 ### 4.9. Research: исследовательские сессии и наблюдения UX
 
@@ -391,6 +418,8 @@ MVP fake bank владеет собственной книгой синтети�
 
 Сохранять отдельно доказательство показа предупреждения, осмысленный ответ человека и автоматическую остановку системой. Не записывать сообщение целиком, номер или счет в analytics payload. Точные формулы — в разделе 13.
 
+<a id="feature-scenarios"></a>
+
 ### 4.10. Scenarios: воспроизводимая демонстрация
 
 **Путь:** только `application/scenarios/`; domain-аналога не требуется. Файлы: `list_scenarios.py`, `start_scenario.py`, `advance_scenario.py`, `reset_demo.py`, `dto.py`.
@@ -398,6 +427,8 @@ MVP fake bank владеет собственной книгой синтети�
 **Вход:** scenario_id, fixture_version, seed, действующая demo session. **Выход:** ScenarioRun с последовательностью разрешенных шагов и ссылками на созданные сущности. Сценарный движок вызывает те же workflows, что ручной ввод; не записывает готовый ответ в assessment/transfer напрямую.
 
 Expected results доступны только тестовому harness и исследовательскому экспорту после trial. Интерфейс участника не видит label «мошенничество» до решения. Настроенный fixture-провайдер может воспроизводить timeout или известный ответ на скриншот; происхождение результата остается mock.
+
+<a id="technical-branches"></a>
 
 ### 4.11. Workflows и технические ветки
 
@@ -427,6 +458,8 @@ Expected results доступны только тестовому harness и и�
 - Входные JSON-схемы запрещают неизвестные поля и ограничивают размеры; GET-выходы явно перечисляют публичные поля. Private токены/полные банковские идентификаторы наружу не возвращаются.
 - Коллекции: `{items, next_cursor}`; cursor непрозрачный, default limit 20, max 100, порядок `(created_at, id)`. Пустая выдача — `items=[]`, `next_cursor=null`.
 - Пример/fixture — валидный JSON без комментариев. Секреты и реальные номера в примерах запрещены. URL примеров используют `.test`/`.invalid`, счета — синтетические токены.
+
+<a id="data-models"></a>
 
 ### 5.2. Основные объекты
 
@@ -464,6 +497,8 @@ Expected results доступны только тестовому harness и и�
 
 `evaluation_context`: namespace_id, ingress_risk_epoch, incident context_version, history_snapshot_id/as_of, registry_snapshot_id, graph_snapshot_id, consent_revision, call_proof_id/expiry?, analysis_plan_version, policy_version и hash этих значений. `expires_at` check — минимум TTL политики и сроков применимых свидетельств. Публикация нового реестра/профиля, отзыв scope, смена proof/policy или неразрешенный релевантный анализ аннулируют пригодность check. Если истории/снимка нет, это явный null + status, а не отсутствующий элемент сравнения.
 
+<a id="input-limits"></a>
+
 ### 5.3. Лимиты входов MVP
 
 | Вход | Лимит / валидация |
@@ -481,6 +516,8 @@ MVP media endpoint принимает только разрешенное изо
 <a id="state-machines"></a>
 
 ## 6. Политика риска и реакции
+
+<a id="risk-policy"></a>
 
 ### 6.1. Начальная демо-политика
 
@@ -522,6 +559,8 @@ Trusted catalog содержит только заранее проверенн�
 
 `allow` не является автоматической отправкой денег. Никакой пользовательский `acknowledge` не переопределяет high/critical. Дальнейшая политика банка и полномочия на удержание — отдельное решение перед live-интеграцией.
 
+<a id="lifecycle"></a>
+
 ### 6.2. Машины состояний
 
 | Объект | Переходы | Кто меняет / запреты |
@@ -546,6 +585,8 @@ Trusted catalog содержит только заранее проверенн�
 
 ## 7. Сквозные потоки и согласованность
 
+<a id="flow-contact"></a>
+
 ### 7.1. Получение подозрительного контакта
 
 1. HTTP проверяет сессию, согласие, размеры, Idempotency-Key и форму входа.
@@ -557,6 +598,8 @@ Trusted catalog содержит только заранее проверенн�
 
 MVP выполняет анализ синхронно в этом HTTP workflow. Долгоживущей очереди задач, WebSocket и скрытого frontend-таймера, создающего готовый вердикт, нет. При исчерпании deadline возвращается сохраненная degraded-оценка. Если процесс упал между приемом и финализацией, повтор с тем же ключом продолжает незавершенный workflow; runtime recovery на старте находит зависшие `received/analyzing` и завершает их как degraded либо безопасно повторяет чтения.
 
+<a id="flow-transfer"></a>
+
 ### 7.2. Перевод после контакта
 
 1. Создать/обновить TransferIntent; сервер вычисляет revision и fingerprint.
@@ -566,6 +609,8 @@ MVP выполняет анализ синхронно в этом HTTP workflow
 5. Перед **submit** backend атомарно перепроверяет owner/namespace, consent, expiry, fingerprint, revision, весь evaluation_context, отсутствие analysis_pending, allowed action/gate и отсутствие active execution. **Cancel** проверяет owner/namespace, target_revision, lifecycle, конфликтующие исполнения и capability отмены; заблокированный gate, устаревший check или незавершенный анализ сами по себе не запрещают отменить локальный draft. Для **hold** проверяется актуальность основания ограничения и revision; разрешенный gate для него не требуется.
 6. Сохраняется запрос исполнения, затем вызывается банк за пределами DB-транзакции. Ответ/ошибка записываются отдельной транзакцией; accepted создает BankOperation и переводит intent в submitted. Последующее settled/declined обновляет lifecycle отдельно. Для локальной отмены draft сеть не вызывается, effect=cancelled имеет scope=local.
 7. При неопределенном ответе UI получает unknown, сохраняет экран статуса и предлагает обновить состояние; reconciliation проверяет прежний provider_ref/key. Успех не рисуется до подтверждения.
+
+<a id="idempotency"></a>
 
 ### 7.3. Идемпотентность, гонки и повторные события
 
@@ -581,6 +626,8 @@ MVP выполняет анализ синхронно в этом HTTP workflow
 - Audit события неизменяемы; исправление — новое событие. UX event batch дедуплицируется по event_id независимо от порядка получения.
 
 Namespace создает сервер: для ручного ввода — manual workspace текущей demo session, для сценария — отдельный scenario_run_id; trial ссылается на один run. Reset создает новый namespace и сохраняет старые сущности только для разрешенного чтения. Корреляция, ключи исходных событий, idempotency и query cache включают namespace; fixture source IDs могут повторяться в разных runs без склейки. Получить чужой namespace передачей ID в теле нельзя.
+
+<a id="internal-events"></a>
 
 ### 7.4. Внутренние события
 
@@ -640,6 +687,8 @@ Envelope: `event_id`, `event_type`, `schema_version=1`, `aggregate_id`, `aggrega
 
 Административное обновление threat registry в MVP выполняет будущий seed/refresh script через use case; публичный API правки blacklist не добавляется. Роли MVP `demo_user`, `researcher`; researcher задается конфигурацией/защищенной сессией, не кнопкой переключения роли пользователя. Live login/callback/webhooks проектируются по реальному контракту при подключении, endpoints провайдеров сейчас не выдумываются.
 
+<a id="http-errors"></a>
+
 ### 8.1. Ошибки и обновление статуса
 
 Ошибки HTTP используют `application/problem+json`: `type`, `title`, `status`, `detail`, `instance` плюс `code`, `request_id`, `field_errors?`, `retryable`. Это формат Problem Details. [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html).
@@ -657,6 +706,8 @@ Envelope: `event_id`, `event_type`, `schema_version=1`, `aggregate_id`, `aggrega
 Высокий риск, deny, timeout одного анализатора или rejected банком — не обязательно HTTP-ошибка: это валидный бизнес-результат с соответствующим статусом. При неизвестном исходе внешнего действия сначала сохранить execution=unknown, затем вернуть ссылку; не превращать его в обобщенный 500 с предложением повторить перевод.
 
 Для pending/unknown web опрашивает конкретный execution/action раз в 1 секунду до 30 секунд; после accepted тот же режим применяется к BankOperation до terminal status. Затем web останавливает автоматический polling и показывает ручное обновление. Этот предел меняет только частоту запросов UI, не завершает операцию. Reconnect получает актуальный серверный snapshot; никакого оптимистичного `completed` для денежных действий.
+
+<a id="ports"></a>
 
 ## 9. Порты и адаптеры
 
@@ -713,6 +764,8 @@ Mock и live подчиняются одним contract tests, включая о
 
 Маршруты MVP: `/welcome`, `/demo`, `/inbox`, `/resources/check`, `/incidents/:id`, `/transfers/new`, `/transfers/:id`, `/education/:code`, `/study/:id/feedback`. Отдельный кабинет администратора, общий чат и банковский login-screen, похожий на настоящий, не требуются.
 
+<a id="ux-contract"></a>
+
 ### 10.3. UX-контракт и форматирование
 
 - Каждый экран имеет состояния `loading`, `ready`, `empty` (где применимо), `error`; анализ дополнительно `degraded`, исполнение `pending|unknown|confirmed|rejected|failed`.
@@ -724,6 +777,8 @@ Mock и live подчиняются одним contract tests, включая о
 - Даты/деньги форматируются только в `shared/formatting/`; серверный score не округляется в другую категорию. Тексты интерфейса — `shared/i18n/ru.json`; содержательные объяснения и карточки — content catalog backend.
 - Подозрительные URL отображаются текстом/обезвреженно (`hxxps`, `[.]` в представлении), не становятся активными внешними ссылками. Проверяемый текст рендерится как text, не через innerHTML. Формат хранения URL остается нормальным.
 - Mobile-first: основной поток помещается в ширину 360 px; проверять также 768 и 1280 px, длинный русский текст, 200% zoom и управление клавиатурой.
+
+<a id="configuration"></a>
 
 ## 11. Конфигурация и безопасность границ
 
@@ -765,6 +820,8 @@ Research consent отделен от обработки, необходимой 
 
 Обязательные именованные варианты: `S09.false_positive` — согласованный законный перевод новому получателю на необычную сумму, который эвристика удержала; пользователь сообщает об ошибке, resolution=false_positive_reported не снимает gate, доступны отмена/новая оценка на проверяемом контексте. `S15.declined_after_accepted` — банк принял запрос отправки, затем отклонил операцию; UI показывает failed/declined, а не completed. Benign ground truth известен только исследователю, не политике. S11–S13 — контрольные случаи, S14–S15 — проверки устойчивости; все 15 не называются обнаруженными атаками.
 
+<a id="fixture-format"></a>
+
 ### 12.1. ScenarioDefinition
 
 Обязательные поля: `schema_version`, `scenario_id`, `fixture_version`, `title`, `learning_goal`, `tags[]`, `locale`, `seed`, `initial_state`, `steps[]`, `expected`, `cleanup_scope`.
@@ -777,11 +834,15 @@ Research consent отделен от обработки, необходимой 
 
 Profile JSON: прошлые synthetic операции со временем, outcome и money, known recipient tokens; профиль вычисляется из них, а не противоречащих вручную заданных summary. Network JSON: typed nodes, edges, source, observed_at, expires_at; совпадение общего IP само по себе не доказательство мошенничества. Threat JSON включает полное описание происхождения и актуальности. Screenshot имеет metadata sidecar с sha256 и expected mock outputs, доступный только mock resource adapter.
 
+<a id="ux-research"></a>
+
 ## 13. Исследование и метрики UX
 
 Исследовательские материалы проектируются сейчас, результаты появятся только после реализации и реальных сессий. Единица хранения — **participant × scenario × condition × trial**. Основная метрика доли пользователей считается по уникальным участникам, каждому заранее назначается один `primary_trial`. Trial-level показатели по остальным сценариям — отдельный диагностический срез. Количество участников, число trials и повторные прохождения сообщаются отдельно. Debug/replay runs исключаются по явному признаку.
 
 До старта фиксируются protocol_version, primary scenario/condition участника, порядок/рандомизация остальных сценариев, инструкция, критерии включения/технического исключения и окно реакции 120 секунд. Повторное прохождение не заменяет неудачный primary trial; повторы — отдельный срез обучения. При техническом исключении primary trial участник отражается среди исключенных основной метрики, а не переносится в более удобный сценарий.
+
+<a id="ux-events"></a>
 
 ### 13.1. События
 
@@ -790,6 +851,8 @@ Allowlist: `trial_started`, `risky_intent_recorded`, `observation_visible`, `ana
 События UI используют monotonic `elapsed_ms` от начала наблюдения trial в текущем document, `client_timebase_id` и sequence внутри этой базы. Серверное `received_at` служит доставке, не заменяет время реакции человека. `warning_presented` отправляется при фактическом видимом render с доступными действиями, а не при начале fetch. UI batching/retries сохраняют event_id. Одновременный служебный endpoint presentation и research event с одним impression_id связывают одну экспозицию, не две.
 
 При reload создается новый client_timebase_id; текущее состояние run/trial восстанавливается GET без повторения действия. Вычитать elapsed_ms разных баз запрещено. Если warning и реакция оказались в разных базах, reaction_ms=null, timing_exclusion_reason=client_reload; поведенческий outcome сохраняется, но попадание в 120-секундное окно отмечается как неизмеримое и исключается из основной метрики по этому заранее заданному техническому правилу. Число таких исключений публикуется. Повторный показ не перезапускает основной интервал искусственно; новый trial для улучшения результата не создается.
+
+<a id="ux-metrics"></a>
 
 ### 13.2. Определения метрик
 
@@ -809,6 +872,8 @@ Allowlist: `trial_started`, `risky_intent_recorded`, `observation_visible`, `ana
 
 Технические метрики отдельно: received_at → assessment saved, warning created → actual presentation, provider latency/timeouts, доля partial/unavailable, дубли действий, доля ложных предупреждений на benign scenarios. На 15 fixtures показывать конкретные пройденные/непройденные случаи, не выдавать это за качество ML на населении.
 
+<a id="research-output"></a>
+
 ### 13.3. Форматы исследования и презентации
 
 Экспорт JSONL: одна строка — одно разрешенное обезличенное событие, schema_version в записи. Экспорт CSV UTF-8: одна строка — trial summary, поля participant pseudonym, scenario/version, condition, is_primary_trial, completion_status, warning_presented, prior_risky_intent, eligible, safe_action, reaction_ms?, useful_score?, exclusion_reason?. Исходный контент и банковские ID не экспортируются. Report JSON: metric_code, definition_version, analysis_unit `participant|trial`, numerator?, denominator?, value?, unit, n_participants, n_trials, exclusions, generated_at.
@@ -818,6 +883,8 @@ CSV-защита: пользовательские строки, начинаю�
 План презентации: проблема и исследование → целевая аудитория/поток → демонстрация основной цепочки → 15 сценариев и benign-контроли → архитектура и ограничения mocks → метод UX-теста → фактические результаты с знаменателями → ошибки/уроки → этапы внедрения и зависимые интеграции. Результаты и слайды не заполнять вымышленными числами.
 
 <a id="operations"></a>
+
+<a id="persistence"></a>
 
 ## 14. Хранение и модель данных
 
@@ -839,6 +906,8 @@ SQLite JSON хранит структурированные signals/provider met
 
 Политика MVP: runtime demo runs можно очищать после 7 дней; исследовательские raw события/комментарии — через 30 дней после закрытия исследования; обезличенные утвержденные агрегаты — по протоколу. Это предлагаемые локальные сроки, не требования закона. Очистка учитывает ссылки и незавершенные действия; исследовательские данные не удаляются кнопкой reset demo. Live-retention определяется отдельно до реальных данных.
 
+<a id="reliability"></a>
+
 ## 15. Надежность и измеримые ограничения
 
 - Начальные цели MVP на локальном стенде: p95 intake → сохраненный assessment ≤2 s, p95 receipt → видимое предупреждение ≤1 s, p95 transfer check ≤2 s. Это будущие приемочные цели с указанной средой и набором; сейчас измерений нет.
@@ -849,6 +918,8 @@ SQLite JSON хранит структурированные signals/provider met
 - Readiness проверяет доступность обязательной БД, валидность content/fixtures и согласованность режима. Необязательный внешний анализатор может быть unavailable при рабочем UI с degraded-статусом.
 - Перед первой публичной демонстрацией: backup БД исследования, проверенный reset/restore, готовые 15 fixtures и отсутствие реальных внешних сайд-эффектов. Это задача этапа реализации/эксплуатации, а не утверждение текущей готовности.
 
+<a id="evolution"></a>
+
 ## 16. Как архитектура расширяется
 
 1. **NLP/CV:** меняется адаптер соответствующего AnalysisPort. Датасеты/эксперименты остаются в ml; runtime загружает только зарегистрированный артефакт/endpoint с model version и воспроизводимым preprocessing. Перед заменой — независимая оценка, false positives, timeout/malformed output тесты. Начать в shadow-режиме без изменения платежных решений.
@@ -858,6 +929,8 @@ SQLite JSON хранит структурированные signals/provider met
 5. **Threat intelligence/Big Data:** отдельный ingestion pipeline строит валидные versioned snapshots и графовые признаки. Online сервис читает компактный снимок; Kafka/Spark/graph DB вводятся по измеренным потребностям, не как обязательные зависимости MVP.
 6. **Масштабирование:** PostgreSQL, отдельный outbox/reconciliation worker и очереди долгих анализов после нагрузки/измерений. В этом случае intake может перейти к 202+job с обновлением контракта и клиентского состояния; текущий синхронный MVP контракт не менять скрыто.
 7. **Ресурсы и операторы:** добавить документированные report/restrict/notification adapters с подтверждаемым scope; факт передачи жалобы не превращается в подтверждение закрытия ресурса.
+
+<a id="open-questions"></a>
 
 ## 17. Неизвестные, которые не блокируют каркас
 
@@ -877,6 +950,8 @@ SQLite JSON хранит структурированные signals/provider met
 
 Сейчас завершен только этап 0: архитектурный документ и каталоги. Следующие этапы выполняются по запросу пользователя на реализацию.
 
+Подробный исполнимый чеклист с зависимостями, объемом, критериями приемки и протоколом отметок: [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md#roadmap). Таблица ниже задает общие этапы; текущий прогресс P/E-задач хранится только в чеклисте.
+
 | Этап | Работа | Проверяемый выход |
 | --- | --- | --- |
 | 1. Контракты и foundation | Manifests/lock, domain shared, ActorContext, consent, Clock/ID, errors, bootstrap, SQLite UoW, HTTP errors, schema generation | Backend запускается; contract и import-boundary проверки; session ownership; ни одной внешней интеграции |
@@ -887,6 +962,8 @@ SQLite JSON хранит структурированные signals/provider met
 | 6. Упаковка результата | Проверенный запуск/backup/reset, демонстрация, фактический UX-отчет, презентация | Комплект требований TASK с явными mock/live и измеренными/неизмеренными результатами |
 | 7. Пилотные интеграции | По одной подтвержденной capability, shadow ML, безопасность и эксплуатация | Отдельная приемка; не входит автоматически в прототип |
 
+<a id="feature-protocol"></a>
+
 ### 18.1. Правило добавления любой фичи
 
 1. Найти владельца и контракт в этом документе; уточнить данные, состояния и негативные исходы до реализации.
@@ -895,6 +972,8 @@ SQLite JSON хранит структурированные signals/provider met
 4. Добавить transport DTO/routes и экспорт OpenAPI; сгенерировать TS-типы и обновить валидные examples.
 5. Добавить UI-состояния, русские объяснения, событие показа/ответа при необходимости; не дублировать domain-решение.
 6. Проверить затронутые сценарии/инварианты; обновить ARCHITECTURE и при изменении существенного решения добавить ADR. Не объявлять весь проект готовым по одному smoke test.
+
+<a id="verification"></a>
 
 ### 18.2. Уровни проверки будущего кода
 
@@ -911,6 +990,8 @@ SQLite JSON хранит структурированные signals/provider met
 | `ml/evaluation/` | Только после появления моделей: независимые splits, per-class/slice metrics, calibration если заявляется вероятность, качество вне fixture-каталога |
 
 Сбой хранения до отправки, два подтверждения из разных вкладок, изменение суммы после check, поздний высокорисковый контакт, неверный owner, истекший check и timeout после принятия банком — обязательные приемочные случаи платежной ветки.
+
+<a id="mvp-acceptance"></a>
 
 ### 18.3. Что означает готовый MVP
 
