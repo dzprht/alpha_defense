@@ -34,7 +34,7 @@ required-version = "==0.11.7"
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-src = ["src", "tests"]
+src = ["src", "tests", "migrations"]
 
 [tool.ruff.lint]
 select = ["ASYNC", "B", "E", "F", "I", "RUF", "SIM", "UP"]
@@ -46,7 +46,7 @@ quote-style = "double"
 
 [tool.mypy]
 python_version = "3.11"
-files = ["src", "tests"]
+files = ["src", "tests", "migrations"]
 mypy_path = "src"
 plugins = ["pydantic.mypy"]
 strict = true

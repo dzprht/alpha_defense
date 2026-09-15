@@ -148,7 +148,7 @@ P-пункт — одна законченная способность или �
 
 ### P03. Реализовать хранилище, UnitOfWork и технические гарантии команд
 
-- [ ] Выполнено и проверено. **Статус:** todo. **Исполнитель:** —.
+- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
 
 **Зависимости:** [P02](#p02).
 
@@ -162,7 +162,7 @@ P-пункт — одна законченная способность или �
 
 **Приемка и качество:** Откат не оставляет частичной локальной записи; тот же ключ/тело воспроизводит ресурс, другое тело дает конфликт; CAS допускает одного победителя. Аудит/outbox записываются атомарно, переживают restart; in-memory и SQL проходят одинаковые смысловые contract cases.
 
-**Запись выполнения:** —. После начала работ заменить на ссылку на запись [журнала](#work-log).
+**Запись выполнения:** [2026-09-15-P03-01](#log-2026-09-15-p03-01).
 
 <a id="p04"></a>
 
@@ -1330,7 +1330,8 @@ AST-проверка stdlib/фичевых границ. Для web добавл
 `apps/backend/pyproject.toml`, `apps/web/eslint-rules/layer-boundaries.js`,
 `apps/web/tests/unit/layer-boundaries.test.js`, `apps/web/eslint.config.js`,
 `apps/web/tsconfig.json`, `.gitignore`, `ops/runbooks/development.md`, `README.md`, этот чеклист.
-Commit P02 не создавался.
+Commit `0e51cfc` («Реализовать общие типы и границы слоёв») отправлен в `origin/main`
+2026-09-15.
 
 **Проверки:**
 
@@ -1368,3 +1369,74 @@ Commit P02 не создавался.
 
 **Затронутые или повторно открытые зависимые задачи:** Закрыты P01 и P02; активных задач нет;
 P03 стал доступен, но не запускался.
+
+<a id="log-2026-09-15-p03-01"></a>
+
+#### 2026-09-15-P03-01
+
+**Задача/исполнитель:** P03, Codex.
+
+**Статус и дата:** done, 2026-09-15.
+
+**Проверенная версия архитектуры / существенные решения:** ARCHITECTURE.md v1.0 от
+2026-09-13, §7.3, §7.4, §9 и §14. Архитектурные границы не менялись. SQLite остается
+единственным durable-хранилищем MVP, in-memory adapter воспроизводит те же смысловые
+ограничения. Outbox имеет at-least-once семантику: handler вызывается вне UoW, а provider
+idempotency/exactly-once не имитируются.
+
+**Что сделано:** Добавлены plain application-контракты repository/UoW/events, versioned event
+envelope, idempotency scope/record с canonical command hash, audit record и outbox lease/state.
+Реализованы сериализуемый copy-on-write in-memory UoW и SQLite/SQLAlchemy UoW с явными
+entity↔row mapper-функциями, optimistic CAS и прикладным преобразованием ошибок хранения.
+Создана начальная Alembic-миграция только для `idempotency_records`, `audit_events`, `outbox`;
+state/result, revision, uniqueness и outbox state/timestamp защищены ограничениями БД.
+Добавлены системные Clock/UUID, SHA-256 fingerprints, transactional audit/event adapters и
+dispatcher с retry, lease и восстановлением незавершенной доставки после restart.
+
+**Файлы и артефакты:** `apps/backend/src/alpha_defense/application/ports/{events,
+repositories,unit_of_work}.py`, `apps/backend/src/alpha_defense/infrastructure/persistence/`,
+`apps/backend/src/alpha_defense/infrastructure/runtime/`,
+`apps/backend/src/alpha_defense/infrastructure/observability/`, `apps/backend/alembic.ini`,
+`apps/backend/migrations/`, `apps/backend/tests/{contract,integration}/`,
+`apps/backend/tests/unit/test_runtime_infrastructure.py`, `apps/backend/pyproject.toml`,
+`ops/runbooks/development.md`, `README.md`, этот чеклист. Commit создается после записи
+фактической приемки.
+
+**Проверки:**
+
+- `uv lock --check`, cwd `apps/backend`, uv 0.11.7 / CPython 3.11.15, 2026-09-15:
+  exit 0, разрешено 43 пакета.
+- `ruff check src tests migrations` и `ruff format --check src tests migrations` через
+  принятый venv, cwd `apps/backend`, 2026-09-15: обе команды exit 0, 48 файлов соответствуют
+  правилам и форматированию.
+- `mypy`, cwd `apps/backend`, 2026-09-15: exit 0, strict-проверка прошла для 48 source/test/
+  migration файлов.
+- `pytest`, cwd `apps/backend`, 2026-09-15: exit 0, `46 passed`. Десять общих contract cases
+  выполнены для in-memory и SQL; проверены rollback без частичной записи, replay/conflict,
+  CAS, атомарные audit/outbox, dispatch/retry. Три integration cases проверили реальную
+  SQLite-конкурентность, restart recovery и Alembic upgrade/check/downgrade/upgrade без drift.
+- `lint-imports --config pyproject.toml`, cwd `apps/backend`, 2026-09-15: exit 0,
+  `4 kept, 0 broken`, проанализировано 54 файла и 124 зависимости.
+- `uv build --out-dir <temporary-directory>`, cwd `apps/backend`, 2026-09-15: exit 0,
+  созданы sdist и wheel; новые ports/persistence/runtime/observability модули присутствуют в
+  wheel.
+- `npm run lint`, `npm run typecheck`, `npm test`, `npm run format:check`, cwd `apps/web`,
+  2026-09-15: все exit 0; frontend regression `3 passed`. `npm audit --audit-level=high`:
+  exit 0, найдено 0 известных уязвимостей.
+- `git diff --check`, cwd корня репозитория, 2026-09-15: exit 0.
+
+**Что не проверено и почему:** HTTP/bootstrap и пользовательские сценарии не создавались —
+это P04 и последующие карточки. Реальные provider handlers и денежные операции отсутствуют;
+P03 проверяет только регистрацию/повтор технической доставки и не заявляет exactly-once.
+PostgreSQL не проверялся, поскольку архитектура MVP требует SQLite. Общий venv сохраняет
+описанные в runbook посторонние конфликты `rectools`; код P03 их не импортирует.
+
+**Остаток / блокер:** По P03 остатка и блокера нет.
+
+**Условие разблокировки:** Не применимо.
+
+**Следующее конкретное действие:** Начать [P04](#p04): settings/container/ASGI bootstrap,
+Problem Details, request_id, health и детерминированный OpenAPI с web-типами.
+
+**Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P03; активных задач нет;
+P04 стал доступен, но не запускался.

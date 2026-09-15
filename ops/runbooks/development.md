@@ -1,8 +1,8 @@
 # Локальная разработка
 
-Статус: проверено для P01 2026-09-15. Здесь зафиксированы инструменты и команды;
-backend-приложение появится в P04, web-shell — в P06. Поэтому команды запуска, сборки и
-тестовых наборов ниже подготовлены, но пока не считаются успешно пройденными.
+Статус: проверено для P01–P03 2026-09-15. Здесь зафиксированы инструменты и команды;
+backend-приложение появится в P04, web-shell — в P06. Статические проверки и текущие
+backend/frontend тесты исполнимы, но команды запуска приложений пока только подготовлены.
 
 ## Проверенные инструменты
 
@@ -37,17 +37,40 @@ UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv sync --fr
 
 ```bash
 uv lock --check
-UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen ruff check src tests
-UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen ruff format --check src tests
+UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen ruff check src tests migrations
+UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen ruff format --check src tests migrations
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen mypy
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen lint-imports --config pyproject.toml
 ```
 
-Запуск unit- и architecture-тестов backend:
+Запуск unit-, contract-, integration- и architecture-тестов backend:
 
 ```bash
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen pytest
 ```
+
+### Локальная SQLite и миграции
+
+Миграции не выполняются при импорте модулей. До появления bootstrap в P04 их нужно запускать
+явно из `apps/backend`; конфигурация по умолчанию использует исключенный из Git файл
+`../../var/alpha_defense.db`:
+
+```bash
+mkdir -p ../../var
+UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen alembic upgrade head
+UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen alembic current
+```
+
+Проверка upgrade/downgrade, отсутствия drift, сохранения audit/outbox после restart и
+восстановления истекшего lease входит в интеграционный набор:
+
+```bash
+UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen pytest tests/integration/test_sqlite_persistence.py
+```
+
+Outbox имеет семантику at-least-once: handler вызывается вне локальной транзакции, успешный
+результат фиксируется отдельным commit, а истекший lease снова подбирается dispatcher. Это не
+гарантия exactly-once и не замена provider idempotency для будущих денежных операций.
 
 После реализации bootstrap в P04 сервер будет запускаться из того же каталога командой:
 

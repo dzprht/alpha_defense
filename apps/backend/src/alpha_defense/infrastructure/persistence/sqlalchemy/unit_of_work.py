@@ -1,0 +1,109 @@
+"""SQLAlchemy transaction boundary for the SQLite adapter."""
+
+from __future__ import annotations
+
+from types import TracebackType
+
+from sqlalchemy.engine import Engine
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+from alpha_defense.application.shared import ServiceUnavailableError
+from alpha_defense.infrastructure.persistence.sqlalchemy.repositories import (
+    SqlAlchemyAuditRepository,
+    SqlAlchemyIdempotencyRepository,
+    SqlAlchemyOutboxRepository,
+)
+
+
+class SqlAlchemyUnitOfWork:
+    def __init__(self, engine: Engine) -> None:
+        if engine.dialect.name != "sqlite":
+            raise ValueError("P03 SqlAlchemyUnitOfWork supports SQLite only")
+        self._engine = engine
+        self._session: Session | None = None
+        self._active = False
+        self._finished = False
+        self._idempotency: SqlAlchemyIdempotencyRepository | None = None
+        self._audit: SqlAlchemyAuditRepository | None = None
+        self._outbox: SqlAlchemyOutboxRepository | None = None
+
+    @property
+    def idempotency(self) -> SqlAlchemyIdempotencyRepository:
+        if self._idempotency is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._idempotency
+
+    @property
+    def audit(self) -> SqlAlchemyAuditRepository:
+        if self._audit is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._audit
+
+    @property
+    def outbox(self) -> SqlAlchemyOutboxRepository:
+        if self._outbox is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._outbox
+
+    def begin(self) -> None:
+        if self._active:
+            raise RuntimeError("UnitOfWork is already active")
+        self._session = Session(self._engine, expire_on_commit=False)
+        self._session.begin()
+        self._idempotency = SqlAlchemyIdempotencyRepository(self._session)
+        self._audit = SqlAlchemyAuditRepository(self._session)
+        self._outbox = SqlAlchemyOutboxRepository(self._session)
+        self._active = True
+        self._finished = False
+
+    def commit(self) -> None:
+        session = self._require_unfinished()
+        try:
+            session.commit()
+        except SQLAlchemyError as exc:
+            session.rollback()
+            raise ServiceUnavailableError("Local persistence commit failed") from exc
+        finally:
+            self._finished = True
+
+    def rollback(self) -> None:
+        session = self._require_active()
+        if not self._finished:
+            session.rollback()
+            self._finished = True
+
+    def __enter__(self) -> SqlAlchemyUnitOfWork:
+        self.begin()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        if self._active and not self._finished:
+            self.rollback()
+        if self._session is not None:
+            self._session.close()
+        self._active = False
+
+    def _require_active(self) -> Session:
+        if not self._active or self._session is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._session
+
+    def _require_unfinished(self) -> Session:
+        session = self._require_active()
+        if self._finished:
+            raise RuntimeError("UnitOfWork transaction is already finished")
+        return session
+
+
+class SqlAlchemyUnitOfWorkFactory:
+    def __init__(self, engine: Engine) -> None:
+        self.engine = engine
+
+    def __call__(self) -> SqlAlchemyUnitOfWork:
+        return SqlAlchemyUnitOfWork(self.engine)
