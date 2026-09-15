@@ -1,0 +1,62 @@
+[build-system]
+requires = ["uv_build==0.12.14"]
+build-backend = "uv_build"
+
+[project]
+name = "alpha-defense"
+version = "0.1.0"
+description = "Mock-only backend for the Alpha Defense prototype"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "alembic==1.20.0",
+    "fastapi==0.141.1",
+    "pydantic==2.13.5",
+    "pydantic-settings==2.15.0",
+    "python-multipart==0.0.32",
+    "sqlalchemy==2.0.53",
+    "uvicorn==0.53.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx==0.28.1",
+    "import-linter==2.15",
+    "mypy==2.3.1",
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "ruff==0.16.7",
+]
+
+[tool.uv]
+default-groups = ["dev"]
+required-version = "==0.11.7"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["ASYNC", "B", "E", "F", "I", "RUF", "SIM", "UP"]
+
+[tool.ruff.format]
+indent-style = "space"
+line-ending = "lf"
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src"]
+mypy_path = "src"
+plugins = ["pydantic.mypy"]
+strict = true
+warn_unreachable = true
+
+[tool.pytest.ini_options]
+addopts = ["--strict-config", "--strict-markers", "-ra"]
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.importlinter]
+root_package = "alpha_defense"
