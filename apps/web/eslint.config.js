@@ -4,6 +4,8 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
+import layerBoundaries from "./eslint-rules/layer-boundaries.js";
+
 export default tseslint.config(
   {
     ignores: ["coverage", "dist", "node_modules", "playwright-report", "test-results"],
@@ -28,10 +30,16 @@ export default tseslint.config(
       },
     },
     plugins: {
+      project: {
+        rules: {
+          "layer-boundaries": layerBoundaries,
+        },
+      },
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
     },
     rules: {
+      "project/layer-boundaries": "error",
       ...reactHooks.configs.flat.recommended.rules,
       ...reactRefresh.configs.vite.rules,
     },

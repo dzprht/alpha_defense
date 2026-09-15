@@ -46,7 +46,7 @@ quote-style = "double"
 
 [tool.mypy]
 python_version = "3.11"
-files = ["src"]
+files = ["src", "tests"]
 mypy_path = "src"
 plugins = ["pydantic.mypy"]
 strict = true
@@ -60,3 +60,57 @@ testpaths = ["tests"]
 
 [tool.importlinter]
 root_package = "alpha_defense"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Domain is independent from outer layers and frameworks"
+type = "forbidden"
+source_modules = ["alpha_defense.domain"]
+forbidden_modules = [
+    "alembic",
+    "alpha_defense.application",
+    "alpha_defense.bootstrap",
+    "alpha_defense.infrastructure",
+    "alpha_defense.transport",
+    "fastapi",
+    "httpx",
+    "pydantic",
+    "pydantic_settings",
+    "sqlalchemy",
+    "uvicorn",
+]
+
+[[tool.importlinter.contracts]]
+name = "Application is independent from adapters and frameworks"
+type = "forbidden"
+source_modules = ["alpha_defense.application"]
+forbidden_modules = [
+    "alembic",
+    "alpha_defense.bootstrap",
+    "alpha_defense.infrastructure",
+    "alpha_defense.transport",
+    "fastapi",
+    "httpx",
+    "pydantic",
+    "pydantic_settings",
+    "sqlalchemy",
+    "uvicorn",
+]
+
+[[tool.importlinter.contracts]]
+name = "Infrastructure does not import delivery or composition"
+type = "forbidden"
+source_modules = ["alpha_defense.infrastructure"]
+forbidden_modules = ["alpha_defense.bootstrap", "alpha_defense.transport"]
+
+[[tool.importlinter.contracts]]
+name = "Transport depends only on application contracts"
+type = "forbidden"
+source_modules = ["alpha_defense.transport"]
+forbidden_modules = [
+    "alembic",
+    "alpha_defense.bootstrap",
+    "alpha_defense.domain",
+    "alpha_defense.infrastructure",
+    "sqlalchemy",
+]

@@ -43,7 +43,7 @@ UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --fro
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen lint-imports --config pyproject.toml
 ```
 
-Команда будущего набора backend-тестов подготовлена, но до P02 тестовых модулей нет:
+Запуск unit- и architecture-тестов backend:
 
 ```bash
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen pytest
@@ -72,7 +72,8 @@ npm run typecheck
 npm run format:check
 ```
 
-Команды будущих наборов тестов подготовлены, но до появления тестов не считаются PASS:
+Vitest уже проверяет frontend import boundaries. Playwright-команда подготовлена для будущей
+браузерной приемки:
 
 ```bash
 npm test

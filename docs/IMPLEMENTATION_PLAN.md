@@ -128,7 +128,7 @@ P-пункт — одна законченная способность или �
 
 ### P02. Создать общие типы, ошибки и проверки границ слоев
 
-- [ ] Выполнено и проверено. **Статус:** todo. **Исполнитель:** —.
+- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
 
 **Зависимости:** [P01](#p01).
 
@@ -142,7 +142,7 @@ P-пункт — одна законченная способность или �
 
 **Приемка и качество:** Money отклоняет неверные/дробные значения; время/ID инъецируются. Временная запрещенная зависимость обнаруживается проверкой, затем удаляется; валидное дерево проходит. Зависимости Python не проникают из infrastructure в application/domain.
 
-**Запись выполнения:** —. После начала работ заменить на ссылку на запись [журнала](#work-log).
+**Запись выполнения:** [2026-09-15-P02-01](#log-2026-09-15-p02-01).
 
 <a id="p03"></a>
 
@@ -1262,7 +1262,8 @@ runbook с рабочими каталогами, общей Python-средой
 `apps/backend/src/alpha_defense/__init__.py`, `apps/web/package.json`,
 `apps/web/package-lock.json`, `apps/web/tsconfig.json`, `apps/web/eslint.config.js`,
 `apps/web/.prettierrc.json`, `apps/web/.prettierignore`, `apps/web/src/vite-env.d.ts`,
-`ops/runbooks/development.md`, `README.md`, этот чеклист. Commit не создавался.
+`ops/runbooks/development.md`, `README.md`, этот чеклист. Commit `cd8a8d8` («Настроить
+инструменты и зависимости проекта») отправлен в `origin/main` 2026-09-15.
 
 **Проверки:**
 
@@ -1301,3 +1302,69 @@ exit 1 из-за ранее существующих конфликтов `recto
 
 **Затронутые или повторно открытые зависимые задачи:** Закрыт P01; активных задач нет; P02
 стал доступен, но в рамках запроса только P01 не запускался.
+
+<a id="log-2026-09-15-p02-01"></a>
+
+#### 2026-09-15-P02-01
+
+**Задача/исполнитель:** P02, Codex.
+
+**Статус и дата:** done, 2026-09-15.
+
+**Проверенная версия архитектуры / существенные решения:** ARCHITECTURE.md v1.0 от
+2026-09-13, §2.2, §4.11 и §5. Архитектурные границы не менялись. Domain использует только
+stdlib и `domain/shared`; application зависит от domain и собственных контрактов; runtime I/O
+представлен Protocol-портами без конкретных адаптеров.
+
+**Что сделано:** Реализованы `EntityId`, integer-minor-unit `Money` только для RUB в границах
+MVP, `Severity`, `ExecutionMode` и `Provenance`. Добавлены серверный `ActorContext`/роли,
+инъецируемые `Clock`/`IdGenerator`, cursor pagination и типизированная иерархия прикладных
+ошибок без HTTP-зависимостей. Настроены четыре Import Linter контракта и дополнительная
+AST-проверка stdlib/фичевых границ. Для web добавлено локальное ESLint-правило, проверяющее
+направление `app → pages → features → shared` и запрет импорта между соседними features.
+
+**Файлы и артефакты:** `apps/backend/src/alpha_defense/domain/shared/`,
+`apps/backend/src/alpha_defense/application/shared/`,
+`apps/backend/src/alpha_defense/application/ports/runtime.py`, package markers корней слоев,
+`apps/backend/tests/unit/`, `apps/backend/tests/architecture/test_import_boundaries.py`,
+`apps/backend/pyproject.toml`, `apps/web/eslint-rules/layer-boundaries.js`,
+`apps/web/tests/unit/layer-boundaries.test.js`, `apps/web/eslint.config.js`,
+`apps/web/tsconfig.json`, `.gitignore`, `ops/runbooks/development.md`, `README.md`, этот чеклист.
+Commit P02 не создавался.
+
+**Проверки:**
+
+- `ruff check src tests` и `ruff format --check src tests` через принятый venv, cwd
+  `apps/backend`, 2026-09-15: обе команды exit 0, проверено 20 Python-файлов.
+- `mypy`, cwd `apps/backend`, 2026-09-15: exit 0, строгая типизация прошла для 20 source/test
+  файлов.
+- `pytest`, cwd `apps/backend`, 2026-09-15: exit 0, 30 passed; проверены Money/ID/provenance,
+  ActorContext/errors/pagination, инъекция frozen clock/fixed ID и позитивные/негативные
+  направления импортов.
+- `lint-imports --config pyproject.toml`, cwd `apps/backend`, 2026-09-15: exit 0,
+  `4 kept, 0 broken`, 24 файла и 30 зависимостей. Временный импорт
+  `domain.shared → infrastructure` дал ожидаемый exit 1 и `BROKEN`; после удаления probe
+  повторный прогон снова дал `4 kept, 0 broken`.
+- `uv lock --check` и `uv build` во временный каталог, cwd `apps/backend`, 2026-09-15:
+  exit 0; lock остался согласован, sdist/wheel собраны, новые domain/application модули
+  присутствуют в wheel.
+- `npm run lint`, `npm run typecheck`, `npm test`, `npm run format:check`, cwd `apps/web`,
+  2026-09-15: все exit 0; Vitest `3 passed`. Временный импорт `shared → features` дал
+  ожидаемый ESLint exit 1 по `project/layer-boundaries`; после удаления probe lint проходит.
+- `npm audit --audit-level=high`, cwd `apps/web`, 2026-09-15: exit 0, найдено 0 известных
+  уязвимостей. `git diff --check`, cwd корня репозитория, 2026-09-15: exit 0.
+
+**Что не проверено и почему:** HTTP, persistence, миграции, runtime-реализации Clock/ID и
+интеграционные сценарии не создавались и не проверялись: это объем P03–P05. Playwright не
+запускался, поскольку P02 не добавляет пользовательский интерфейс. Общий venv сохраняет
+описанные в runbook посторонние конфликты `rectools`; стек P02 их не импортирует.
+
+**Остаток / блокер:** По P02 остатка и блокера нет.
+
+**Условие разблокировки:** Не применимо.
+
+**Следующее конкретное действие:** При отдельном разрешении начать [P03](#p03): порты и
+реализации UnitOfWork, idempotency/audit/outbox и начальные технические миграции.
+
+**Затронутые или повторно открытые зависимые задачи:** Закрыты P01 и P02; активных задач нет;
+P03 стал доступен, но не запускался.
