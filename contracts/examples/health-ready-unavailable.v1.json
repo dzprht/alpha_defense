@@ -1,0 +1,10 @@
+{
+  "type": "urn:alpha-defense:problem:service_unavailable",
+  "title": "Сервис временно недоступен",
+  "status": 503,
+  "detail": "Обязательная зависимость приложения пока недоступна.",
+  "instance": "/api/v1/health/ready",
+  "code": "service_unavailable",
+  "request_id": "00000000-0000-4000-8000-000000000001",
+  "retryable": true
+}

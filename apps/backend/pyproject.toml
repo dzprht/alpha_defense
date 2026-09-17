@@ -107,6 +107,7 @@ forbidden_modules = ["alpha_defense.bootstrap", "alpha_defense.transport"]
 name = "Transport depends only on application contracts"
 type = "forbidden"
 source_modules = ["alpha_defense.transport"]
+allow_indirect_imports = true
 forbidden_modules = [
     "alembic",
     "alpha_defense.bootstrap",

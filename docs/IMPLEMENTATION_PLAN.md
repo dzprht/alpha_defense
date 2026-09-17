@@ -169,7 +169,7 @@ P-пункт — одна законченная способность или �
 
 ### P04. Собрать bootstrap, базовый HTTP и генерацию контрактов
 
-- [ ] Выполнено и проверено. **Статус:** todo. **Исполнитель:** —.
+- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
 
 **Зависимости:** [P03](#p03).
 
@@ -183,7 +183,7 @@ P-пункт — одна законченная способность или �
 
 **Приемка и качество:** Приложение стартует с валидной конфигурацией; плохой режим/секрет/БД дает ожидаемый отказ. HTTP-ошибки валидны по схеме, внутренние исключения/секреты не выходят наружу. Повтор экспорта без изменения API не меняет контракт.
 
-**Запись выполнения:** —. После начала работ заменить на ссылку на запись [журнала](#work-log).
+**Запись выполнения:** [2026-09-17-P04-01](#log-2026-09-17-p04-01).
 
 <a id="p05"></a>
 
@@ -1400,8 +1400,8 @@ repositories,unit_of_work}.py`, `apps/backend/src/alpha_defense/infrastructure/p
 `apps/backend/src/alpha_defense/infrastructure/observability/`, `apps/backend/alembic.ini`,
 `apps/backend/migrations/`, `apps/backend/tests/{contract,integration}/`,
 `apps/backend/tests/unit/test_runtime_infrastructure.py`, `apps/backend/pyproject.toml`,
-`ops/runbooks/development.md`, `README.md`, этот чеклист. Commit создается после записи
-фактической приемки.
+`ops/runbooks/development.md`, `README.md`, этот чеклист. Commit `f103eb8` («Реализовать
+хранилище и гарантии команд») отправлен в `origin/main` 2026-09-15.
 
 **Проверки:**
 
@@ -1441,3 +1441,79 @@ Problem Details, request_id, health и детерминированный OpenAP
 
 **Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P03; активных задач нет;
 P04 стал доступен, но не запускался.
+
+<a id="log-2026-09-17-p04-01"></a>
+
+#### 2026-09-17-P04-01
+
+**Задача/исполнитель:** P04, Codex.
+
+**Статус и дата:** done, 2026-09-17.
+
+**Проверенная версия архитектуры / существенные решения:** ARCHITECTURE.md v1.0 от
+2026-09-13, §4.11, §8, §8.1 и §11. Границы слоев не менялись. Transport импортирует только
+application-контракты и разрешенные HTTP-библиотеки; bootstrap остается единственным местом
+сборки. Import Linter для transport настроен проверять запрещенные прямые импорты, поскольку
+разрешенный application сам транзитивно использует domain; отдельный AST-тест продолжает
+проверять эту границу. Live-режим не имитируется и отклоняется до появления проверенных
+capability/adapters.
+
+**Что сделано:** Реализованы типизированные settings, fail-fast container и ASGI factory.
+Старт проверяет режим, секрет, каталоги, file-backed SQLite и точную Alembic revision, но не
+выполняет миграции автоматически. Добавлены transport-neutral readiness port и локальная
+проверка БД/обязательного файла политики. HTTP v1 публикует только live/ready; ready возвращает
+503 до P07. Введены UUID request ID, базовые security headers, явный CORS/trusted-host список,
+лимит тела, единый безопасный Problem Details и подготовленные CSRF/Idempotency-Key guards.
+OpenAPI экспортируется каноническим JSON, из него сгенерированы TypeScript-типы; добавлены
+валидные примеры live и unavailable.
+
+**Файлы и артефакты:** `apps/backend/src/alpha_defense/{bootstrap,transport/http/v1}/`,
+`apps/backend/src/alpha_defense/application/ports/readiness.py`,
+`apps/backend/src/alpha_defense/infrastructure/observability/readiness.py`,
+`apps/backend/tests/{unit/test_settings.py,contract/test_http_contract.py,
+integration/test_http_app.py}`, `contracts/http/openapi.json`, `contracts/examples/`,
+`apps/web/src/shared/api/generated/openapi.ts`, `scripts/export_openapi.py`,
+`ops/local/.env.example`, runbook, README, AGENTS, архитектура и конспект для защиты. Commit с
+реализацией будет указан после его создания; это не является условием статуса done.
+
+**Проверки:**
+
+- `uv lock --check`, cwd `apps/backend`, uv 0.11.7 / CPython 3.11.15, 2026-09-17:
+  exit 0, разрешено 43 пакета.
+- `ruff check` и `ruff format --check` для `src tests migrations` и export-script через
+  принятый venv, cwd `apps/backend`, 2026-09-17: обе команды exit 0, 69 файлов.
+- `mypy`, cwd `apps/backend`, 2026-09-17: exit 0, strict-проверка прошла для 68 source/test/
+  migration файлов.
+- `pytest`, cwd `apps/backend`, 2026-09-17: exit 0, `66 passed`. Проверены environment factory,
+  неверные mode/secret/DB, миграция до старта, live/ready, request ID, body limit, guards,
+  Problem Details без утечки пути/секрета, примеры и детерминированность OpenAPI. Два warning
+  относятся к deprecation внутри закрепленной связки FastAPI/Starlette TestClient и не скрывают
+  failed/skipped тесты.
+- `lint-imports --config pyproject.toml`, cwd `apps/backend`, 2026-09-17: exit 0,
+  `4 kept, 0 broken`, проанализировано 78 файлов и 200 зависимостей.
+- Два экспорта во временный каталог и сравнение с committed `openapi.json` через `cmp`, cwd
+  `apps/backend`, 2026-09-17: все exit 0; байты совпадают. `npm run generate:api` успешно
+  пересоздал `openapi.ts` из этого контракта.
+- `npm run lint`, `npm run typecheck`, `npm test`, `npm run format:check`, cwd `apps/web`,
+  2026-09-17: все exit 0; Vitest `3 passed`. `npm audit --audit-level=high`: exit 0,
+  найдено 0 известных уязвимостей.
+- `uv build --out-dir <temporary-directory>`, cwd `apps/backend`, 2026-09-17: exit 0,
+  созданы sdist и wheel с новыми bootstrap/transport-модулями.
+
+**Что не проверено и почему:** Полный бизнес-readiness 200 не заявляется: P07 должен добавить
+JSON Schema, loader, версию/hash и валидный каталог; P04 проверяет отсутствие файла как 503.
+Session/ownership и использование подготовленных guards реальными командами относятся к P05.
+Web UI и браузерный flow относятся к P06 и последующим задачам. Реальные providers и live-
+режим отсутствуют. Ручной browser-тест не нужен двум machine health endpoints; HTTP поведение
+проверено через ASGI integration.
+
+**Остаток / блокер:** По P04 остатка и блокера нет. Красная readiness — предусмотренное
+состояние неполной сборки, а не незавершенность P04.
+
+**Условие разблокировки:** Не применимо.
+
+**Следующее конкретное действие:** Начать [P05](#p05): synthetic demo-сессии,
+owner/namespace, серверные роли, согласия и подключение CSRF/idempotency к реальным командам.
+
+**Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P04; активных задач нет.
+Разблокированы P05 и P07; по порядку плана следующая P05.

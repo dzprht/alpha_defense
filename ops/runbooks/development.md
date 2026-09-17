@@ -1,8 +1,8 @@
 # Локальная разработка
 
-Статус: проверено для P01–P03 2026-09-15. Здесь зафиксированы инструменты и команды;
-backend-приложение появится в P04, web-shell — в P06. Статические проверки и текущие
-backend/frontend тесты исполнимы, но команды запуска приложений пока только подготовлены.
+Статус: проверено для P01–P04 2026-09-17. Здесь зафиксированы инструменты и команды;
+backend HTTP-контур исполним, web-shell появится в P06. Сейчас HTTP публикует только health
+endpoints, а readiness остается красной до обязательного каталога P07.
 
 ## Проверенные инструменты
 
@@ -51,8 +51,8 @@ UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --fro
 
 ### Локальная SQLite и миграции
 
-Миграции не выполняются при импорте модулей. До появления bootstrap в P04 их нужно запускать
-явно из `apps/backend`; конфигурация по умолчанию использует исключенный из Git файл
+Миграции не выполняются при импорте модулей или старте приложения. Их нужно запускать явно из
+`apps/backend`; конфигурация примера использует исключенный из Git файл
 `../../var/alpha_defense.db`:
 
 ```bash
@@ -72,11 +72,54 @@ Outbox имеет семантику at-least-once: handler вызывается
 результат фиксируется отдельным commit, а истекший lease снова подбирается dispatcher. Это не
 гарантия exactly-once и не замена provider idempotency для будущих денежных операций.
 
-После реализации bootstrap в P04 сервер будет запускаться из того же каталога командой:
+### Запуск HTTP-контура
+
+Подготовить локальную конфигурацию, заменить placeholder-секрет и создать runtime-каталог:
 
 ```bash
+cp ../../ops/local/.env.example .env
+mkdir -p ../../var/media
+# Отредактировать SESSION_SECRET в .env: не менее 32 случайных символов.
+```
+
+После применения миграций загрузить переменные только в текущую shell-сессию и запустить
+сервер:
+
+```bash
+set -a
+source .env
+set +a
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen uvicorn alpha_defense.bootstrap.app:create_app --factory --reload
 ```
+
+Проверка живости отвечает 200, если процесс способен обработать HTTP. Проверка готовности
+дополнительно проверяет SQLite на текущей миграции и наличие файла выбранной политики:
+
+```bash
+curl -i http://127.0.0.1:8000/api/v1/health/live
+curl -i http://127.0.0.1:8000/api/v1/health/ready
+```
+
+До P07 второй запрос ожидаемо отвечает 503 в формате `application/problem+json`: обязательный
+каталог еще не реализован. Создавать пустой файл ради зеленого статуса нельзя; P07 добавит
+схему, проверенный loader и содержимое.
+
+### Контракт HTTP и web-типы
+
+Из `apps/backend` экспортировать детерминированный контракт только реализованных endpoints:
+
+```bash
+UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen python ../../scripts/export_openapi.py
+```
+
+Затем из `apps/web` обновить типы клиента:
+
+```bash
+npm run generate:api
+```
+
+Повторный экспорт без изменения роутов должен дать те же байты. Файлы OpenAPI и TypeScript
+коммитятся вместе с изменением HTTP-контракта.
 
 ## Frontend
 
@@ -111,8 +154,7 @@ npm run build
 npm run preview
 ```
 
-Генерация клиентских типов требует существующего экспорта P04
-`contracts/http/openapi.json`:
+Генерация клиентских типов использует экспорт P04 `contracts/http/openapi.json`:
 
 ```bash
 npm run generate:api

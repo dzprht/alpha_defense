@@ -8,6 +8,11 @@ from alpha_defense.application.ports.events import (
     EventSinkPort,
     OutboxReceipt,
 )
+from alpha_defense.application.ports.readiness import (
+    ReadinessCheck,
+    ReadinessPort,
+    ReadinessReport,
+)
 from alpha_defense.application.ports.repositories import (
     AuditRecord,
     AuditRepositoryPort,
@@ -43,6 +48,9 @@ __all__ = [
     "OutboxReceipt",
     "OutboxRepositoryPort",
     "OutboxState",
+    "ReadinessCheck",
+    "ReadinessPort",
+    "ReadinessReport",
     "RepositoryPort",
     "UnitOfWorkFactory",
     "UnitOfWorkPort",
