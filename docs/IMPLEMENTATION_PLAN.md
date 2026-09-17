@@ -1473,8 +1473,9 @@ OpenAPI экспортируется каноническим JSON, из нег�
 `apps/backend/tests/{unit/test_settings.py,contract/test_http_contract.py,
 integration/test_http_app.py}`, `contracts/http/openapi.json`, `contracts/examples/`,
 `apps/web/src/shared/api/generated/openapi.ts`, `scripts/export_openapi.py`,
-`ops/local/.env.example`, runbook, README, AGENTS, архитектура и конспект для защиты. Commit с
-реализацией будет указан после его создания; это не является условием статуса done.
+`ops/local/.env.example`, runbook, README, AGENTS, архитектура и конспект для защиты. Commit
+`242e6be` («Реализовать bootstrap и базовый HTTP-контур») создан 2026-09-17 и отправляется в
+`origin/main` вместе с этой записью.
 
 **Проверки:**
 
