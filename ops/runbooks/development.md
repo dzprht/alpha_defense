@@ -1,7 +1,7 @@
 # Локальная разработка
 
-Статус: проверено для P01–P05 2026-09-19. Здесь зафиксированы инструменты и команды;
-backend HTTP-контур и synthetic demo-сессии исполнимы, web-shell появится в P06.
+Статус: проверено для P01–P06 2026-09-19. Здесь зафиксированы инструменты и команды;
+backend HTTP-контур, synthetic demo-сессии и onboarding web-shell исполнимы.
 Readiness остается красной до обязательного каталога P07.
 
 ## Проверенные инструменты
@@ -169,23 +169,27 @@ cd apps/web
 npm ci
 npm run lint
 npm run typecheck
+npm test
+npm run build
 npm run format:check
 ```
 
-Vitest уже проверяет frontend import boundaries. Playwright-команда подготовлена для будущей
-браузерной приемки:
-
-```bash
-npm test
-npm run test:e2e
-```
-
-После реализации web-shell в P06 станут исполнимы команды приложения:
+Vitest проверяет форматирование денег/дат, session/consent-состояния onboarding, клавиатурное
+управление и frontend import boundaries. Vite проксирует `/api` на локальный backend по адресу
+`http://127.0.0.1:8000` в dev/preview-режимах. Запуск приложения:
 
 ```bash
 npm run dev
-npm run build
+# либо после npm run build
 npm run preview
+```
+
+Открыть `http://127.0.0.1:5173/welcome` для dev или `http://127.0.0.1:4173/welcome` для
+preview. Backend должен быть запущен по инструкции выше. Отдельная Playwright-команда
+подготовлена для будущей автоматизированной браузерной приемки:
+
+```bash
+npm run test:e2e
 ```
 
 Генерация клиентских типов использует экспорт P04 `contracts/http/openapi.json`:
