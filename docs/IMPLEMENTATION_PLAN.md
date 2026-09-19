@@ -233,7 +233,7 @@ P-пункт — одна законченная способность или �
 
 ### P07. Создать схемы и загрузку версионированных данных
 
-- [ ] Выполнено и проверено. **Статус:** in_progress. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
 
 **Зависимости:** [P04](#p04).
 
@@ -1654,3 +1654,72 @@ runbook, архитектурный status, defense guide и этот чекли
 
 **Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P06; активных задач нет.
 P07 разблокирован и является следующим пунктом по порядку плана.
+
+<a id="log-2026-09-19-p07-01"></a>
+
+#### 2026-09-19-P07-01
+
+**Задача/исполнитель:** P07, Codex.
+
+**Статус и дата:** done, 2026-09-19.
+
+**Проверенная версия архитектуры / существенные решения:** ARCHITECTURE.md v1.0 от
+2026-09-13, §3.1, §6.1, §11 и §12.1. Чтение файлов оставлено в infrastructure, application
+получает plain snapshots через порт, domain не импортирует файловые API. JSON Schema задает
+общий конверт и каталоги P07; payload-схемы будущих фич намеренно не придуманы заранее.
+Readiness требует целиком валидный каталог, а не одно наличие файла политики.
+
+**Что сделано:** Добавлены схемы demo-политики, trusted entities и общего fixture-конверта,
+версионированные синтетические данные S01 для SMS и связанного threat URL. Loader ограничивает
+размер и UTF-8 JSON, запрещает повторяющиеся ключи и нечисловые константы, проверяет schema,
+версии, enums, canonical content/payload hash и hash связанного файла. Относительные ссылки
+разрешаются только внутри `FIXTURE_ROOT`, включая защиту от `..` и symlink escape. Политика и
+trusted entities преобразуются в типизированные application snapshots. Добавлен отдельный
+validator CLI, `SCHEMA_ROOT` и полная проверка каталога в readiness; с мигрированной БД и
+валидным каталогом `/health/ready` теперь отвечает 200.
+
+**Файлы и артефакты:** `contracts/fixtures/*.schema.json`,
+`content/{policies,trusted_entities}/*.json`, `fixtures/{communications,threats}/*.json`,
+`application/ports/content.py`, `infrastructure/content/`, `scripts/validate_catalog.py`,
+настройка bootstrap/readiness, unit/contract/integration/architecture tests, пример успешной
+readiness, README, AGENTS, runbook, архитектурный status, defense guide и этот чеклист.
+Реализация зафиксирована commit `7ac52fd` («Реализовать валидируемый каталог P07»); эта
+документационная фиксация добавляет evidence перед отправкой обоих commit в `origin/main`.
+
+**Проверки:**
+
+- `uv lock --check`, cwd `apps/backend`, uv 0.11.7 / CPython 3.11.15, 2026-09-19:
+  exit 0, lock согласован, 49 пакетов.
+- `ruff check`, `ruff format --check`, `mypy`, cwd `apps/backend`, 2026-09-19: все exit 0;
+  strict-типизация прошла для 89 source/test/migration файлов.
+- `pytest`, cwd `apps/backend`, 2026-09-19: exit 0, `87 passed`; два warning относятся к
+  deprecation в закрепленной связке FastAPI/Starlette TestClient. Отдельно проверены valid S01,
+  поврежденный JSON, неизвестный enum и fixture version, выход ссылки за fixture root, неверные
+  content/reference hash, зеленая readiness и запрет file-system API в domain.
+- `lint-imports --config pyproject.toml`, cwd `apps/backend`, 2026-09-19: exit 0,
+  `4 kept, 0 broken`, 91 файл и 281 зависимость.
+- `python ../../scripts/validate_catalog.py`, cwd `apps/backend`, 2026-09-19: exit 0,
+  policy `demo-risk-v1`, 2 fixtures, итоговый catalog sha256
+  `de94df4320aeb7f050a8163b5af9c21721843ff637aec886d6cc8ba66b5a73e6`.
+- Два экспорта OpenAPI во временные файлы и `cmp` между ними и committed contract,
+  2026-09-19: все exit 0; HTTP-схема не изменилась. `uv build` создал sdist и wheel.
+- `npm run lint`, `npm run typecheck`, `npm test -- --run`, `npm run build`,
+  `npm run format:check`, `npm audit --audit-level=high`, cwd `apps/web`, 2026-09-19:
+  все exit 0; Vitest `9 passed`, production build преобразовал 88 модулей, известных
+  уязвимостей нет. `git diff --check`: exit 0.
+
+**Что не проверено и почему:** Fixture-конверты еще не исполняются scenario runner и не
+передаются анализаторам: эти способности принадлежат следующим карточкам. S01-данные не
+являются готовой оценкой и не содержат expected→assessment shortcut. Реальные сообщения,
+threat feeds, персональные данные и live-интеграции не подключались. Зеленая readiness
+подтверждает локальные обязательные зависимости, но не готовность антифрод-потока.
+
+**Остаток / блокер:** По P07 остатка и блокера нет.
+
+**Условие разблокировки:** Не применимо.
+
+**Следующее конкретное действие:** Начать [P08](#p08): реестр угроз с атомарной публикацией
+валидированных снимков, статусами записей и детерминированным match.
+
+**Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P07; активных задач нет.
+P08 и P09 разблокированы; по порядку плана следующая P08.
