@@ -1,0 +1,8 @@
+{
+  "status": "anonymous",
+  "pre_session_expires_at": "2026-09-18T09:05:00Z",
+  "execution_mode": "mock",
+  "capabilities": [
+    "start_demo_session"
+  ]
+}

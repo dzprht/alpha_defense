@@ -18,6 +18,15 @@ from alpha_defense.application.ports import (
     OutboxState,
 )
 from alpha_defense.application.ports.events import JsonObject
+from alpha_defense.domain.identity import (
+    ConsentScope,
+    ConsentSnapshot,
+    ConsentStatus,
+    DemoSession,
+    PreSession,
+    SessionRole,
+    SyntheticUser,
+)
 from alpha_defense.domain.shared import EntityId, ExecutionMode
 
 
@@ -46,6 +55,95 @@ def as_utc(value: datetime) -> datetime:
 
 def optional_id(value: str | None) -> EntityId | None:
     return None if value in {None, ""} else EntityId.from_string(value)
+
+
+def user_values(user: SyntheticUser) -> dict[str, Any]:
+    return {
+        "user_id": str(user.user_id),
+        "profile_code": user.profile_code,
+        "created_at": user.created_at,
+    }
+
+
+def user_from_row(row: RowMapping) -> SyntheticUser:
+    return SyntheticUser(
+        user_id=EntityId.from_string(row["user_id"]),
+        profile_code=row["profile_code"],
+        created_at=as_utc(row["created_at"]),
+    )
+
+
+def pre_session_values(pre_session: PreSession) -> dict[str, Any]:
+    return {
+        "pre_session_id": str(pre_session.pre_session_id),
+        "token_fingerprint": pre_session.token_fingerprint,
+        "created_at": pre_session.created_at,
+        "expires_at": pre_session.expires_at,
+        "consumed_session_id": (
+            None
+            if pre_session.consumed_session_id is None
+            else str(pre_session.consumed_session_id)
+        ),
+    }
+
+
+def pre_session_from_row(row: RowMapping) -> PreSession:
+    return PreSession(
+        pre_session_id=EntityId.from_string(row["pre_session_id"]),
+        token_fingerprint=row["token_fingerprint"],
+        created_at=as_utc(row["created_at"]),
+        expires_at=as_utc(row["expires_at"]),
+        consumed_session_id=optional_id(row["consumed_session_id"]),
+    )
+
+
+def session_values(session: DemoSession) -> dict[str, Any]:
+    return {
+        "session_id": str(session.session_id),
+        "user_id": str(session.user_id),
+        "manual_namespace_id": str(session.manual_namespace_id),
+        "roles_json": dump_json([role.value for role in sorted(session.roles, key=str)]),
+        "token_fingerprint": session.token_fingerprint,
+        "consent_revision": session.consent_revision,
+        "created_at": session.created_at,
+        "expires_at": session.expires_at,
+    }
+
+
+def session_from_row(row: RowMapping) -> DemoSession:
+    decoded: object = json.loads(row["roles_json"])
+    if not isinstance(decoded, list) or any(not isinstance(item, str) for item in decoded):
+        raise ValueError("persisted session roles must be a string list")
+    return DemoSession(
+        session_id=EntityId.from_string(row["session_id"]),
+        user_id=EntityId.from_string(row["user_id"]),
+        manual_namespace_id=EntityId.from_string(row["manual_namespace_id"]),
+        roles=frozenset(SessionRole(item) for item in decoded),
+        token_fingerprint=row["token_fingerprint"],
+        consent_revision=row["consent_revision"],
+        created_at=as_utc(row["created_at"]),
+        expires_at=as_utc(row["expires_at"]),
+    )
+
+
+def consent_values(consent: ConsentSnapshot) -> dict[str, Any]:
+    return {
+        "user_id": str(consent.user_id),
+        "scope": consent.scope.value,
+        "status": consent.status.value,
+        "revision": consent.revision,
+        "changed_at": consent.changed_at,
+    }
+
+
+def consent_from_row(row: RowMapping) -> ConsentSnapshot:
+    return ConsentSnapshot(
+        user_id=EntityId.from_string(row["user_id"]),
+        scope=ConsentScope(row["scope"]),
+        status=ConsentStatus(row["status"]),
+        revision=row["revision"],
+        changed_at=as_utc(row["changed_at"]),
+    )
 
 
 def event_values(event: EventEnvelope) -> dict[str, Any]:

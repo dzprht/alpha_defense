@@ -9,9 +9,11 @@ import sqlalchemy as sa
 from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.exc import SQLAlchemyError
 
+from alpha_defense.application.identity import IdentityService, IdentityServicePort
 from alpha_defense.application.ports import Clock, IdGenerator, ReadinessPort, UnitOfWorkFactory
 from alpha_defense.bootstrap.settings import Settings
 from alpha_defense.domain.shared import ExecutionMode
+from alpha_defense.infrastructure.identity.mock import HmacSecurityTokens, SyntheticIdentityProvider
 from alpha_defense.infrastructure.observability import (
     EXPECTED_SCHEMA_REVISION,
     LocalReadinessChecker,
@@ -35,6 +37,7 @@ class Container:
     clock: Clock
     id_generator: IdGenerator
     readiness: ReadinessPort
+    identity_service: IdentityServicePort
 
     def close(self) -> None:
         self.engine.dispose()
@@ -59,13 +62,24 @@ def build_container(settings: Settings) -> Container:
         engine.dispose()
         raise
     factory = SqlAlchemyUnitOfWorkFactory(engine)
+    clock = SystemClock()
+    id_generator = UuidGenerator()
+    identity_service = IdentityService(
+        unit_of_work=factory,
+        clock=clock,
+        id_generator=id_generator,
+        provider=SyntheticIdentityProvider(),
+        tokens=HmacSecurityTokens(settings.session_secret.get_secret_value()),
+        execution_mode=settings.execution_mode,
+    )
     return Container(
         settings=settings,
         engine=engine,
         unit_of_work=factory,
-        clock=SystemClock(),
-        id_generator=UuidGenerator(),
+        clock=clock,
+        id_generator=id_generator,
         readiness=LocalReadinessChecker(engine, settings.policy_file),
+        identity_service=identity_service,
     )
 
 

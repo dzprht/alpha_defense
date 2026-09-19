@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/v1/consents/{scope}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Consent */
+        patch: operations["update_consent"];
+        trace?: never;
+    };
     "/api/v1/health/live": {
         parameters: {
             query?: never;
@@ -38,10 +55,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Session */
+        get: operations["get_session"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/demo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Demo Session */
+        post: operations["start_demo_session"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AnonymousSessionResponse */
+        AnonymousSessionResponse: {
+            /** Capabilities */
+            capabilities: "start_demo_session"[];
+            /**
+             * Execution Mode
+             * @default mock
+             * @constant
+             */
+            execution_mode: "mock";
+            /**
+             * Pre Session Expires At
+             * Format: date-time
+             */
+            pre_session_expires_at: string;
+            /**
+             * Status
+             * @default anonymous
+             * @constant
+             */
+            status: "anonymous";
+        };
+        /** ConsentResponse */
+        ConsentResponse: {
+            /**
+             * Changed At
+             * Format: date-time
+             */
+            changed_at: string;
+            /** Revision */
+            revision: number;
+            scope: components["schemas"]["ConsentScope"];
+            status: components["schemas"]["ConsentStatus"];
+        };
+        /**
+         * ConsentScope
+         * @enum {string}
+         */
+        ConsentScope: "analyze_communications" | "analyze_resources" | "use_transaction_history" | "send_notifications" | "participate_in_research";
+        /**
+         * ConsentStatus
+         * @enum {string}
+         */
+        ConsentStatus: "granted" | "revoked";
         /** DependencyStatus */
         DependencyStatus: {
             /** Name */
@@ -113,6 +208,51 @@ export interface components {
              */
             status: "ready";
         };
+        /** SessionResponse */
+        SessionResponse: {
+            /** Capabilities */
+            capabilities: "update_consents"[];
+            /** Consent Revision */
+            consent_revision: number;
+            /** Consents */
+            consents: components["schemas"]["ConsentResponse"][];
+            /**
+             * Execution Mode
+             * @default mock
+             * @constant
+             */
+            execution_mode: "mock";
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Namespace Id */
+            namespace_id: string;
+            /** Roles */
+            roles: ("demo_user" | "researcher")[];
+            /** Session Id */
+            session_id: string;
+            /**
+             * Status
+             * @default active
+             * @constant
+             */
+            status: "active";
+            /** User Id */
+            user_id: string;
+        };
+        /** StartDemoSessionRequest */
+        StartDemoSessionRequest: {
+            /** Profile Code */
+            profile_code: string;
+        };
+        /** UpdateConsentRequest */
+        UpdateConsentRequest: {
+            /** Expected Revision */
+            expected_revision: number;
+            status: components["schemas"]["ConsentStatus"];
+        };
     };
     responses: never;
     parameters: never;
@@ -122,6 +262,86 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    update_consent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scope: components["schemas"]["ConsentScope"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateConsentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsentResponse"];
+                };
+            };
+            /** @description Problem Details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     get_liveness: {
         parameters: {
             query?: never;
@@ -161,6 +381,113 @@ export interface operations {
                 };
             };
             /** @description Mandatory dependency is unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    get_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnonymousSessionResponse"] | components["schemas"]["SessionResponse"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    start_demo_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartDemoSessionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionResponse"];
+                };
+            };
+            /** @description Problem Details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
             503: {
                 headers: {
                     [name: string]: unknown;

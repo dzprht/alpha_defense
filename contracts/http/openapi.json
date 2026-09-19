@@ -1,6 +1,90 @@
 {
   "components": {
     "schemas": {
+      "AnonymousSessionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "items": {
+              "const": "start_demo_session",
+              "type": "string"
+            },
+            "title": "Capabilities",
+            "type": "array"
+          },
+          "execution_mode": {
+            "const": "mock",
+            "default": "mock",
+            "title": "Execution Mode",
+            "type": "string"
+          },
+          "pre_session_expires_at": {
+            "format": "date-time",
+            "title": "Pre Session Expires At",
+            "type": "string"
+          },
+          "status": {
+            "const": "anonymous",
+            "default": "anonymous",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pre_session_expires_at",
+          "capabilities"
+        ],
+        "title": "AnonymousSessionResponse",
+        "type": "object"
+      },
+      "ConsentResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "changed_at": {
+            "format": "date-time",
+            "title": "Changed At",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/ConsentScope"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ConsentStatus"
+          }
+        },
+        "required": [
+          "scope",
+          "status",
+          "revision",
+          "changed_at"
+        ],
+        "title": "ConsentResponse",
+        "type": "object"
+      },
+      "ConsentScope": {
+        "enum": [
+          "analyze_communications",
+          "analyze_resources",
+          "use_transaction_history",
+          "send_notifications",
+          "participate_in_research"
+        ],
+        "title": "ConsentScope",
+        "type": "string"
+      },
+      "ConsentStatus": {
+        "enum": [
+          "granted",
+          "revoked"
+        ],
+        "title": "ConsentStatus",
+        "type": "string"
+      },
       "DependencyStatus": {
         "additionalProperties": false,
         "properties": {
@@ -183,6 +267,119 @@
         ],
         "title": "ReadinessResponse",
         "type": "object"
+      },
+      "SessionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "items": {
+              "const": "update_consents",
+              "type": "string"
+            },
+            "title": "Capabilities",
+            "type": "array"
+          },
+          "consent_revision": {
+            "minimum": 0.0,
+            "title": "Consent Revision",
+            "type": "integer"
+          },
+          "consents": {
+            "items": {
+              "$ref": "#/components/schemas/ConsentResponse"
+            },
+            "title": "Consents",
+            "type": "array"
+          },
+          "execution_mode": {
+            "const": "mock",
+            "default": "mock",
+            "title": "Execution Mode",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "namespace_id": {
+            "title": "Namespace Id",
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "enum": [
+                "demo_user",
+                "researcher"
+              ],
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "active",
+            "default": "active",
+            "title": "Status",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "session_id",
+          "namespace_id",
+          "roles",
+          "consent_revision",
+          "consents",
+          "expires_at",
+          "capabilities"
+        ],
+        "title": "SessionResponse",
+        "type": "object"
+      },
+      "StartDemoSessionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "profile_code": {
+            "maxLength": 64,
+            "minLength": 3,
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "title": "Profile Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "profile_code"
+        ],
+        "title": "StartDemoSessionRequest",
+        "type": "object"
+      },
+      "UpdateConsentRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ConsentStatus"
+          }
+        },
+        "required": [
+          "status",
+          "expected_revision"
+        ],
+        "title": "UpdateConsentRequest",
+        "type": "object"
       }
     }
   },
@@ -193,6 +390,107 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/consents/{scope}": {
+      "patch": {
+        "operationId": "update_consent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scope",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ConsentScope"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConsentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          }
+        },
+        "summary": "Update Consent",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
     "/api/v1/health/live": {
       "get": {
         "operationId": "get_liveness",
@@ -242,6 +540,136 @@
         "summary": "Readiness",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/session": {
+      "get": {
+        "operationId": "get_session",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/AnonymousSessionResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SessionResponse"
+                    }
+                  ],
+                  "title": "Response Get Session"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          }
+        },
+        "summary": "Get Session",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/sessions/demo": {
+      "post": {
+        "operationId": "start_demo_session",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartDemoSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          }
+        },
+        "summary": "Start Demo Session",
+        "tags": [
+          "identity"
         ]
       }
     }

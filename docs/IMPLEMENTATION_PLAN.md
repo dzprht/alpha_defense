@@ -189,7 +189,7 @@ P-пункт — одна законченная способность или �
 
 ### P05. Реализовать demo-сессии, namespace, роли и согласия
 
-- [ ] Выполнено и проверено. **Статус:** todo. **Исполнитель:** —.
+- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
 
 **Зависимости:** [P04](#p04).
 
@@ -203,7 +203,7 @@ P-пункт — одна законченная способность или �
 
 **Приемка и качество:** POST /sessions/demo, GET /session, PATCH /consents/{scope} сохраняют/восстанавливают состояние. Повтор не создает лишнюю сессию; чужой resource/namespace не раскрывается; клиент не расширяет роль. Отзыв scope меняет revision; отказ от research не выключает основную защиту.
 
-**Запись выполнения:** —. После начала работ заменить на ссылку на запись [журнала](#work-log).
+**Запись выполнения:** [2026-09-18-P05-01](#log-2026-09-18-p05-01).
 
 <a id="p06"></a>
 
@@ -1518,3 +1518,74 @@ owner/namespace, серверные роли, согласия и подключ
 
 **Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P04; активных задач нет.
 Разблокированы P05 и P07; по порядку плана следующая P05.
+
+<a id="log-2026-09-18-p05-01"></a>
+
+#### 2026-09-18-P05-01
+
+**Задача/исполнитель:** P05, Codex.
+
+**Статус и дата:** done, 2026-09-19.
+
+**Проверенная версия архитектуры / существенные решения:** ARCHITECTURE.md v1.0 от
+2026-09-13, §4.1, §5.2, §7.3, §8 и §11. Границы слоев не менялись. Сессию, manual
+namespace и роль назначает backend. В БД хранятся только SHA-256 отпечатки токенов;
+сессионный токен воспроизводимо выводится из короткоживущей pre-session и server secret, что
+позволяет безопасно повторить потерянный ответ без хранения raw token. Это только
+synthetic identity, а не Alfa ID и не доказательство происхождения звонка.
+
+**Что сделано:** Реализованы identity-сущности и use cases для короткоживущей pre-session,
+создания/восстановления demo-сессии и изменения пяти независимых consent scopes. Все
+согласия по умолчанию revoked; изменение использует ожидаемую версию всего снимка.
+Добавлены allowlisted synthetic-профили без client-controlled role, HMAC/CSRF-токены, in-memory и
+SQLite repositories, Alembic-миграция users/sessions/pre_sessions/consents и audit старта/изменения
+согласий. HTTP публикует `GET /session`, `POST /sessions/demo`, `PATCH /consents/{scope}`;
+команды требуют CSRF и Idempotency-Key. Общие owner, namespace и role dependencies готовы для
+будущих routes. OpenAPI, TypeScript-типы, JSON-примеры, runbook, README, AGENTS,
+архитектурный status и конспект для защиты обновлены по фактическому состоянию.
+
+**Файлы и артефакты:** `apps/backend/src/alpha_defense/{domain,application}/identity/`,
+`apps/backend/src/alpha_defense/infrastructure/identity/mock/`, identity repositories/mappers/UoW,
+`apps/backend/src/alpha_defense/transport/http/v1/{dependencies.py,routes/identity.py,
+schemas/identity.py}`, `apps/backend/migrations/versions/20260918_0002_identity_sessions.py`,
+identity unit/contract/integration tests, `contracts/{http,examples}/`, generated web API types,
+runbook, README, AGENTS, architecture, defense guide и этот чеклист. Commit `pending` будет
+отправлен в `origin/main`; точный hash будет внесен следующей документационной фиксацией.
+
+**Проверки:**
+
+- `uv lock --check`, cwd `apps/backend`, uv 0.11.7 / CPython 3.11.15, 2026-09-19:
+  exit 0, lock согласован, 43 пакета.
+- `ruff check`, `ruff format --check`, `mypy`, cwd `apps/backend`, 2026-09-19: все exit 0;
+  strict-типизация прошла для 84 source/test/migration файлов.
+- `pytest`, cwd `apps/backend`, 2026-09-19: exit 0, `78 passed`; два warning относятся
+  к deprecation в закрепленной связке FastAPI/Starlette TestClient. Проверены инварианты
+  domain, общий contract in-memory/SQLite, rollback неуспешной аутентификации, replay/conflict,
+  CAS согласий, CSRF/idempotency/role guards, отсутствие raw tokens в БД, отзыв research-
+  согласия и восстановление сессии после restart.
+- `lint-imports --config pyproject.toml`, cwd `apps/backend`, 2026-09-19: exit 0,
+  `4 kept, 0 broken`, 87 файлов и 264 зависимости.
+- Два экспорта OpenAPI во временные файлы и `cmp` с committed contract,
+  2026-09-19: все exit 0; байты совпали. `npm run generate:api` пересоздал типы
+  из нового контракта.
+- `npm run lint`, `npm run typecheck`, `npm test`, `npm run format:check`, `npm audit
+  --audit-level=high`, cwd `apps/web`, 2026-09-19: все exit 0; Vitest `3 passed`,
+  известных уязвимостей нет.
+- `uv build --out-dir <temporary-directory>`, cwd `apps/backend`, 2026-09-19: exit 0,
+  созданы sdist и wheel с identity и transport-модулями. `git diff --check`:
+  exit 0.
+
+**Что не проверено и почему:** Браузерный UI-flow не проверялся, потому что web-shell и
+onboarding принадлежат P06; HTTP поведение проверено через ASGI integration. Реальные Alfa ID,
+call attestation, SMS и персональные данные не подключались и не заявляются. Readiness 200 не
+заявляется до валидированного каталога P07. Реальных UX-сессий и измерений не было.
+
+**Остаток / блокер:** По P05 остатка и блокера нет.
+
+**Условие разблокировки:** Не применимо.
+
+**Следующее конкретное действие:** Начать [P06](#p06): web-shell, типизированный API-клиент с
+cookies/CSRF/idempotency и русский onboarding на реальном session/consent API.
+
+**Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P05; активных задач нет.
+P06 и P07 разблокированы; по порядку плана следующая P06.

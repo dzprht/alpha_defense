@@ -10,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from alpha_defense.application.ports import ReadinessCheck, ReadinessReport
 
-EXPECTED_SCHEMA_REVISION = "20260915_0001"
+EXPECTED_SCHEMA_REVISION = "20260918_0002"
 
 
 class LocalReadinessChecker:

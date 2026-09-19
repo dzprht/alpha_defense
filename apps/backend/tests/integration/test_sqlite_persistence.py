@@ -28,9 +28,8 @@ from tests.contract.test_uow_contract import (
 
 def test_migration_creates_only_technical_tables(tmp_path: Path) -> None:
     database_path = tmp_path / "schema.db"
-    migrate(database_path)
+    migrate(database_path, "20260915_0001")
     config = alembic_config(database_path)
-    command.check(config)
     engine = create_sqlite_engine(database_path)
 
     inspector = sa.inspect(engine)
@@ -50,6 +49,19 @@ def test_migration_creates_only_technical_tables(tmp_path: Path) -> None:
     downgraded_engine.dispose()
 
     command.upgrade(config, "head")
+    command.check(config)
+    current_engine = create_sqlite_engine(database_path)
+    assert set(sa.inspect(current_engine).get_table_names()) == {
+        "alembic_version",
+        "audit_events",
+        "consents",
+        "idempotency_records",
+        "outbox",
+        "pre_sessions",
+        "sessions",
+        "users",
+    }
+    current_engine.dispose()
 
 
 def test_audit_and_expired_outbox_lease_survive_restart(tmp_path: Path) -> None:

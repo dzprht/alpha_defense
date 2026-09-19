@@ -23,6 +23,7 @@ def configured_app(tmp_path: Path) -> Iterator[tuple[TestClient, Path, str]]:
     container = build_container(settings)
     app = create_http_app(
         readiness=container.readiness,
+        identity_service=container.identity_service,
         max_request_body_bytes=1024,
         cors_origins=settings.cors_origins,
         allowed_hosts=settings.allowed_hosts,

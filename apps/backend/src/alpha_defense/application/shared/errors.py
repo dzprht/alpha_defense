@@ -62,6 +62,14 @@ class ActionForbiddenError(ApplicationError):
     code = "action_forbidden"
 
 
+class SessionRequiredError(ApplicationError):
+    code = "session_required"
+
+
+class ConsentRequiredError(ApplicationError):
+    code = "consent_required"
+
+
 class StaleRevisionError(ApplicationError):
     code = "stale_revision"
 

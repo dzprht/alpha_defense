@@ -6,6 +6,7 @@ from alpha_defense.application.ports.events import (
     EventEnvelope,
     EventHandler,
     EventSinkPort,
+    JsonValue,
     OutboxReceipt,
 )
 from alpha_defense.application.ports.readiness import (
@@ -44,6 +45,7 @@ __all__ = [
     "IdempotencyReservation",
     "IdempotencyScope",
     "IdempotencyState",
+    "JsonValue",
     "OutboxMessage",
     "OutboxReceipt",
     "OutboxRepositoryPort",

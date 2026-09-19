@@ -1,8 +1,8 @@
 # Локальная разработка
 
-Статус: проверено для P01–P04 2026-09-17. Здесь зафиксированы инструменты и команды;
-backend HTTP-контур исполним, web-shell появится в P06. Сейчас HTTP публикует только health
-endpoints, а readiness остается красной до обязательного каталога P07.
+Статус: проверено для P01–P05 2026-09-19. Здесь зафиксированы инструменты и команды;
+backend HTTP-контур и synthetic demo-сессии исполнимы, web-shell появится в P06.
+Readiness остается красной до обязательного каталога P07.
 
 ## Проверенные инструменты
 
@@ -103,6 +103,40 @@ curl -i http://127.0.0.1:8000/api/v1/health/ready
 До P07 второй запрос ожидаемо отвечает 503 в формате `application/problem+json`: обязательный
 каталог еще не реализован. Создавать пустой файл ради зеленого статуса нельзя; P07 добавит
 схему, проверенный loader и содержимое.
+
+### Проверка demo-сессии и согласий
+
+Клиент сначала получает короткоживущую pre-session и CSRF-cookie. Cookie jar нужно
+сохранять между запросами; роль и namespace в теле команды не передаются:
+
+```bash
+cookie_jar=$(mktemp)
+curl -sS -c "$cookie_jar" -b "$cookie_jar" http://127.0.0.1:8000/api/v1/session
+csrf_token=$(awk '$6 == "alpha_defense_csrf" {print $7}' "$cookie_jar" | tail -n 1)
+curl -sS -c "$cookie_jar" -b "$cookie_jar" \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: $csrf_token" \
+  -H "Idempotency-Key: local-session-1" \
+  -d '{"profile_code":"demo-user"}' \
+  http://127.0.0.1:8000/api/v1/sessions/demo
+```
+
+После старта сессии CSRF-cookie меняется. При изменении согласия клиент передает
+версию всего снимка и новый ключ команды:
+
+```bash
+csrf_token=$(awk '$6 == "alpha_defense_csrf" {print $7}' "$cookie_jar" | tail -n 1)
+curl -sS -c "$cookie_jar" -b "$cookie_jar" -X PATCH \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: $csrf_token" \
+  -H "Idempotency-Key: grant-analysis-1" \
+  -d '{"status":"granted","expected_revision":0}' \
+  http://127.0.0.1:8000/api/v1/consents/analyze_communications
+```
+
+Это synthetic-вход локального MVP, а не интеграция Alfa ID и не проверка происхождения
+звонка. Доступны только allowlisted-профили `demo-user` и `demo-senior`; оба получают
+серверную роль `demo_user`.
 
 ### Контракт HTTP и web-типы
 

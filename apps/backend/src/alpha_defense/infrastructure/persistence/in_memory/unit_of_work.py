@@ -7,6 +7,7 @@ from types import TracebackType
 from alpha_defense.infrastructure.persistence.in_memory.repositories import (
     InMemoryAuditRepository,
     InMemoryIdempotencyRepository,
+    InMemoryIdentityRepository,
     InMemoryOutboxRepository,
 )
 from alpha_defense.infrastructure.persistence.in_memory.store import InMemoryDatabase, InMemoryState
@@ -19,6 +20,7 @@ class InMemoryUnitOfWork:
         self._active = False
         self._finished = False
         self._idempotency: InMemoryIdempotencyRepository | None = None
+        self._identity: InMemoryIdentityRepository | None = None
         self._audit: InMemoryAuditRepository | None = None
         self._outbox: InMemoryOutboxRepository | None = None
 
@@ -35,6 +37,12 @@ class InMemoryUnitOfWork:
         return self._audit
 
     @property
+    def identity(self) -> InMemoryIdentityRepository:
+        if self._identity is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._identity
+
+    @property
     def outbox(self) -> InMemoryOutboxRepository:
         if self._outbox is None:
             raise RuntimeError("UnitOfWork is not active")
@@ -46,6 +54,7 @@ class InMemoryUnitOfWork:
         self._database.lock.acquire()
         self._state = self._database.state.clone()
         self._idempotency = InMemoryIdempotencyRepository(self._state)
+        self._identity = InMemoryIdentityRepository(self._state)
         self._audit = InMemoryAuditRepository(self._state)
         self._outbox = InMemoryOutboxRepository(self._state)
         self._active = True

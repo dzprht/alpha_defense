@@ -6,9 +6,9 @@ import hmac
 
 from fastapi import Request
 
+from alpha_defense.transport.http.v1.dependencies import CSRF_COOKIE_NAME
 from alpha_defense.transport.http.v1.errors import RequestGuardError
 
-CSRF_COOKIE_NAME = "alpha_defense_csrf"
 CSRF_HEADER_NAME = "X-CSRF-Token"
 IDEMPOTENCY_HEADER_NAME = "Idempotency-Key"
 

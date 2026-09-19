@@ -12,6 +12,63 @@ NAMING_CONVENTION = {
 
 metadata = sa.MetaData(naming_convention=NAMING_CONVENTION)
 
+users = sa.Table(
+    "users",
+    metadata,
+    sa.Column("user_id", sa.String(36), primary_key=True),
+    sa.Column("profile_code", sa.String(64), nullable=False),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+)
+
+sessions = sa.Table(
+    "sessions",
+    metadata,
+    sa.Column("session_id", sa.String(36), primary_key=True),
+    sa.Column("user_id", sa.String(36), sa.ForeignKey("users.user_id"), nullable=False),
+    sa.Column("manual_namespace_id", sa.String(36), nullable=False, unique=True),
+    sa.Column("roles_json", sa.Text(), nullable=False),
+    sa.Column("token_fingerprint", sa.String(64), nullable=False, unique=True),
+    sa.Column("consent_revision", sa.Integer(), nullable=False),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
+    sa.CheckConstraint("consent_revision >= 0", name="consent_revision_non_negative"),
+    sa.CheckConstraint("expires_at > created_at", name="expiry_after_creation"),
+)
+
+pre_sessions = sa.Table(
+    "pre_sessions",
+    metadata,
+    sa.Column("pre_session_id", sa.String(36), primary_key=True),
+    sa.Column("token_fingerprint", sa.String(64), nullable=False, unique=True),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column(
+        "consumed_session_id",
+        sa.String(36),
+        sa.ForeignKey("sessions.session_id"),
+        nullable=True,
+        unique=True,
+    ),
+    sa.CheckConstraint("expires_at > created_at", name="expiry_after_creation"),
+)
+
+consents = sa.Table(
+    "consents",
+    metadata,
+    sa.Column("user_id", sa.String(36), sa.ForeignKey("users.user_id"), primary_key=True),
+    sa.Column("scope", sa.String(64), primary_key=True),
+    sa.Column("status", sa.String(16), nullable=False),
+    sa.Column("revision", sa.Integer(), nullable=False),
+    sa.Column("changed_at", sa.DateTime(timezone=True), nullable=False),
+    sa.CheckConstraint(
+        "scope IN ('analyze_communications', 'analyze_resources', "
+        "'use_transaction_history', 'send_notifications', 'participate_in_research')",
+        name="scope_valid",
+    ),
+    sa.CheckConstraint("status IN ('granted', 'revoked')", name="status_valid"),
+    sa.CheckConstraint("revision >= 0", name="revision_non_negative"),
+)
+
 idempotency_records = sa.Table(
     "idempotency_records",
     metadata,

@@ -12,6 +12,7 @@ from alpha_defense.application.shared import ServiceUnavailableError
 from alpha_defense.infrastructure.persistence.sqlalchemy.repositories import (
     SqlAlchemyAuditRepository,
     SqlAlchemyIdempotencyRepository,
+    SqlAlchemyIdentityRepository,
     SqlAlchemyOutboxRepository,
 )
 
@@ -25,6 +26,7 @@ class SqlAlchemyUnitOfWork:
         self._active = False
         self._finished = False
         self._idempotency: SqlAlchemyIdempotencyRepository | None = None
+        self._identity: SqlAlchemyIdentityRepository | None = None
         self._audit: SqlAlchemyAuditRepository | None = None
         self._outbox: SqlAlchemyOutboxRepository | None = None
 
@@ -41,6 +43,12 @@ class SqlAlchemyUnitOfWork:
         return self._audit
 
     @property
+    def identity(self) -> SqlAlchemyIdentityRepository:
+        if self._identity is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._identity
+
+    @property
     def outbox(self) -> SqlAlchemyOutboxRepository:
         if self._outbox is None:
             raise RuntimeError("UnitOfWork is not active")
@@ -52,6 +60,7 @@ class SqlAlchemyUnitOfWork:
         self._session = Session(self._engine, expire_on_commit=False)
         self._session.begin()
         self._idempotency = SqlAlchemyIdempotencyRepository(self._session)
+        self._identity = SqlAlchemyIdentityRepository(self._session)
         self._audit = SqlAlchemyAuditRepository(self._session)
         self._outbox = SqlAlchemyOutboxRepository(self._session)
         self._active = True

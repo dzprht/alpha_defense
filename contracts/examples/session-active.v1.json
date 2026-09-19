@@ -1,0 +1,47 @@
+{
+  "status": "active",
+  "user_id": "00000000-0000-0000-0000-000000000001",
+  "session_id": "00000000-0000-0000-0000-000000000002",
+  "namespace_id": "00000000-0000-0000-0000-000000000003",
+  "roles": [
+    "demo_user"
+  ],
+  "consent_revision": 0,
+  "consents": [
+    {
+      "scope": "analyze_communications",
+      "status": "revoked",
+      "revision": 0,
+      "changed_at": "2026-09-18T09:00:00Z"
+    },
+    {
+      "scope": "analyze_resources",
+      "status": "revoked",
+      "revision": 0,
+      "changed_at": "2026-09-18T09:00:00Z"
+    },
+    {
+      "scope": "participate_in_research",
+      "status": "revoked",
+      "revision": 0,
+      "changed_at": "2026-09-18T09:00:00Z"
+    },
+    {
+      "scope": "send_notifications",
+      "status": "revoked",
+      "revision": 0,
+      "changed_at": "2026-09-18T09:00:00Z"
+    },
+    {
+      "scope": "use_transaction_history",
+      "status": "revoked",
+      "revision": 0,
+      "changed_at": "2026-09-18T09:00:00Z"
+    }
+  ],
+  "execution_mode": "mock",
+  "expires_at": "2026-09-18T21:00:00Z",
+  "capabilities": [
+    "update_consents"
+  ]
+}

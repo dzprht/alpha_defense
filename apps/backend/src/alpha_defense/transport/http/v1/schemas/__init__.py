@@ -6,11 +6,23 @@ from alpha_defense.transport.http.v1.schemas.health import (
     LivenessResponse,
     ReadinessResponse,
 )
+from alpha_defense.transport.http.v1.schemas.identity import (
+    AnonymousSessionResponse,
+    ConsentResponse,
+    SessionResponse,
+    StartDemoSessionRequest,
+    UpdateConsentRequest,
+)
 
 __all__ = [
+    "AnonymousSessionResponse",
+    "ConsentResponse",
     "DependencyStatus",
     "FieldError",
     "LivenessResponse",
     "ProblemDetails",
     "ReadinessResponse",
+    "SessionResponse",
+    "StartDemoSessionRequest",
+    "UpdateConsentRequest",
 ]

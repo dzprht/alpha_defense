@@ -14,6 +14,13 @@ from alpha_defense.application.ports import (
     OutboxState,
 )
 from alpha_defense.application.shared import IdempotencyConflictError, StaleRevisionError
+from alpha_defense.domain.identity import (
+    ConsentScope,
+    ConsentSnapshot,
+    DemoSession,
+    PreSession,
+    SyntheticUser,
+)
 from alpha_defense.domain.shared import EntityId
 from alpha_defense.infrastructure.persistence.in_memory.store import InMemoryState
 
@@ -67,6 +74,121 @@ class InMemoryIdempotencyRepository:
             raise StaleRevisionError("Idempotency record does not exist")
         _assert_idempotency_update(current, record, expected_revision=expected_revision)
         self._state.idempotency_records[record.record_id] = record
+
+
+class InMemoryIdentityRepository:
+    def __init__(self, state: InMemoryState) -> None:
+        self._state = state
+
+    def add_user(self, user: SyntheticUser) -> None:
+        existing = self._state.users.get(user.user_id)
+        if existing is not None and existing != user:
+            raise ValueError("user_id already exists with different data")
+        self._state.users[user.user_id] = user
+
+    def get_user(self, user_id: EntityId) -> SyntheticUser | None:
+        return self._state.users.get(user_id)
+
+    def add_pre_session(self, pre_session: PreSession) -> None:
+        existing_id = self._state.pre_session_tokens.get(pre_session.token_fingerprint)
+        existing = self._state.pre_sessions.get(pre_session.pre_session_id)
+        if existing == pre_session or (
+            existing_id is not None and self._state.pre_sessions[existing_id] == pre_session
+        ):
+            return
+        if existing is not None or existing_id is not None:
+            raise ValueError("pre-session token or id already exists")
+        self._state.pre_sessions[pre_session.pre_session_id] = pre_session
+        self._state.pre_session_tokens[pre_session.token_fingerprint] = pre_session.pre_session_id
+
+    def get_pre_session_by_fingerprint(self, token_fingerprint: str) -> PreSession | None:
+        pre_session_id = self._state.pre_session_tokens.get(token_fingerprint)
+        return None if pre_session_id is None else self._state.pre_sessions[pre_session_id]
+
+    def save_pre_session(
+        self,
+        pre_session: PreSession,
+        *,
+        expected_consumed_session_id: EntityId | None,
+    ) -> None:
+        current = self._state.pre_sessions.get(pre_session.pre_session_id)
+        if current is None or current.consumed_session_id != expected_consumed_session_id:
+            raise StaleRevisionError("Pre-session was already consumed")
+        if (
+            current.token_fingerprint != pre_session.token_fingerprint
+            or current.created_at != pre_session.created_at
+            or current.expires_at != pre_session.expires_at
+        ):
+            raise ValueError("immutable pre-session fields cannot be changed")
+        self._state.pre_sessions[pre_session.pre_session_id] = pre_session
+
+    def add_session(self, session: DemoSession) -> None:
+        token_owner = self._state.session_tokens.get(session.token_fingerprint)
+        namespace_owner = self._state.session_namespaces.get(session.manual_namespace_id)
+        existing = self._state.sessions.get(session.session_id)
+        if existing == session:
+            return
+        if existing is not None or token_owner is not None or namespace_owner is not None:
+            raise ValueError("session id, token, or namespace already exists")
+        if session.user_id not in self._state.users:
+            raise ValueError("session user does not exist")
+        self._state.sessions[session.session_id] = session
+        self._state.session_tokens[session.token_fingerprint] = session.session_id
+        self._state.session_namespaces[session.manual_namespace_id] = session.session_id
+
+    def get_session(self, session_id: EntityId) -> DemoSession | None:
+        return self._state.sessions.get(session_id)
+
+    def get_session_by_fingerprint(self, token_fingerprint: str) -> DemoSession | None:
+        session_id = self._state.session_tokens.get(token_fingerprint)
+        return None if session_id is None else self._state.sessions[session_id]
+
+    def save_session(self, session: DemoSession, *, expected_consent_revision: int) -> None:
+        current = self._state.sessions.get(session.session_id)
+        if current is None or current.consent_revision != expected_consent_revision:
+            raise StaleRevisionError("Session consent revision is stale")
+        if session.consent_revision != expected_consent_revision + 1:
+            raise StaleRevisionError("Session consent revision must advance by one")
+        if replace(current, consent_revision=session.consent_revision) != session:
+            raise ValueError("immutable session fields cannot be changed")
+        self._state.sessions[session.session_id] = session
+
+    def add_consent(self, consent: ConsentSnapshot) -> None:
+        key = (consent.user_id, consent.scope)
+        existing = self._state.consents.get(key)
+        if existing is not None and existing != consent:
+            raise ValueError("consent scope already exists with different data")
+        if consent.user_id not in self._state.users:
+            raise ValueError("consent user does not exist")
+        self._state.consents[key] = consent
+
+    def get_consent(
+        self,
+        user_id: EntityId,
+        scope: ConsentScope,
+    ) -> ConsentSnapshot | None:
+        return self._state.consents.get((user_id, scope))
+
+    def list_consents(self, user_id: EntityId) -> tuple[ConsentSnapshot, ...]:
+        return tuple(
+            sorted(
+                (
+                    consent
+                    for (owner_id, _), consent in self._state.consents.items()
+                    if owner_id == user_id
+                ),
+                key=lambda consent: consent.scope.value,
+            )
+        )
+
+    def save_consent(self, consent: ConsentSnapshot, *, expected_revision: int) -> None:
+        key = (consent.user_id, consent.scope)
+        current = self._state.consents.get(key)
+        if current is None or current.revision != expected_revision:
+            raise StaleRevisionError("Consent revision is stale")
+        if consent.revision <= expected_revision:
+            raise StaleRevisionError("Consent revision must advance")
+        self._state.consents[key] = consent
 
 
 class InMemoryAuditRepository:

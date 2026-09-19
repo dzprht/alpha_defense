@@ -25,19 +25,38 @@ from alpha_defense.application.shared import (
     ServiceUnavailableError,
     StaleRevisionError,
 )
+from alpha_defense.domain.identity import (
+    ConsentScope,
+    ConsentSnapshot,
+    DemoSession,
+    PreSession,
+    SyntheticUser,
+)
 from alpha_defense.domain.shared import EntityId
 from alpha_defense.infrastructure.persistence.sqlalchemy.mappers import (
     audit_from_row,
     audit_values,
+    consent_from_row,
+    consent_values,
     idempotency_from_row,
     idempotency_values,
     outbox_from_row,
     outbox_values,
+    pre_session_from_row,
+    pre_session_values,
+    session_from_row,
+    session_values,
+    user_from_row,
+    user_values,
 )
 from alpha_defense.infrastructure.persistence.sqlalchemy.schema import (
     audit_events,
+    consents,
     idempotency_records,
     outbox,
+    pre_sessions,
+    sessions,
+    users,
 )
 
 
@@ -138,6 +157,201 @@ class SqlAlchemyIdempotencyRepository:
         )
         if _rowcount(result) != 1:
             raise StaleRevisionError("Idempotency record revision is stale")
+
+
+class SqlAlchemyIdentityRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add_user(self, user: SyntheticUser) -> None:
+        result = _execute(
+            self._session,
+            sqlite_insert(users).values(user_values(user)).on_conflict_do_nothing(),
+        )
+        if _rowcount(result) == 1:
+            return
+        if self.get_user(user.user_id) != user:
+            raise ValueError("user_id already exists with different data")
+
+    def get_user(self, user_id: EntityId) -> SyntheticUser | None:
+        row = (
+            _execute(
+                self._session,
+                sa.select(users).where(users.c.user_id == str(user_id)),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        return None if row is None else user_from_row(row)
+
+    def add_pre_session(self, pre_session: PreSession) -> None:
+        result = _execute(
+            self._session,
+            sqlite_insert(pre_sessions)
+            .values(pre_session_values(pre_session))
+            .on_conflict_do_nothing(),
+        )
+        if _rowcount(result) == 1:
+            return
+        existing = self.get_pre_session_by_fingerprint(pre_session.token_fingerprint)
+        if existing != pre_session:
+            raise ValueError("pre-session token or id already exists with different data")
+
+    def get_pre_session_by_fingerprint(self, token_fingerprint: str) -> PreSession | None:
+        row = (
+            _execute(
+                self._session,
+                sa.select(pre_sessions).where(
+                    pre_sessions.c.token_fingerprint == token_fingerprint
+                ),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        return None if row is None else pre_session_from_row(row)
+
+    def save_pre_session(
+        self,
+        pre_session: PreSession,
+        *,
+        expected_consumed_session_id: EntityId | None,
+    ) -> None:
+        expected = (
+            pre_sessions.c.consumed_session_id.is_(None)
+            if expected_consumed_session_id is None
+            else pre_sessions.c.consumed_session_id == str(expected_consumed_session_id)
+        )
+        result = _execute(
+            self._session,
+            sa.update(pre_sessions)
+            .where(
+                pre_sessions.c.pre_session_id == str(pre_session.pre_session_id),
+                expected,
+            )
+            .values(
+                consumed_session_id=(
+                    None
+                    if pre_session.consumed_session_id is None
+                    else str(pre_session.consumed_session_id)
+                )
+            ),
+        )
+        if _rowcount(result) != 1:
+            raise StaleRevisionError("Pre-session was already consumed")
+
+    def add_session(self, session: DemoSession) -> None:
+        result = _execute(
+            self._session,
+            sqlite_insert(sessions).values(session_values(session)).on_conflict_do_nothing(),
+        )
+        if _rowcount(result) == 1:
+            return
+        if self.get_session(session.session_id) != session:
+            raise ValueError("session id, token, or namespace already exists")
+
+    def get_session(self, session_id: EntityId) -> DemoSession | None:
+        row = (
+            _execute(
+                self._session,
+                sa.select(sessions).where(sessions.c.session_id == str(session_id)),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        return None if row is None else session_from_row(row)
+
+    def get_session_by_fingerprint(self, token_fingerprint: str) -> DemoSession | None:
+        row = (
+            _execute(
+                self._session,
+                sa.select(sessions).where(sessions.c.token_fingerprint == token_fingerprint),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        return None if row is None else session_from_row(row)
+
+    def save_session(self, session: DemoSession, *, expected_consent_revision: int) -> None:
+        current = self.get_session(session.session_id)
+        if current is None or current.consent_revision != expected_consent_revision:
+            raise StaleRevisionError("Session consent revision is stale")
+        if (
+            current.user_id != session.user_id
+            or current.manual_namespace_id != session.manual_namespace_id
+            or current.roles != session.roles
+            or current.token_fingerprint != session.token_fingerprint
+            or current.created_at != session.created_at
+            or current.expires_at != session.expires_at
+        ):
+            raise ValueError("immutable session fields cannot be changed")
+        if session.consent_revision != expected_consent_revision + 1:
+            raise StaleRevisionError("Session consent revision must advance by one")
+        result = _execute(
+            self._session,
+            sa.update(sessions)
+            .where(
+                sessions.c.session_id == str(session.session_id),
+                sessions.c.consent_revision == expected_consent_revision,
+            )
+            .values(consent_revision=session.consent_revision),
+        )
+        if _rowcount(result) != 1:
+            raise StaleRevisionError("Session consent revision is stale")
+
+    def add_consent(self, consent: ConsentSnapshot) -> None:
+        result = _execute(
+            self._session,
+            sqlite_insert(consents).values(consent_values(consent)).on_conflict_do_nothing(),
+        )
+        if _rowcount(result) == 1:
+            return
+        if self.get_consent(consent.user_id, consent.scope) != consent:
+            raise ValueError("consent scope already exists with different data")
+
+    def get_consent(
+        self,
+        user_id: EntityId,
+        scope: ConsentScope,
+    ) -> ConsentSnapshot | None:
+        row = (
+            _execute(
+                self._session,
+                sa.select(consents).where(
+                    consents.c.user_id == str(user_id),
+                    consents.c.scope == scope.value,
+                ),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        return None if row is None else consent_from_row(row)
+
+    def list_consents(self, user_id: EntityId) -> tuple[ConsentSnapshot, ...]:
+        rows = _execute(
+            self._session,
+            sa.select(consents)
+            .where(consents.c.user_id == str(user_id))
+            .order_by(consents.c.scope),
+        ).mappings()
+        return tuple(consent_from_row(row) for row in rows)
+
+    def save_consent(self, consent: ConsentSnapshot, *, expected_revision: int) -> None:
+        result = _execute(
+            self._session,
+            sa.update(consents)
+            .where(
+                consents.c.user_id == str(consent.user_id),
+                consents.c.scope == consent.scope.value,
+                consents.c.revision == expected_revision,
+            )
+            .values(
+                status=consent.status.value,
+                revision=consent.revision,
+                changed_at=consent.changed_at,
+            ),
+        )
+        if _rowcount(result) != 1:
+            raise StaleRevisionError("Consent revision is stale")
 
 
 class SqlAlchemyAuditRepository:
