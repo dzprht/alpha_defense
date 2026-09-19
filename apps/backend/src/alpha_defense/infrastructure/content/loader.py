@@ -246,6 +246,12 @@ class LocalCatalogLoader:
                         "fixture kind does not match its directory",
                     )
                 payload = _object(document, "payload", resource)
+                if kind == "threat":
+                    self._validate_schema(
+                        payload,
+                        resource=f"{resource}.payload",
+                        schema_name="threat-record.v1.schema.json",
+                    )
                 payload_hash = _string(document, "payload_sha256", resource)
                 if _canonical_sha256(payload) != payload_hash:
                     raise CatalogValidationError(
@@ -297,6 +303,16 @@ class LocalCatalogLoader:
         resource = relative_path
         path = _safe_file(root, relative_path, resource)
         document = _read_json_object(path, resource)
+        self._validate_schema(document, resource=resource, schema_name=schema_name)
+        return document
+
+    def _validate_schema(
+        self,
+        document: Mapping[str, JsonValue],
+        *,
+        resource: str,
+        schema_name: str,
+    ) -> None:
         schema_path = _safe_file(self._schema_root, schema_name, f"schemas/{schema_name}")
         schema = _read_json_object(schema_path, f"schemas/{schema_name}")
         try:
@@ -316,7 +332,6 @@ class LocalCatalogLoader:
                 resource,
                 f"value at {location} violates the schema",
             )
-        return document
 
 
 def _read_json_object(path: Path, resource: str) -> dict[str, JsonValue]:

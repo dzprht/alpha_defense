@@ -22,7 +22,7 @@
       "fixture_id": "s01-phishing-url",
       "fixture_version": "1.0.0",
       "path": "threats/s01-phishing-url.v1.json",
-      "sha256": "2962225eb2e3019fd96f0f7c1b46f07fde316ccb225655c8019b8d70cd708124"
+      "sha256": "e382dd8b28939f96c811724df2cc50d237061340cbcb74f24cc482404897727e"
     }
   ],
   "schema_version": "1.0"

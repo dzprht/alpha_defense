@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     media_root: Path
     session_secret: SecretStr
     policy_version: str = Field(min_length=1, max_length=64, pattern=r"^[a-z0-9][a-z0-9-]*$")
+    threat_feed_source: str = Field(
+        default="alpha-defense-synthetic",
+        min_length=3,
+        max_length=128,
+        pattern=r"^[a-z][a-z0-9.-]*$",
+    )
     analysis_deadline_ms: int = Field(default=3000, ge=100, le=30_000)
     call_proof_ttl_seconds: int = Field(default=300, ge=1, le=3600)
     transfer_check_ttl_seconds: int = Field(default=300, ge=1, le=3600)

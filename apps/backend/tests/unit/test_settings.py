@@ -31,6 +31,7 @@ def settings_values(tmp_path: Path, **overrides: object) -> dict[str, object]:
         "media_root": media_root,
         "session_secret": "test-session-secret-with-32-characters",
         "policy_version": "demo-risk-v1",
+        "threat_feed_source": "alpha-defense-synthetic",
         "trusted_support_contact": "900",
     }
     values.update(overrides)

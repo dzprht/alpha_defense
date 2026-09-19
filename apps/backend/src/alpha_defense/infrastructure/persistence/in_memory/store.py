@@ -20,6 +20,7 @@ from alpha_defense.domain.identity import (
     SyntheticUser,
 )
 from alpha_defense.domain.shared import EntityId
+from alpha_defense.domain.threats import RegistrySnapshot
 
 
 @dataclass(slots=True)
@@ -36,6 +37,9 @@ class InMemoryState:
     audit_events: dict[EntityId, AuditRecord] = field(default_factory=dict)
     outbox_messages: dict[EntityId, OutboxMessage] = field(default_factory=dict)
     outbox_events: dict[tuple[EntityId, str], EntityId] = field(default_factory=dict)
+    threat_snapshots: dict[EntityId, RegistrySnapshot] = field(default_factory=dict)
+    threat_snapshot_versions: dict[str, EntityId] = field(default_factory=dict)
+    current_threat_snapshot_id: EntityId | None = None
 
     def clone(self) -> InMemoryState:
         return deepcopy(self)

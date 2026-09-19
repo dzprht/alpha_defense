@@ -1,8 +1,9 @@
 # Локальная разработка
 
-Статус: проверено для P01–P07 2026-09-19. Здесь зафиксированы инструменты и команды;
+Статус: проверено для P01–P08 2026-09-19. Здесь зафиксированы инструменты и команды;
 backend HTTP-контур, synthetic demo-сессии, onboarding web-shell и валидатор обязательного
-каталога исполнимы.
+каталога исполнимы. Синтетический threat registry можно идемпотентно заполнить и обновить
+отдельной операторской командой.
 
 ## Проверенные инструменты
 
@@ -37,8 +38,8 @@ UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv sync --fr
 
 ```bash
 uv lock --check
-UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen ruff check src tests migrations
-UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen ruff format --check src tests migrations
+UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen ruff check src tests migrations ../../scripts/*.py
+UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen ruff format --check src tests migrations ../../scripts/*.py
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen mypy
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen lint-imports --config pyproject.toml
 ```
@@ -61,8 +62,8 @@ UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --fro
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen alembic current
 ```
 
-Проверка upgrade/downgrade, отсутствия drift, сохранения audit/outbox после restart и
-восстановления истекшего lease входит в интеграционный набор:
+Проверка upgrade/downgrade, отсутствия drift, сохранения audit/outbox и threat snapshot после
+restart, а также восстановления истекшего lease входит в интеграционный набор:
 
 ```bash
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen pytest tests/integration/test_sqlite_persistence.py
@@ -112,6 +113,21 @@ curl -i http://127.0.0.1:8000/api/v1/health/ready
 запрос отвечает 200. Поврежденный JSON, неизвестная версия, неверный hash или небезопасная
 ссылка дают 503 в формате `application/problem+json`; внутренний путь и причина наружу не
 выводятся.
+
+### Синтетический реестр угроз
+
+После применения миграций и загрузки `.env` первая команда создает текущий снимок из
+валидированных fixtures. Повтор с той же версией не создает дубликат; `published=false`
+показывает идемпотентный повтор:
+
+```bash
+UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen python ../../scripts/refresh_threat_registry.py refresh
+UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen python ../../scripts/refresh_threat_registry.py status
+```
+
+Плохой пакет не переключает текущую версию. Статус `unavailable` или `expired` нельзя
+трактовать как отсутствие угрозы. Команда использует только локальный synthetic feed; она не
+вызывает МВД/РКН, банковские или коммерческие API и не публикует административный HTTP-route.
 
 ### Проверка demo-сессии и согласий
 

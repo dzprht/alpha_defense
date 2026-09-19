@@ -39,6 +39,15 @@ from alpha_defense.application.ports.repositories import (
     RepositoryPort,
 )
 from alpha_defense.application.ports.runtime import Clock, IdGenerator
+from alpha_defense.application.ports.threat_intel import (
+    ThreatBatch,
+    ThreatFeedPort,
+    ThreatFeedRecord,
+    ThreatFeedUnavailableError,
+    ThreatRegistryRepositoryPort,
+    ThreatUnitOfWorkFactory,
+    ThreatUnitOfWorkPort,
+)
 from alpha_defense.application.ports.unit_of_work import UnitOfWorkFactory, UnitOfWorkPort
 
 __all__ = [
@@ -72,6 +81,13 @@ __all__ = [
     "RepositoryPort",
     "RiskThresholds",
     "SignalPolicy",
+    "ThreatBatch",
+    "ThreatFeedPort",
+    "ThreatFeedRecord",
+    "ThreatFeedUnavailableError",
+    "ThreatRegistryRepositoryPort",
+    "ThreatUnitOfWorkFactory",
+    "ThreatUnitOfWorkPort",
     "TrustedEntitiesSnapshot",
     "TrustedEntity",
     "UnitOfWorkFactory",

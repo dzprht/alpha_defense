@@ -17,6 +17,11 @@ from alpha_defense.application.ports import (
     ReadinessPort,
     UnitOfWorkFactory,
 )
+from alpha_defense.application.threats import (
+    GetThreatRegistryStatus,
+    LookupThreatIndicators,
+    RefreshThreatRegistry,
+)
 from alpha_defense.bootstrap.settings import Settings
 from alpha_defense.domain.shared import ExecutionMode
 from alpha_defense.infrastructure.content import LocalCatalogLoader
@@ -30,6 +35,7 @@ from alpha_defense.infrastructure.persistence.sqlalchemy import (
     create_sqlite_engine,
 )
 from alpha_defense.infrastructure.runtime import SystemClock, UuidGenerator
+from alpha_defense.infrastructure.threat_intel import FixtureThreatFeed
 
 
 class ConfigurationError(RuntimeError):
@@ -46,6 +52,9 @@ class Container:
     readiness: ReadinessPort
     catalog: CatalogLoaderPort
     identity_service: IdentityServicePort
+    lookup_threats: LookupThreatIndicators
+    refresh_threat_registry: RefreshThreatRegistry
+    threat_registry_status: GetThreatRegistryStatus
 
     def close(self) -> None:
         self.engine.dispose()
@@ -79,6 +88,7 @@ def build_container(settings: Settings) -> Container:
         fixture_root=settings.fixture_root,
         policy_version=settings.policy_version,
     )
+    threat_feed = FixtureThreatFeed(catalog)
     identity_service = IdentityService(
         unit_of_work=factory,
         clock=clock,
@@ -96,6 +106,19 @@ def build_container(settings: Settings) -> Container:
         readiness=LocalReadinessChecker(engine, catalog),
         catalog=catalog,
         identity_service=identity_service,
+        lookup_threats=LookupThreatIndicators(unit_of_work=factory, clock=clock),
+        refresh_threat_registry=RefreshThreatRegistry(
+            source=settings.threat_feed_source,
+            feed=threat_feed,
+            unit_of_work=factory,
+            clock=clock,
+            id_generator=id_generator,
+            execution_mode=settings.execution_mode,
+        ),
+        threat_registry_status=GetThreatRegistryStatus(
+            unit_of_work=factory,
+            clock=clock,
+        ),
     )
 
 

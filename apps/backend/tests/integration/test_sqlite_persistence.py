@@ -59,8 +59,14 @@ def test_migration_creates_only_technical_tables(tmp_path: Path) -> None:
         "outbox",
         "pre_sessions",
         "sessions",
+        "threat_records",
+        "threat_registry_state",
+        "threat_snapshots",
         "users",
     }
+    assert {
+        index["name"] for index in sa.inspect(current_engine).get_indexes("threat_records")
+    } == {"ix_threat_records_lookup"}
     current_engine.dispose()
 
 

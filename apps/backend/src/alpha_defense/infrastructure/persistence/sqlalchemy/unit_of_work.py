@@ -15,6 +15,9 @@ from alpha_defense.infrastructure.persistence.sqlalchemy.repositories import (
     SqlAlchemyIdentityRepository,
     SqlAlchemyOutboxRepository,
 )
+from alpha_defense.infrastructure.persistence.sqlalchemy.threat_registry import (
+    SqlAlchemyThreatRegistryRepository,
+)
 
 
 class SqlAlchemyUnitOfWork:
@@ -29,6 +32,7 @@ class SqlAlchemyUnitOfWork:
         self._identity: SqlAlchemyIdentityRepository | None = None
         self._audit: SqlAlchemyAuditRepository | None = None
         self._outbox: SqlAlchemyOutboxRepository | None = None
+        self._threat_registry: SqlAlchemyThreatRegistryRepository | None = None
 
     @property
     def idempotency(self) -> SqlAlchemyIdempotencyRepository:
@@ -54,6 +58,12 @@ class SqlAlchemyUnitOfWork:
             raise RuntimeError("UnitOfWork is not active")
         return self._outbox
 
+    @property
+    def threat_registry(self) -> SqlAlchemyThreatRegistryRepository:
+        if self._threat_registry is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._threat_registry
+
     def begin(self) -> None:
         if self._active:
             raise RuntimeError("UnitOfWork is already active")
@@ -63,6 +73,7 @@ class SqlAlchemyUnitOfWork:
         self._identity = SqlAlchemyIdentityRepository(self._session)
         self._audit = SqlAlchemyAuditRepository(self._session)
         self._outbox = SqlAlchemyOutboxRepository(self._session)
+        self._threat_registry = SqlAlchemyThreatRegistryRepository(self._session)
         self._active = True
         self._finished = False
 

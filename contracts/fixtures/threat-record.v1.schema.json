@@ -1,0 +1,91 @@
+{
+  "$id": "https://alpha-defense.test/schemas/threat-record.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "evidence_ref": {
+      "maxLength": 512,
+      "pattern": "^synthetic://[a-z0-9._/-]+$",
+      "type": "string"
+    },
+    "expires_at": {
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "type": "string"
+    },
+    "feed_valid_until": {
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "type": "string"
+    },
+    "first_seen_at": {
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "type": "string"
+    },
+    "indicator_type": {
+      "enum": [
+        "phone",
+        "domain",
+        "url",
+        "wallet",
+        "account_token",
+        "ip",
+        "pattern_id"
+      ],
+      "type": "string"
+    },
+    "normalization_version": {
+      "const": "indicator-v1",
+      "type": "string"
+    },
+    "normalized_value": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "type": "string"
+    },
+    "observed_at": {
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "type": "string"
+    },
+    "source": {
+      "pattern": "^[a-z][a-z0-9.-]{2,127}$",
+      "type": "string"
+    },
+    "source_record_id": {
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$",
+      "type": "string"
+    },
+    "source_version": {
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "unverified",
+        "active",
+        "revoked",
+        "expired"
+      ],
+      "type": "string"
+    },
+    "verification_source": {
+      "pattern": "^[a-z][a-z0-9_.-]{2,127}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source",
+    "source_version",
+    "source_record_id",
+    "indicator_type",
+    "normalized_value",
+    "normalization_version",
+    "status",
+    "first_seen_at",
+    "observed_at",
+    "expires_at",
+    "feed_valid_until",
+    "evidence_ref",
+    "verification_source"
+  ],
+  "title": "Alpha Defense threat record fixture payload",
+  "type": "object"
+}

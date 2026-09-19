@@ -782,7 +782,7 @@ Mock и live подчиняются одним contract tests, включая о
 
 ## 11. Конфигурация и безопасность границ
 
-Будущие settings: `APP_ENV=local|test|production`, `EXECUTION_MODE=mock|live`, `DATABASE_URL`, `SCHEMA_ROOT`, `CONTENT_ROOT`, `FIXTURE_ROOT`, `MEDIA_ROOT`, `SESSION_SECRET`, `POLICY_VERSION`, `ANALYSIS_DEADLINE_MS`, `CALL_PROOF_TTL_SECONDS`, `TRANSFER_CHECK_TTL_SECONDS`, `CORRELATION_WINDOW_SECONDS`, `RESEARCH_ENABLED`, `TRUSTED_SUPPORT_CONTACT`. Пути проверяются при старте; пустой секрет недопустим вне тестов; никаких секретов в fixture или frontend bundle.
+Будущие settings: `APP_ENV=local|test|production`, `EXECUTION_MODE=mock|live`, `DATABASE_URL`, `SCHEMA_ROOT`, `CONTENT_ROOT`, `FIXTURE_ROOT`, `MEDIA_ROOT`, `SESSION_SECRET`, `POLICY_VERSION`, `THREAT_FEED_SOURCE`, `ANALYSIS_DEADLINE_MS`, `CALL_PROOF_TTL_SECONDS`, `TRANSFER_CHECK_TTL_SECONDS`, `CORRELATION_WINDOW_SECONDS`, `RESEARCH_ENABLED`, `TRUSTED_SUPPORT_CONTACT`. Пути проверяются при старте; пустой секрет недопустим вне тестов; никаких секретов в fixture или frontend bundle.
 
 На каждое внешнее направление нужен отдельный capability/configuration: история операций, submit, hold, cancel, call attestation, threat feed, resource report/restrict, операторские уведомления. Один флаг «Alfa API подключен» не разрешает все действия. Все реальные capability по умолчанию выключены до реализации/проверки адаптера.
 
@@ -948,9 +948,10 @@ SQLite JSON хранит структурированные signals/provider met
 
 ## 18. Порядок будущей реализации
 
-Сейчас завершены P01–P07: воспроизводимая среда, общие контракты и границы слоев,
+Сейчас завершены P01–P08: воспроизводимая среда, общие контракты и границы слоев,
 техническое хранение, bootstrap, HTTP-контур, synthetic demo-сессии, onboarding web-shell и
-валидируемый версионированный каталог первого сценария.
+валидируемый версионированный каталог первого сценария. Реестр угроз нормализует typed
+indicators и атомарно публикует immutable snapshots из синтетического файлового feed.
 Точный прогресс, evidence и следующая доступная задача хранятся в IMPLEMENTATION_PLAN;
 архитектурная таблица ниже задает этапы, а не заменяет этот журнал.
 
@@ -1009,7 +1010,7 @@ SQLite JSON хранит структурированные signals/provider met
 
 ## 19. Состояние этой поставки
 
-Завершены P01–P07. Зафиксированы manifests/lock-файлы и проверки Python/Node; реализованы
+Завершены P01–P08. Зафиксированы manifests/lock-файлы и проверки Python/Node; реализованы
 общие domain/application-типы и исполнимые правила импортов; созданы in-memory и SQLite UoW,
 технические idempotency/audit/outbox, Alembic-миграции и проверки восстановления.
 Bootstrap валидирует конфигурацию и миграцию до старта, собирает только mock-режим и публикует
@@ -1023,8 +1024,14 @@ JSON Schema, безопасный локальный loader и CLI провер�
 политики, trusted entities и минимального synthetic-набора S01. Эти данные отображаются в
 plain application snapshots; domain не читает файлы. Readiness становится зеленой только
 при одновременно актуальной БД и полностью валидном обязательном каталоге.
+Файловый threat feed проходит дополнительную payload-схему и domain-нормализацию. Только
+полностью валидный пакет получает новый immutable RegistrySnapshot; записи и указатель
+текущего снимка переключаются одной локальной транзакцией. Lookup учитывает только active и
+непросроченные exact matches, а no match не смешивается с отсутствующим или просроченным
+реестром. Повтор исходной версии идемпотентен, смена версии видна в lookup/status и audit.
 
-Alfa ID, аттестация звонка, анализ риска, остальные web-экраны, полный scenario runner,
-модели, исследование и презентация пока не реализованы. Наличие S01-fixtures не означает,
-что сценарий уже исполняется. Остальные перечисленные контракты и файлы — спецификация
-следующих этапов, а не отчет о готовом коде.
+Публичного API управления blacklist и интеграций с реальными threat providers нет. Alfa ID,
+аттестация звонка, прием коммуникаций, анализ риска, остальные web-экраны, полный scenario
+runner, модели, исследование и презентация пока не реализованы. Наличие S01-fixtures и match
+не означает, что сценарий уже исполняется. Остальные перечисленные контракты и файлы —
+спецификация следующих этапов, а не отчет о готовом коде.

@@ -163,3 +163,80 @@ outbox = sa.Table(
 )
 
 sa.Index("ix_outbox_dispatch", outbox.c.state, outbox.c.next_attempt_at, outbox.c.created_at)
+
+threat_snapshots = sa.Table(
+    "threat_snapshots",
+    metadata,
+    sa.Column("snapshot_id", sa.String(36), primary_key=True),
+    sa.Column("version", sa.String(128), nullable=False, unique=True),
+    sa.Column("source_versions_json", sa.Text(), nullable=False),
+    sa.Column("published_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("valid_until", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("record_count", sa.Integer(), nullable=False),
+    sa.Column("content_sha256", sa.String(64), nullable=False),
+    sa.CheckConstraint("record_count >= 0", name="record_count_non_negative"),
+    sa.CheckConstraint("valid_until > published_at", name="valid_until_after_publication"),
+)
+
+threat_records = sa.Table(
+    "threat_records",
+    metadata,
+    sa.Column(
+        "snapshot_id",
+        sa.String(36),
+        sa.ForeignKey("threat_snapshots.snapshot_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    sa.Column("source", sa.String(128), primary_key=True),
+    sa.Column("source_record_id", sa.String(128), primary_key=True),
+    sa.Column("indicator_type", sa.String(32), nullable=False),
+    sa.Column("normalized_value", sa.String(2048), nullable=False),
+    sa.Column("normalization_version", sa.String(64), nullable=False),
+    sa.Column("status", sa.String(16), nullable=False),
+    sa.Column("first_seen_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("observed_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("evidence_ref", sa.String(512), nullable=False),
+    sa.Column("verification_source", sa.String(128), nullable=False),
+    sa.UniqueConstraint(
+        "snapshot_id",
+        "source",
+        "indicator_type",
+        "normalized_value",
+        name="uq_threat_records_snapshot_source_indicator",
+    ),
+    sa.CheckConstraint(
+        "indicator_type IN ('phone', 'domain', 'url', 'wallet', "
+        "'account_token', 'ip', 'pattern_id')",
+        name="indicator_type_valid",
+    ),
+    sa.CheckConstraint(
+        "status IN ('unverified', 'active', 'revoked', 'expired')",
+        name="status_valid",
+    ),
+    sa.CheckConstraint("expires_at > first_seen_at", name="expiry_after_first_seen"),
+)
+
+sa.Index(
+    "ix_threat_records_lookup",
+    threat_records.c.snapshot_id,
+    threat_records.c.indicator_type,
+    threat_records.c.normalized_value,
+    threat_records.c.status,
+)
+
+threat_registry_state = sa.Table(
+    "threat_registry_state",
+    metadata,
+    sa.Column("state_key", sa.String(16), primary_key=True),
+    sa.Column(
+        "current_snapshot_id",
+        sa.String(36),
+        sa.ForeignKey("threat_snapshots.snapshot_id"),
+        nullable=False,
+        unique=True,
+    ),
+    sa.Column("revision", sa.Integer(), nullable=False),
+    sa.CheckConstraint("state_key = 'current'", name="state_key_current"),
+    sa.CheckConstraint("revision >= 0", name="revision_non_negative"),
+)

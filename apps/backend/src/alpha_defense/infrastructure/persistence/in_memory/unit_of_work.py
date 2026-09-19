@@ -11,6 +11,9 @@ from alpha_defense.infrastructure.persistence.in_memory.repositories import (
     InMemoryOutboxRepository,
 )
 from alpha_defense.infrastructure.persistence.in_memory.store import InMemoryDatabase, InMemoryState
+from alpha_defense.infrastructure.persistence.in_memory.threat_registry import (
+    InMemoryThreatRegistryRepository,
+)
 
 
 class InMemoryUnitOfWork:
@@ -23,6 +26,7 @@ class InMemoryUnitOfWork:
         self._identity: InMemoryIdentityRepository | None = None
         self._audit: InMemoryAuditRepository | None = None
         self._outbox: InMemoryOutboxRepository | None = None
+        self._threat_registry: InMemoryThreatRegistryRepository | None = None
 
     @property
     def idempotency(self) -> InMemoryIdempotencyRepository:
@@ -48,6 +52,12 @@ class InMemoryUnitOfWork:
             raise RuntimeError("UnitOfWork is not active")
         return self._outbox
 
+    @property
+    def threat_registry(self) -> InMemoryThreatRegistryRepository:
+        if self._threat_registry is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._threat_registry
+
     def begin(self) -> None:
         if self._active:
             raise RuntimeError("UnitOfWork is already active")
@@ -57,6 +67,7 @@ class InMemoryUnitOfWork:
         self._identity = InMemoryIdentityRepository(self._state)
         self._audit = InMemoryAuditRepository(self._state)
         self._outbox = InMemoryOutboxRepository(self._state)
+        self._threat_registry = InMemoryThreatRegistryRepository(self._state)
         self._active = True
         self._finished = False
 
