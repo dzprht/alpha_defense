@@ -782,7 +782,7 @@ Mock и live подчиняются одним contract tests, включая о
 
 ## 11. Конфигурация и безопасность границ
 
-Будущие settings: `APP_ENV=local|test|production`, `EXECUTION_MODE=mock|live`, `DATABASE_URL`, `CONTENT_ROOT`, `FIXTURE_ROOT`, `MEDIA_ROOT`, `SESSION_SECRET`, `POLICY_VERSION`, `ANALYSIS_DEADLINE_MS`, `CALL_PROOF_TTL_SECONDS`, `TRANSFER_CHECK_TTL_SECONDS`, `CORRELATION_WINDOW_SECONDS`, `RESEARCH_ENABLED`, `TRUSTED_SUPPORT_CONTACT`. Пути проверяются при старте; пустой секрет недопустим вне тестов; никаких секретов в fixture или frontend bundle.
+Будущие settings: `APP_ENV=local|test|production`, `EXECUTION_MODE=mock|live`, `DATABASE_URL`, `SCHEMA_ROOT`, `CONTENT_ROOT`, `FIXTURE_ROOT`, `MEDIA_ROOT`, `SESSION_SECRET`, `POLICY_VERSION`, `ANALYSIS_DEADLINE_MS`, `CALL_PROOF_TTL_SECONDS`, `TRANSFER_CHECK_TTL_SECONDS`, `CORRELATION_WINDOW_SECONDS`, `RESEARCH_ENABLED`, `TRUSTED_SUPPORT_CONTACT`. Пути проверяются при старте; пустой секрет недопустим вне тестов; никаких секретов в fixture или frontend bundle.
 
 На каждое внешнее направление нужен отдельный capability/configuration: история операций, submit, hold, cancel, call attestation, threat feed, resource report/restrict, операторские уведомления. Один флаг «Alfa API подключен» не разрешает все действия. Все реальные capability по умолчанию выключены до реализации/проверки адаптера.
 
@@ -948,8 +948,9 @@ SQLite JSON хранит структурированные signals/provider met
 
 ## 18. Порядок будущей реализации
 
-Сейчас завершены P01–P06: воспроизводимая среда, общие контракты и границы слоев,
-техническое хранение, bootstrap, HTTP-контур, synthetic demo-сессии и onboarding web-shell.
+Сейчас завершены P01–P07: воспроизводимая среда, общие контракты и границы слоев,
+техническое хранение, bootstrap, HTTP-контур, synthetic demo-сессии, onboarding web-shell и
+валидируемый версионированный каталог первого сценария.
 Точный прогресс, evidence и следующая доступная задача хранятся в IMPLEMENTATION_PLAN;
 архитектурная таблица ниже задает этапы, а не заменяет этот журнал.
 
@@ -1008,7 +1009,7 @@ SQLite JSON хранит структурированные signals/provider met
 
 ## 19. Состояние этой поставки
 
-Завершены P01–P06. Зафиксированы manifests/lock-файлы и проверки Python/Node; реализованы
+Завершены P01–P07. Зафиксированы manifests/lock-файлы и проверки Python/Node; реализованы
 общие domain/application-типы и исполнимые правила импортов; созданы in-memory и SQLite UoW,
 технические idempotency/audit/outbox, Alembic-миграции и проверки восстановления.
 Bootstrap валидирует конфигурацию и миграцию до старта, собирает только mock-режим и публикует
@@ -1018,9 +1019,12 @@ manual namespace и роли формирует backend; команды имею
 предел тела. OpenAPI экспортируется детерминированно, из него сгенерированы frontend-типы.
 Web-shell использует эти типы, восстанавливает session-cookie через backend и позволяет
 создавать synthetic-сессию и менять независимые согласия, не принимая решений о риске.
+JSON Schema, безопасный локальный loader и CLI проверяют версии, hash, enums и ссылки
+политики, trusted entities и минимального synthetic-набора S01. Эти данные отображаются в
+plain application snapshots; domain не читает файлы. Readiness становится зеленой только
+при одновременно актуальной БД и полностью валидном обязательном каталоге.
 
-Readiness сейчас ожидаемо отклоняется из-за отсутствия обязательной политики: P04 проверяет
-ее наличие, а P07 добавит схему, безопасную загрузку и валидированное содержимое. Alfa ID,
-аттестация звонка, анализ риска, остальные web-экраны, fixture-сценарии, модели,
-исследование и презентация пока не реализованы. Остальные перечисленные контракты и файлы —
-спецификация следующих этапов, а не отчет о готовом коде.
+Alfa ID, аттестация звонка, анализ риска, остальные web-экраны, полный scenario runner,
+модели, исследование и презентация пока не реализованы. Наличие S01-fixtures не означает,
+что сценарий уже исполняется. Остальные перечисленные контракты и файлы — спецификация
+следующих этапов, а не отчет о готовом коде.

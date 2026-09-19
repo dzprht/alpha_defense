@@ -144,6 +144,31 @@ def test_current_backend_tree_respects_import_boundaries() -> None:
     )
 
 
+def test_domain_does_not_use_file_system_apis() -> None:
+    violations: list[str] = []
+    domain_root = SOURCE_ROOT / "alpha_defense" / "domain"
+    for path in sorted(domain_root.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                if any(
+                    alias.name.partition(".")[0] in {"glob", "pathlib", "shutil"}
+                    for alias in node.names
+                ):
+                    violations.append(f"{path}:{node.lineno}: file-system import")
+            elif isinstance(node, ast.ImportFrom):
+                if (node.module or "").partition(".")[0] in {"glob", "pathlib", "shutil"}:
+                    violations.append(f"{path}:{node.lineno}: file-system import")
+            elif (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "open"
+            ):
+                violations.append(f"{path}:{node.lineno}: open call")
+
+    assert violations == []
+
+
 def test_forbidden_dependency_is_detected_and_removed(tmp_path: Path) -> None:
     probe = tmp_path / "alpha_defense" / "domain" / "shared" / "probe.py"
     probe.parent.mkdir(parents=True)

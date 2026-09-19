@@ -1,0 +1,29 @@
+{
+  "fixture_id": "s01-card-block-sms",
+  "fixture_version": "1.0.0",
+  "kind": "communication",
+  "locale": "ru-RU",
+  "payload": {
+    "channel": "sms",
+    "indicators": [
+      {
+        "type": "url",
+        "value": "https://alfa-secure-check.test/card"
+      }
+    ],
+    "occurred_at": "2026-09-19T09:00:00Z",
+    "sender_display": "ALFA-DEMO",
+    "source_event_id": "s01-sms-001",
+    "text": "Ваша карта заблокирована. Срочно подтвердите данные по ссылке: https://alfa-secure-check.test/card"
+  },
+  "payload_sha256": "c2d9bbd970cfef0ac5bd64aae4436f8097ffd0f13e4fdc5fb61b7dd398e32403",
+  "refs": [
+    {
+      "fixture_id": "s01-phishing-url",
+      "fixture_version": "1.0.0",
+      "path": "threats/s01-phishing-url.v1.json",
+      "sha256": "2962225eb2e3019fd96f0f7c1b46f07fde316ccb225655c8019b8d70cd708124"
+    }
+  ],
+  "schema_version": "1.0"
+}

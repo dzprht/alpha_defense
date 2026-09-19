@@ -1,0 +1,27 @@
+{
+  "catalog_version": "demo-trusted-entities-v1",
+  "content_sha256": "7f597c547bedbd42adb1b57aab994234229c9e6ef4904c2f0987e602ea5f297a",
+  "entities": [
+    {
+      "code": "alfa_brand",
+      "kind": "brand",
+      "status": "trusted",
+      "value": "Альфа-Банк"
+    },
+    {
+      "code": "alfa_domain",
+      "kind": "domain",
+      "status": "trusted",
+      "value": "alfabank.ru"
+    },
+    {
+      "code": "alfa_support",
+      "kind": "support_contact",
+      "status": "trusted",
+      "value": "900"
+    }
+  ],
+  "reviewed_at": "2026-09-19T00:00:00Z",
+  "schema_version": "1.0",
+  "source": "alpha-defense-synthetic"
+}

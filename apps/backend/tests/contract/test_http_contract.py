@@ -11,6 +11,7 @@ from alpha_defense.transport.http.v1.schemas import (
     ConsentResponse,
     LivenessResponse,
     ProblemDetails,
+    ReadinessResponse,
     SessionResponse,
 )
 
@@ -22,6 +23,9 @@ def test_committed_examples_match_public_schemas() -> None:
 
     live = LivenessResponse.model_validate_json(
         (examples / "health-live.v1.json").read_text(encoding="utf-8")
+    )
+    ready = ReadinessResponse.model_validate_json(
+        (examples / "health-ready.v1.json").read_text(encoding="utf-8")
     )
     unavailable = ProblemDetails.model_validate_json(
         (examples / "health-ready-unavailable.v1.json").read_text(encoding="utf-8")
@@ -37,6 +41,7 @@ def test_committed_examples_match_public_schemas() -> None:
     )
 
     assert live.status == "alive"
+    assert tuple(check.name for check in ready.checks) == ("database", "catalog")
     assert unavailable.status == 503
     assert unavailable.retryable
     assert anonymous.status == "anonymous"

@@ -1,0 +1,77 @@
+{
+  "$id": "https://alpha-defense.test/schemas/trusted-entities.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "catalog_version": {
+      "pattern": "^[a-z0-9][a-z0-9-]{2,63}$",
+      "type": "string"
+    },
+    "content_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "entities": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "pattern": "^[a-z][a-z0-9_]{2,63}$",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "brand",
+              "domain",
+              "support_contact"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "trusted",
+              "revoked"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "kind",
+          "value",
+          "status"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "reviewed_at": {
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "source": {
+      "const": "alpha-defense-synthetic",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "catalog_version",
+    "source",
+    "reviewed_at",
+    "entities",
+    "content_sha256"
+  ],
+  "title": "Alpha Defense trusted entities catalog",
+  "type": "object"
+}

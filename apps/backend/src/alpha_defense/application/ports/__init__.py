@@ -1,5 +1,16 @@
 """Interfaces implemented by runtime and infrastructure adapters."""
 
+from alpha_defense.application.ports.content import (
+    CatalogLoaderPort,
+    CatalogSnapshot,
+    FixtureEnvelope,
+    FixtureReference,
+    PolicySnapshot,
+    RiskThresholds,
+    SignalPolicy,
+    TrustedEntitiesSnapshot,
+    TrustedEntity,
+)
 from alpha_defense.application.ports.events import (
     AuditPort,
     AuditReceipt,
@@ -35,10 +46,14 @@ __all__ = [
     "AuditReceipt",
     "AuditRecord",
     "AuditRepositoryPort",
+    "CatalogLoaderPort",
+    "CatalogSnapshot",
     "Clock",
     "EventEnvelope",
     "EventHandler",
     "EventSinkPort",
+    "FixtureEnvelope",
+    "FixtureReference",
     "IdGenerator",
     "IdempotencyRecord",
     "IdempotencyRepositoryPort",
@@ -50,10 +65,15 @@ __all__ = [
     "OutboxReceipt",
     "OutboxRepositoryPort",
     "OutboxState",
+    "PolicySnapshot",
     "ReadinessCheck",
     "ReadinessPort",
     "ReadinessReport",
     "RepositoryPort",
+    "RiskThresholds",
+    "SignalPolicy",
+    "TrustedEntitiesSnapshot",
+    "TrustedEntity",
     "UnitOfWorkFactory",
     "UnitOfWorkPort",
 ]

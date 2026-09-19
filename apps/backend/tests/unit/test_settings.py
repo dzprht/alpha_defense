@@ -15,15 +15,17 @@ from alpha_defense.transport.http.v1.guards import require_csrf, require_idempot
 
 
 def settings_values(tmp_path: Path, **overrides: object) -> dict[str, object]:
+    schema_root = tmp_path / "schemas"
     content_root = tmp_path / "content"
     fixture_root = tmp_path / "fixtures"
     media_root = tmp_path / "media"
-    for path in (content_root, fixture_root, media_root):
+    for path in (schema_root, content_root, fixture_root, media_root):
         path.mkdir(exist_ok=True)
     values: dict[str, object] = {
         "app_env": "test",
         "execution_mode": "mock",
         "database_url": f"sqlite:///{tmp_path / 'app.db'}",
+        "schema_root": schema_root,
         "content_root": content_root,
         "fixture_root": fixture_root,
         "media_root": media_root,
@@ -50,7 +52,7 @@ def test_settings_load_architecture_environment_names(
 
     assert settings.app_env.value == "test"
     assert settings.execution_mode.value == "mock"
-    assert settings.policy_file.name == "demo-risk-v1.json"
+    assert settings.schema_root == tmp_path / "schemas"
     assert settings.cors_origins == ("http://localhost:5173",)
 
 

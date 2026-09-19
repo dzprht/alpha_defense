@@ -1,0 +1,85 @@
+{
+  "content_sha256": "2d274f265588500c9cfc508118c4aa113c22ba08e891cd1feb1925bbe2797907",
+  "deduplication_key": "code+evidence_ref",
+  "max_score": 100,
+  "modifiers": {
+    "linked_contact": 20,
+    "urgency_with_other_signal": 10
+  },
+  "policy_version": "demo-risk-v1",
+  "schema_version": "1.0",
+  "score_kind": "heuristic",
+  "signals": [
+    {
+      "base_score": 15,
+      "code": "urgency_or_secrecy",
+      "group": "social_engineering"
+    },
+    {
+      "base_score": 30,
+      "code": "prize_fee_request",
+      "group": "payment_request"
+    },
+    {
+      "base_score": 30,
+      "code": "delivery_fee_request",
+      "group": "payment_request"
+    },
+    {
+      "base_score": 45,
+      "code": "relative_emergency_payment",
+      "group": "payment_request"
+    },
+    {
+      "base_score": 45,
+      "code": "lookalike_domain",
+      "group": "resource"
+    },
+    {
+      "base_score": 55,
+      "code": "credential_request",
+      "group": "credentials"
+    },
+    {
+      "base_score": 55,
+      "code": "visual_brand_imitation",
+      "group": "resource"
+    },
+    {
+      "base_score": 60,
+      "code": "safe_account_transfer",
+      "group": "payment_request"
+    },
+    {
+      "base_score": 85,
+      "code": "active_threat_match",
+      "group": "threat_intelligence"
+    },
+    {
+      "base_score": 15,
+      "code": "new_recipient",
+      "group": "behavior"
+    },
+    {
+      "base_score": 30,
+      "code": "known_recipient_amount_outlier",
+      "group": "behavior"
+    },
+    {
+      "base_score": 50,
+      "code": "new_recipient_amount_outlier",
+      "group": "behavior"
+    },
+    {
+      "base_score": 80,
+      "code": "active_fraud_network_link",
+      "group": "network"
+    }
+  ],
+  "thresholds": {
+    "critical_max": 100,
+    "high_max": 79,
+    "low_max": 24,
+    "medium_max": 49
+  }
+}

@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import sqlalchemy as sa
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
-from alpha_defense.application.ports import ReadinessCheck, ReadinessReport
+from alpha_defense.application.ports import (
+    CatalogLoaderPort,
+    ReadinessCheck,
+    ReadinessReport,
+)
 
 EXPECTED_SCHEMA_REVISION = "20260918_0002"
 
@@ -16,15 +18,15 @@ EXPECTED_SCHEMA_REVISION = "20260918_0002"
 class LocalReadinessChecker:
     """Report only stable check codes; never expose paths or driver errors."""
 
-    def __init__(self, engine: Engine, policy_file: Path) -> None:
+    def __init__(self, engine: Engine, catalog: CatalogLoaderPort) -> None:
         self._engine = engine
-        self._policy_file = policy_file
+        self._catalog = catalog
 
     def check(self) -> ReadinessReport:
         return ReadinessReport(
             checks=(
                 self._check_database(),
-                self._check_policy_catalog(),
+                self._check_catalog(),
             )
         )
 
@@ -41,10 +43,9 @@ class LocalReadinessChecker:
             return ReadinessCheck("database", False, "schema_outdated")
         return ReadinessCheck("database", True, "ready")
 
-    def _check_policy_catalog(self) -> ReadinessCheck:
+    def _check_catalog(self) -> ReadinessCheck:
         try:
-            available = self._policy_file.is_file()
-        except OSError:
-            available = False
-        code = "ready" if available else "catalog_unavailable"
-        return ReadinessCheck("policy_catalog", available, code)
+            self._catalog.load()
+        except (OSError, ValueError):
+            return ReadinessCheck("catalog", False, "catalog_unavailable")
+        return ReadinessCheck("catalog", True, "ready")

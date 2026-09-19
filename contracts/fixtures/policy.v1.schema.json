@@ -1,0 +1,145 @@
+{
+  "$id": "https://alpha-defense.test/schemas/policy.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "content_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "deduplication_key": {
+      "const": "code+evidence_ref",
+      "type": "string"
+    },
+    "max_score": {
+      "const": 100,
+      "type": "integer"
+    },
+    "modifiers": {
+      "additionalProperties": false,
+      "properties": {
+        "linked_contact": {
+          "maximum": 100,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "urgency_with_other_signal": {
+          "maximum": 100,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "linked_contact",
+        "urgency_with_other_signal"
+      ],
+      "type": "object"
+    },
+    "policy_version": {
+      "pattern": "^[a-z0-9][a-z0-9-]{2,63}$",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "type": "string"
+    },
+    "score_kind": {
+      "const": "heuristic",
+      "type": "string"
+    },
+    "signals": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "base_score": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "code": {
+            "enum": [
+              "urgency_or_secrecy",
+              "prize_fee_request",
+              "delivery_fee_request",
+              "relative_emergency_payment",
+              "lookalike_domain",
+              "credential_request",
+              "visual_brand_imitation",
+              "safe_account_transfer",
+              "active_threat_match",
+              "new_recipient",
+              "known_recipient_amount_outlier",
+              "new_recipient_amount_outlier",
+              "active_fraud_network_link"
+            ],
+            "type": "string"
+          },
+          "group": {
+            "enum": [
+              "behavior",
+              "credentials",
+              "network",
+              "payment_request",
+              "resource",
+              "social_engineering",
+              "threat_intelligence"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "group",
+          "base_score"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "thresholds": {
+      "additionalProperties": false,
+      "properties": {
+        "critical_max": {
+          "const": 100,
+          "type": "integer"
+        },
+        "high_max": {
+          "maximum": 99,
+          "minimum": 2,
+          "type": "integer"
+        },
+        "low_max": {
+          "maximum": 97,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "medium_max": {
+          "maximum": 98,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "low_max",
+        "medium_max",
+        "high_max",
+        "critical_max"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "policy_version",
+    "score_kind",
+    "thresholds",
+    "signals",
+    "modifiers",
+    "deduplication_key",
+    "max_score",
+    "content_sha256"
+  ],
+  "title": "Alpha Defense demo risk policy",
+  "type": "object"
+}

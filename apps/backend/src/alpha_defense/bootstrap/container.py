@@ -10,9 +10,16 @@ from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.exc import SQLAlchemyError
 
 from alpha_defense.application.identity import IdentityService, IdentityServicePort
-from alpha_defense.application.ports import Clock, IdGenerator, ReadinessPort, UnitOfWorkFactory
+from alpha_defense.application.ports import (
+    CatalogLoaderPort,
+    Clock,
+    IdGenerator,
+    ReadinessPort,
+    UnitOfWorkFactory,
+)
 from alpha_defense.bootstrap.settings import Settings
 from alpha_defense.domain.shared import ExecutionMode
+from alpha_defense.infrastructure.content import LocalCatalogLoader
 from alpha_defense.infrastructure.identity.mock import HmacSecurityTokens, SyntheticIdentityProvider
 from alpha_defense.infrastructure.observability import (
     EXPECTED_SCHEMA_REVISION,
@@ -37,6 +44,7 @@ class Container:
     clock: Clock
     id_generator: IdGenerator
     readiness: ReadinessPort
+    catalog: CatalogLoaderPort
     identity_service: IdentityServicePort
 
     def close(self) -> None:
@@ -48,6 +56,7 @@ def build_container(settings: Settings) -> Container:
 
     if settings.execution_mode is not ExecutionMode.MOCK:
         raise ConfigurationError("Live execution mode has no verified adapters")
+    _require_directory(settings.schema_root, "SCHEMA_ROOT")
     _require_directory(settings.content_root, "CONTENT_ROOT")
     _require_directory(settings.fixture_root, "FIXTURE_ROOT")
     _require_directory(settings.media_root, "MEDIA_ROOT")
@@ -64,6 +73,12 @@ def build_container(settings: Settings) -> Container:
     factory = SqlAlchemyUnitOfWorkFactory(engine)
     clock = SystemClock()
     id_generator = UuidGenerator()
+    catalog = LocalCatalogLoader(
+        schema_root=settings.schema_root,
+        content_root=settings.content_root,
+        fixture_root=settings.fixture_root,
+        policy_version=settings.policy_version,
+    )
     identity_service = IdentityService(
         unit_of_work=factory,
         clock=clock,
@@ -78,7 +93,8 @@ def build_container(settings: Settings) -> Container:
         unit_of_work=factory,
         clock=clock,
         id_generator=id_generator,
-        readiness=LocalReadinessChecker(engine, settings.policy_file),
+        readiness=LocalReadinessChecker(engine, catalog),
+        catalog=catalog,
         identity_service=identity_service,
     )
 

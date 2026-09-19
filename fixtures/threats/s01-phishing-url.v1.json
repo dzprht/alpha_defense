@@ -1,0 +1,20 @@
+{
+  "fixture_id": "s01-phishing-url",
+  "fixture_version": "1.0.0",
+  "kind": "threat",
+  "locale": "ru-RU",
+  "payload": {
+    "evidence_ref": "synthetic://threats/s01-phishing-url",
+    "expires_at": "2027-09-19T00:00:00Z",
+    "first_seen_at": "2026-09-01T00:00:00Z",
+    "indicator_type": "url",
+    "normalized_value": "https://alfa-secure-check.test/card",
+    "observed_at": "2026-09-19T00:00:00Z",
+    "source": "alpha-defense-synthetic",
+    "source_record_id": "s01-threat-001",
+    "status": "active"
+  },
+  "payload_sha256": "4a6fc034544ef45e9d9dcce71d1a232d50adc3d367621c25f0dc8633baab6ae2",
+  "refs": [],
+  "schema_version": "1.0"
+}

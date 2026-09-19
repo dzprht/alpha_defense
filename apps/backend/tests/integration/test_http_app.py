@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from alpha_defense.application.shared import ServiceUnavailableError
 from alpha_defense.bootstrap import ConfigurationError, build_container, create_app, create_http_app
+from tests.catalog_helpers import install_valid_catalog
 from tests.contract.test_uow_contract import migrate
 from tests.unit.test_settings import make_settings
 
@@ -62,6 +63,32 @@ def test_valid_bootstrap_serves_liveness_but_not_incomplete_readiness(
     rendered = ready.text
     assert str(database_path) not in rendered
     assert secret not in rendered
+
+
+def test_readiness_succeeds_with_migrated_database_and_valid_catalog(tmp_path: Path) -> None:
+    install_valid_catalog(tmp_path)
+    database_path = tmp_path / "app.db"
+    migrate(database_path)
+    settings = make_settings(tmp_path)
+    container = build_container(settings)
+    app = create_http_app(
+        readiness=container.readiness,
+        identity_service=container.identity_service,
+        max_request_body_bytes=settings.max_request_body_bytes,
+        cors_origins=settings.cors_origins,
+        allowed_hosts=settings.allowed_hosts,
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/api/v1/health/ready")
+    container.close()
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "ready"
+    assert response.json()["checks"] == [
+        {"name": "database", "status": "ready"},
+        {"name": "catalog", "status": "ready"},
+    ]
 
 
 def test_environment_factory_starts_with_valid_local_configuration(

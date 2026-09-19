@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     app_env: AppEnvironment
     execution_mode: ExecutionMode
     database_url: str = Field(min_length=1)
+    schema_root: Path
     content_root: Path
     fixture_root: Path
     media_root: Path
@@ -77,10 +78,6 @@ class Settings(BaseSettings):
     @property
     def allowed_hosts(self) -> tuple[str, ...]:
         return _split_csv(self.trusted_hosts)
-
-    @property
-    def policy_file(self) -> Path:
-        return self.content_root / "policies" / f"{self.policy_version}.json"
 
 
 def _split_csv(value: str) -> tuple[str, ...]:
