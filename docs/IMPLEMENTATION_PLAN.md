@@ -1549,8 +1549,9 @@ SQLite repositories, Alembic-миграция users/sessions/pre_sessions/consen
 `apps/backend/src/alpha_defense/transport/http/v1/{dependencies.py,routes/identity.py,
 schemas/identity.py}`, `apps/backend/migrations/versions/20260918_0002_identity_sessions.py`,
 identity unit/contract/integration tests, `contracts/{http,examples}/`, generated web API types,
-runbook, README, AGENTS, architecture, defense guide и этот чеклист. Commit `pending` будет
-отправлен в `origin/main`; точный hash будет внесен следующей документационной фиксацией.
+runbook, README, AGENTS, architecture, defense guide и этот чеклист. Commit `4bd2341`
+(«Реализовать demo-сессии и согласия») создан 2026-09-19; эта документационная фиксация
+добавляет его точный hash перед отправкой обоих commit в `origin/main`.
 
 **Проверки:**
 
