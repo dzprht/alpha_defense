@@ -1,6 +1,6 @@
 # Локальная разработка
 
-Статус: проверено для P01–P09 2026-09-20. Здесь зафиксированы инструменты и команды;
+Статус: проверено для P01–P10 2026-09-20. Здесь зафиксированы инструменты и команды;
 backend HTTP-контур, synthetic demo-сессии, onboarding web-shell и валидатор обязательного
 каталога исполнимы. Синтетический threat registry можно идемпотентно заполнить и обновить
 отдельной операторской командой.
@@ -62,8 +62,9 @@ UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --fro
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen alembic current
 ```
 
-Проверка upgrade/downgrade, отсутствия drift, сохранения audit/outbox, threat snapshot и observations после
-restart, а также восстановления истекшего lease входит в интеграционный набор:
+Проверка upgrade/downgrade, отсутствия drift, сохранения audit/outbox, threat snapshot,
+observations, incidents и pending-контекста после restart, а также восстановления истекшего
+lease входит в интеграционный набор:
 
 ```bash
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen pytest tests/integration/test_sqlite_persistence.py
@@ -136,6 +137,19 @@ raw-content, метаданных и нормализованных индика
 готовы, но отдельного операторского или публичного HTTP-входа для них нет: `POST /observations` будет открыт
 только в полном workflow. Текущая приемка выполняется через unit/contract/integration-тесты, которые
 запускаются общей backend-командой `pytest`.
+
+### Предварительные инциденты и свежесть контекста
+
+P10 добавляет внутреннюю приемную часть analyze-contact. Она одной транзакцией сохраняет
+наблюдение, создает или дополняет предварительный инцидент, повышает `ingress_risk_epoch` и
+оставляет принятое наблюдение в `analysis_pending`. Повтор того же source event не повышает
+epoch повторно. Корреляция использует явный conversation/call либо одинаковый нормализованный
+индикатор внутри namespace; одна близость времени контакты не объединяет.
+
+Публичного HTTP-route пока нет: финализация анализа и разрешение pending-состояния относятся к
+P11/P15. Поведение, rollback и восстановление SQLite после restart проверяются общей backend-
+командой `pytest`; отдельный интеграционный сценарий находится в
+`tests/integration/test_incidents.py`.
 
 ### Проверка demo-сессии и согласий
 

@@ -293,7 +293,7 @@ P-пункт — одна законченная способность или �
 
 ### P10. Создать инциденты, корреляцию и немедленную инвалидизацию контекста
 
-- [ ] Выполнено и проверено. **Статус:** todo. **Исполнитель:** —.
+- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
 
 **Зависимости:** [P09](#p09).
 
@@ -307,7 +307,7 @@ P-пункт — одна законченная способность или �
 
 **Приемка и качество:** Принятый контакт виден как pending до оценки и делает прежний контекст непригодным; rollback не оставляет разорванную пару observation/incident. Чужие namespace не связываются; history оценок не теряется; false_positive_reported не меняет платежный gate.
 
-**Запись выполнения:** —. После начала работ заменить на ссылку на запись [журнала](#work-log).
+**Запись выполнения:** [2026-09-20-P10-01](#log-2026-09-20-p10-01).
 
 <a id="p11"></a>
 
@@ -1864,3 +1864,74 @@ README, AGENTS, runbook, архитектурный status, defense guide и э�
 
 **Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P09; активных задач нет.
 P10 и P11 разблокированы; по порядку плана следующая P10.
+
+<a id="log-2026-09-20-p10-01"></a>
+
+#### 2026-09-20-P10-01
+
+**Задача/исполнитель:** P10, Codex.
+
+**Статус и дата:** done, 2026-09-20.
+
+**Проверенная версия архитектуры / существенные решения:** ARCHITECTURE.md v1.0 от
+2026-09-13, §4.4, §5.2, §6.2, §7.1, §7.3 и §14. Инцидент остается контейнером
+расследования, а не утверждением о мошенничестве. Прием observation, preliminary incident и
+namespace freshness выполняется одной транзакцией. Корреляция ограничена actor scope и
+требует conversation/call либо нормализованный индикатор; одна временная близость не является
+основанием. HTTP intake и финализация анализа не открыты до P15.
+
+**Что сделано:** Реализованы Incident с append-only ссылками на наблюдения, оценки и решения,
+context version, revision, timeline read model и переходы open/monitoring/resolved с повторным
+открытием по новому свидетельству. Предварительная корреляция детерминированно предпочитает
+conversation/call совпадению индикатора. Внутренний analyze-contact координирует P09 intake и
+прикрепление к инциденту через DTO без промежуточного commit. Каждый новый контакт повышает
+namespace ingress risk epoch и остается analysis pending; идемпотентный повтор не повышает
+epoch снова. Добавлены owner-scoped чтение, resolution с optimistic revision, in-memory/SQLite-
+репозитории, миграция и сборка через bootstrap.
+
+**Файлы и артефакты:** `domain/incidents/`, `application/incidents/`,
+`application/workflows/`, `application/ports/incidents.py`, persistence-адаптеры,
+`20260920_0005_incidents.py`, unit/contract/integration-тесты, README, AGENTS, runbook,
+архитектурный status, defense guide и этот чеклист. Реализация зафиксирована commit
+`91f0c5f` («Реализовать атомарный прием инцидентов P10»); эта документационная фиксация
+добавляет evidence перед отправкой обоих commit в `origin/main`.
+
+**Проверки:**
+
+- `uv lock --check`, `ruff check`, `ruff format --check`, `mypy`, cwd `apps/backend`,
+  2026-09-20: все exit 0; lock согласован, 146 Python-файлов отформатированы, strict-
+  типизация прошла для 143 source/test/migration файлов.
+- `pytest`, cwd `apps/backend`, 2026-09-20: exit 0, `152 passed`; два warning относятся к
+  deprecation в закрепленной связке FastAPI/Starlette TestClient. Общий contract-набор для
+  in-memory и SQLite проверил атомарный прием, идемпотентный повтор, pending/epoch, явную и
+  indicator-корреляцию, запрет time-only merge, изоляцию namespace, rollback, сохранение
+  assessment history, resolution, stale revision и owner guard. Интеграционный тест подтвердил
+  восстановление incident и pending-контекста после restart.
+- `lint-imports --config pyproject.toml`, cwd `apps/backend`, 2026-09-20: exit 0,
+  `4 kept, 0 broken`, 133 файла и 522 зависимости.
+- `python ../../scripts/validate_catalog.py`, cwd `apps/backend`, 2026-09-20: exit 0,
+  policy `demo-risk-v1`, 2 fixtures, итоговый catalog sha256
+  `e40373bc513fd1783465d217a828fb56c2392133be5a63e8a738b6303de89911`.
+- Два экспорта OpenAPI во временные файлы и `cmp` между ними и committed contract,
+  2026-09-20: все exit 0; HTTP-схема не изменилась. `uv build` создал sdist и wheel.
+- `npm run lint`, `npm run typecheck`, `npm test -- --run`, `npm run build`,
+  `npm run format:check`, `npm audit --audit-level=high`, cwd `apps/web`, 2026-09-20:
+  все exit 0; Vitest `9 passed`, production build преобразовал 88 модулей, известных
+  уязвимостей нет. `git diff --check`: exit 0.
+
+**Что не проверено и почему:** Публичного intake-маршрута и browser/E2E-потока нет до P15.
+P10 не вычисляет риск и намеренно не завершает pending-анализ: это работа P11 и сборки P15.
+Платежная ветка еще не реализована, поэтому проверено, что `false_positive_reported` не меняет
+существующее freshness/pending-состояние; сквозной запрет снятия будущего payment gate будет
+проверен в карточках перевода. Реальные каналы, Alfa ID и внешние сервисы не подключались.
+
+**Остаток / блокер:** По P10 остатка и блокера нет.
+
+**Условие разблокировки:** Не применимо.
+
+**Следующее конкретное действие:** Начать [P11](#p11): построить детерминированные текстовые и
+URL-сигналы, versioned analysis plan, статусы применимости/полноты и domain risk policy без
+ML/LLM и без использования scenario expected labels.
+
+**Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P10; активных задач нет.
+P11 разблокирован и является следующим пунктом по порядку плана.
