@@ -1,5 +1,10 @@
 """Interfaces implemented by runtime and infrastructure adapters."""
 
+from alpha_defense.application.ports.communications import (
+    CommunicationsUnitOfWorkFactory,
+    CommunicationsUnitOfWorkPort,
+    ObservationRepositoryPort,
+)
 from alpha_defense.application.ports.content import (
     CatalogLoaderPort,
     CatalogSnapshot,
@@ -58,6 +63,8 @@ __all__ = [
     "CatalogLoaderPort",
     "CatalogSnapshot",
     "Clock",
+    "CommunicationsUnitOfWorkFactory",
+    "CommunicationsUnitOfWorkPort",
     "EventEnvelope",
     "EventHandler",
     "EventSinkPort",
@@ -70,6 +77,7 @@ __all__ = [
     "IdempotencyScope",
     "IdempotencyState",
     "JsonValue",
+    "ObservationRepositoryPort",
     "OutboxMessage",
     "OutboxReceipt",
     "OutboxRepositoryPort",

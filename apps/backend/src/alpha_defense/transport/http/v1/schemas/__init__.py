@@ -13,6 +13,7 @@ from alpha_defense.transport.http.v1.schemas.identity import (
     StartDemoSessionRequest,
     UpdateConsentRequest,
 )
+from alpha_defense.transport.http.v1.schemas.observations import ObservationInputSchema
 
 __all__ = [
     "AnonymousSessionResponse",
@@ -20,6 +21,7 @@ __all__ = [
     "DependencyStatus",
     "FieldError",
     "LivenessResponse",
+    "ObservationInputSchema",
     "ProblemDetails",
     "ReadinessResponse",
     "SessionResponse",

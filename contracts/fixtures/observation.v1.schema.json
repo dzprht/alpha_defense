@@ -1,0 +1,227 @@
+{
+  "$id": "https://alpha-defense.test/schemas/observation.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "base": {
+      "properties": {
+        "kind": {
+          "enum": [
+            "sms",
+            "messenger",
+            "call_transcript",
+            "web_resource"
+          ],
+          "type": "string"
+        },
+        "occurred_at": {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+          "type": "string"
+        },
+        "payload": {
+          "type": "object"
+        },
+        "source": {
+          "pattern": "^[a-z][a-z0-9.-]{2,127}$",
+          "type": "string"
+        },
+        "source_event_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "source_event_id",
+        "source",
+        "occurred_at",
+        "payload"
+      ],
+      "type": "object"
+    },
+    "segment": {
+      "additionalProperties": false,
+      "properties": {
+        "end_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "sequence": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "start_ms": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "text": {
+          "maxLength": 10000,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "sequence",
+        "text"
+      ],
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/$defs/base"
+    }
+  ],
+  "oneOf": [
+    {
+      "properties": {
+        "kind": {
+          "const": "sms"
+        },
+        "payload": {
+          "additionalProperties": false,
+          "properties": {
+            "conversation_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "sender": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "text": {
+              "maxLength": 10000,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "text",
+            "sender",
+            "conversation_id"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "messenger"
+        },
+        "payload": {
+          "additionalProperties": false,
+          "properties": {
+            "conversation_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "sender": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "text": {
+              "maxLength": 10000,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "text",
+            "sender",
+            "conversation_id"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "call_transcript"
+        },
+        "payload": {
+          "additionalProperties": false,
+          "properties": {
+            "call_id": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+              "type": "string"
+            },
+            "phone": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "segments": {
+              "items": {
+                "$ref": "#/$defs/segment"
+              },
+              "maxItems": 200,
+              "type": "array"
+            },
+            "sequence": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "transcript": {
+              "maxLength": 30000,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "transcript",
+            "phone",
+            "call_id",
+            "sequence",
+            "segments"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "kind": {
+          "const": "web_resource"
+        },
+        "payload": {
+          "additionalProperties": false,
+          "anyOf": [
+            {
+              "required": [
+                "url"
+              ]
+            },
+            {
+              "required": [
+                "media_id"
+              ]
+            }
+          ],
+          "properties": {
+            "media_id": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "url": {
+              "maxLength": 2048,
+              "minLength": 1,
+              "pattern": "^https?://",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    }
+  ],
+  "title": "Alpha Defense observation fixture payload",
+  "type": "object",
+  "unevaluatedProperties": false
+}

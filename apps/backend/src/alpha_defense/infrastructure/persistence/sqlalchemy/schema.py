@@ -240,3 +240,105 @@ threat_registry_state = sa.Table(
     sa.CheckConstraint("state_key = 'current'", name="state_key_current"),
     sa.CheckConstraint("revision >= 0", name="revision_non_negative"),
 )
+
+observations = sa.Table(
+    "observations",
+    metadata,
+    sa.Column("observation_id", sa.String(36), primary_key=True),
+    sa.Column("owner_id", sa.String(36), sa.ForeignKey("users.user_id"), nullable=False),
+    sa.Column("session_id", sa.String(36), sa.ForeignKey("sessions.session_id"), nullable=False),
+    sa.Column("namespace_id", sa.String(36), nullable=False),
+    sa.Column("kind", sa.String(32), nullable=False),
+    sa.Column("source", sa.String(128), nullable=False),
+    sa.Column("source_event_id", sa.String(128), nullable=False),
+    sa.Column("source_event_fingerprint", sa.String(64), nullable=False),
+    sa.Column("occurred_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("received_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("content_ref", sa.String(36), nullable=False, unique=True),
+    sa.Column("normalization_version", sa.String(64), nullable=False),
+    sa.Column("execution_mode", sa.String(16), nullable=False),
+    sa.Column("conversation_id", sa.String(128), nullable=True),
+    sa.Column("call_id", sa.String(128), nullable=True),
+    sa.Column("sequence", sa.Integer(), nullable=True),
+    sa.Column("media_refs_json", sa.Text(), nullable=False),
+    sa.UniqueConstraint(
+        "namespace_id",
+        "source",
+        "source_event_id",
+        name="uq_observations_namespace_source_event",
+    ),
+    sa.UniqueConstraint(
+        "observation_id",
+        "content_ref",
+        name="uq_observations_id_content_ref",
+    ),
+    sa.CheckConstraint(
+        "kind IN ('sms', 'messenger', 'call_transcript', 'web_resource')",
+        name="kind_valid",
+    ),
+    sa.CheckConstraint("execution_mode IN ('mock', 'live')", name="execution_mode_valid"),
+    sa.CheckConstraint("sequence IS NULL OR sequence >= 0", name="sequence_non_negative"),
+    sa.CheckConstraint(
+        "(kind IN ('sms', 'messenger') AND conversation_id IS NOT NULL "
+        "AND call_id IS NULL AND sequence IS NULL) OR "
+        "(kind = 'call_transcript' AND conversation_id IS NULL "
+        "AND call_id IS NOT NULL AND sequence IS NOT NULL) OR "
+        "(kind = 'web_resource' AND conversation_id IS NULL "
+        "AND call_id IS NULL AND sequence IS NULL)",
+        name="correlation_fields_valid",
+    ),
+)
+
+sa.Index("ix_observations_owner_occurred", observations.c.owner_id, observations.c.occurred_at)
+
+observation_content = sa.Table(
+    "observation_content",
+    metadata,
+    sa.Column("content_ref", sa.String(36), primary_key=True),
+    sa.Column("observation_id", sa.String(36), nullable=False, unique=True),
+    sa.Column("payload_json", sa.Text(), nullable=False),
+    sa.Column("content_sha256", sa.String(64), nullable=False),
+    sa.ForeignKeyConstraint(
+        ["observation_id", "content_ref"],
+        ["observations.observation_id", "observations.content_ref"],
+        name="fk_observation_content_observation_ref_observations",
+        ondelete="CASCADE",
+    ),
+)
+
+observation_indicators = sa.Table(
+    "observation_indicators",
+    metadata,
+    sa.Column(
+        "observation_id",
+        sa.String(36),
+        sa.ForeignKey("observations.observation_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    sa.Column("ordinal", sa.Integer(), primary_key=True),
+    sa.Column("indicator_type", sa.String(16), nullable=False),
+    sa.Column("origin", sa.String(32), nullable=False),
+    sa.Column("raw_value", sa.String(2048), nullable=False),
+    sa.Column("normalized_value", sa.String(2048), nullable=True),
+    sa.Column("status", sa.String(16), nullable=False),
+    sa.Column("normalization_version", sa.String(64), nullable=False),
+    sa.CheckConstraint("ordinal >= 0 AND ordinal < 50", name="ordinal_valid"),
+    sa.CheckConstraint("indicator_type IN ('phone', 'url', 'domain')", name="type_valid"),
+    sa.CheckConstraint(
+        "origin IN ('sender', 'caller', 'embedded_text', 'resource_url', 'resource_domain')",
+        name="origin_valid",
+    ),
+    sa.CheckConstraint("status IN ('normalized', 'invalid')", name="status_valid"),
+    sa.CheckConstraint(
+        "(status = 'normalized' AND normalized_value IS NOT NULL) OR "
+        "(status = 'invalid' AND normalized_value IS NULL)",
+        name="status_value_valid",
+    ),
+)
+
+sa.Index(
+    "ix_observation_indicators_lookup",
+    observation_indicators.c.indicator_type,
+    observation_indicators.c.normalized_value,
+    observation_indicators.c.status,
+)

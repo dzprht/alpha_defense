@@ -1,6 +1,6 @@
 # Локальная разработка
 
-Статус: проверено для P01–P08 2026-09-19. Здесь зафиксированы инструменты и команды;
+Статус: проверено для P01–P09 2026-09-20. Здесь зафиксированы инструменты и команды;
 backend HTTP-контур, synthetic demo-сессии, onboarding web-shell и валидатор обязательного
 каталога исполнимы. Синтетический threat registry можно идемпотентно заполнить и обновить
 отдельной операторской командой.
@@ -62,7 +62,7 @@ UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --fro
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen alembic current
 ```
 
-Проверка upgrade/downgrade, отсутствия drift, сохранения audit/outbox и threat snapshot после
+Проверка upgrade/downgrade, отсутствия drift, сохранения audit/outbox, threat snapshot и observations после
 restart, а также восстановления истекшего lease входит в интеграционный набор:
 
 ```bash
@@ -128,6 +128,14 @@ UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --fro
 Плохой пакет не переключает текущую версию. Статус `unavailable` или `expired` нельзя
 трактовать как отсутствие угрозы. Команда использует только локальный synthetic feed; она не
 вызывает МВД/РКН, банковские или коммерческие API и не публикует административный HTTP-route.
+
+### Наблюдения коммуникаций
+
+P09 добавляет внутреннюю application-операцию приема и отдельную схему хранения
+raw-content, метаданных и нормализованных индикаторов. После `alembic upgrade head` новые таблицы
+готовы, но отдельного операторского или публичного HTTP-входа для них нет: `POST /observations` будет открыт
+только в полном workflow. Текущая приемка выполняется через unit/contract/integration-тесты, которые
+запускаются общей backend-командой `pytest`.
 
 ### Проверка demo-сессии и согласий
 

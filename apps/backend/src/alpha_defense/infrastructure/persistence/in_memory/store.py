@@ -12,6 +12,7 @@ from alpha_defense.application.ports import (
     IdempotencyScope,
     OutboxMessage,
 )
+from alpha_defense.domain.communications import Observation, ObservationContent
 from alpha_defense.domain.identity import (
     ConsentScope,
     ConsentSnapshot,
@@ -40,6 +41,11 @@ class InMemoryState:
     threat_snapshots: dict[EntityId, RegistrySnapshot] = field(default_factory=dict)
     threat_snapshot_versions: dict[str, EntityId] = field(default_factory=dict)
     current_threat_snapshot_id: EntityId | None = None
+    observations: dict[EntityId, Observation] = field(default_factory=dict)
+    observation_contents: dict[EntityId, ObservationContent] = field(default_factory=dict)
+    observation_source_events: dict[tuple[EntityId, str, str], EntityId] = field(
+        default_factory=dict
+    )
 
     def clone(self) -> InMemoryState:
         return deepcopy(self)

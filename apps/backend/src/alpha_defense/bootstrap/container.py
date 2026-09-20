@@ -9,6 +9,7 @@ import sqlalchemy as sa
 from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.exc import SQLAlchemyError
 
+from alpha_defense.application.communications import GetObservation, IngestObservation
 from alpha_defense.application.identity import IdentityService, IdentityServicePort
 from alpha_defense.application.ports import (
     CatalogLoaderPort,
@@ -55,6 +56,8 @@ class Container:
     lookup_threats: LookupThreatIndicators
     refresh_threat_registry: RefreshThreatRegistry
     threat_registry_status: GetThreatRegistryStatus
+    ingest_observation: IngestObservation
+    get_observation: GetObservation
 
     def close(self) -> None:
         self.engine.dispose()
@@ -119,6 +122,12 @@ def build_container(settings: Settings) -> Container:
             unit_of_work=factory,
             clock=clock,
         ),
+        ingest_observation=IngestObservation(
+            unit_of_work=factory,
+            clock=clock,
+            id_generator=id_generator,
+        ),
+        get_observation=GetObservation(unit_of_work=factory),
     )
 
 

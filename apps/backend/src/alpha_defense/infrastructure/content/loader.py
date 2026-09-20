@@ -252,6 +252,12 @@ class LocalCatalogLoader:
                         resource=f"{resource}.payload",
                         schema_name="threat-record.v1.schema.json",
                     )
+                elif kind == "communication":
+                    self._validate_schema(
+                        payload,
+                        resource=f"{resource}.payload",
+                        schema_name="observation.v1.schema.json",
+                    )
                 payload_hash = _string(document, "payload_sha256", resource)
                 if _canonical_sha256(payload) != payload_hash:
                     raise CatalogValidationError(

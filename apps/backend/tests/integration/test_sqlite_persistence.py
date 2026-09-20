@@ -56,6 +56,9 @@ def test_migration_creates_only_technical_tables(tmp_path: Path) -> None:
         "audit_events",
         "consents",
         "idempotency_records",
+        "observation_content",
+        "observation_indicators",
+        "observations",
         "outbox",
         "pre_sessions",
         "sessions",
@@ -67,6 +70,12 @@ def test_migration_creates_only_technical_tables(tmp_path: Path) -> None:
     assert {
         index["name"] for index in sa.inspect(current_engine).get_indexes("threat_records")
     } == {"ix_threat_records_lookup"}
+    assert {index["name"] for index in sa.inspect(current_engine).get_indexes("observations")} == {
+        "ix_observations_owner_occurred"
+    }
+    assert {
+        index["name"] for index in sa.inspect(current_engine).get_indexes("observation_indicators")
+    } == {"ix_observation_indicators_lookup"}
     current_engine.dispose()
 
 

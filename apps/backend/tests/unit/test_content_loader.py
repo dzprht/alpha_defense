@@ -128,3 +128,21 @@ def test_wrong_reference_hash_is_rejected(catalog_root: Path) -> None:
         _loader(catalog_root).load()
 
     assert captured.value.code == "hash_mismatch"
+
+
+def test_invalid_observation_payload_is_rejected_by_its_feature_schema(
+    catalog_root: Path,
+) -> None:
+    communication = catalog_root / "fixtures" / "communications" / "s01-card-block-sms.v1.json"
+    document = _read_object(communication)
+    payload = document["payload"]
+    assert isinstance(payload, dict)
+    message = payload["payload"]
+    assert isinstance(message, dict)
+    message["text"] = ""
+    _write_object(communication, document)
+
+    with pytest.raises(CatalogValidationError) as captured:
+        _loader(catalog_root).load()
+
+    assert captured.value.code == "schema_validation_failed"
