@@ -342,3 +342,191 @@ sa.Index(
     observation_indicators.c.normalized_value,
     observation_indicators.c.status,
 )
+
+incidents = sa.Table(
+    "incidents",
+    metadata,
+    sa.Column("incident_id", sa.String(36), primary_key=True),
+    sa.Column("owner_id", sa.String(36), sa.ForeignKey("users.user_id"), nullable=False),
+    sa.Column("session_id", sa.String(36), sa.ForeignKey("sessions.session_id"), nullable=False),
+    sa.Column("namespace_id", sa.String(36), nullable=False),
+    sa.Column("status", sa.String(16), nullable=False),
+    sa.Column("latest_assessment_id", sa.String(36), nullable=True),
+    sa.Column("current_resolution_code", sa.String(32), nullable=True),
+    sa.Column("context_version", sa.Integer(), nullable=False),
+    sa.Column("revision", sa.Integer(), nullable=False),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("execution_mode", sa.String(16), nullable=False),
+    sa.CheckConstraint("status IN ('open', 'monitoring', 'resolved')", name="status_valid"),
+    sa.CheckConstraint("context_version >= 1", name="context_version_positive"),
+    sa.CheckConstraint("revision >= 0", name="revision_non_negative"),
+    sa.CheckConstraint("updated_at >= created_at", name="updated_after_creation"),
+    sa.CheckConstraint("execution_mode IN ('mock', 'live')", name="execution_mode_valid"),
+    sa.CheckConstraint(
+        "(status = 'resolved' AND current_resolution_code IS NOT NULL) OR "
+        "(status IN ('open', 'monitoring') AND current_resolution_code IS NULL)",
+        name="resolution_status_valid",
+    ),
+)
+
+sa.Index(
+    "ix_incidents_scope_updated",
+    incidents.c.owner_id,
+    incidents.c.session_id,
+    incidents.c.namespace_id,
+    incidents.c.updated_at,
+)
+
+incident_observations = sa.Table(
+    "incident_observations",
+    metadata,
+    sa.Column(
+        "incident_id",
+        sa.String(36),
+        sa.ForeignKey("incidents.incident_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    sa.Column("ordinal", sa.Integer(), primary_key=True),
+    sa.Column(
+        "observation_id",
+        sa.String(36),
+        sa.ForeignKey("observations.observation_id"),
+        nullable=False,
+        unique=True,
+    ),
+    sa.Column("attached_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("context_version", sa.Integer(), nullable=False),
+    sa.Column("correlation_reason", sa.String(32), nullable=False),
+    sa.Column("correlation_key_kind", sa.String(16), nullable=True),
+    sa.Column("correlation_key_value", sa.String(4096), nullable=True),
+    sa.UniqueConstraint(
+        "incident_id",
+        "observation_id",
+        name="uq_incident_observations_incident_observation",
+    ),
+    sa.UniqueConstraint(
+        "incident_id",
+        "context_version",
+        name="uq_incident_observations_context_version",
+    ),
+    sa.CheckConstraint("ordinal >= 0", name="ordinal_non_negative"),
+    sa.CheckConstraint("context_version >= 1", name="context_version_positive"),
+    sa.CheckConstraint(
+        "correlation_reason IN ('new_incident', 'conversation', 'call', 'indicator')",
+        name="correlation_reason_valid",
+    ),
+    sa.CheckConstraint(
+        "(correlation_reason = 'new_incident' AND correlation_key_kind IS NULL "
+        "AND correlation_key_value IS NULL) OR "
+        "(correlation_reason != 'new_incident' AND correlation_key_kind IS NOT NULL "
+        "AND correlation_key_value IS NOT NULL)",
+        name="correlation_key_presence_valid",
+    ),
+    sa.CheckConstraint(
+        "correlation_key_kind IS NULL OR "
+        "correlation_key_kind IN ('conversation', 'call', 'indicator')",
+        name="correlation_key_kind_valid",
+    ),
+)
+
+incident_correlation_keys = sa.Table(
+    "incident_correlation_keys",
+    metadata,
+    sa.Column("incident_id", sa.String(36), primary_key=True),
+    sa.Column("observation_id", sa.String(36), primary_key=True),
+    sa.Column("key_kind", sa.String(16), primary_key=True),
+    sa.Column("key_value", sa.String(4096), primary_key=True),
+    sa.ForeignKeyConstraint(
+        ["incident_id", "observation_id"],
+        ["incident_observations.incident_id", "incident_observations.observation_id"],
+        name="fk_incident_correlation_keys_observation",
+        ondelete="CASCADE",
+    ),
+    sa.CheckConstraint(
+        "key_kind IN ('conversation', 'call', 'indicator')",
+        name="key_kind_valid",
+    ),
+)
+
+sa.Index(
+    "ix_incident_correlation_keys_lookup",
+    incident_correlation_keys.c.key_kind,
+    incident_correlation_keys.c.key_value,
+    incident_correlation_keys.c.incident_id,
+)
+
+incident_assessments = sa.Table(
+    "incident_assessments",
+    metadata,
+    sa.Column(
+        "incident_id",
+        sa.String(36),
+        sa.ForeignKey("incidents.incident_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    sa.Column("ordinal", sa.Integer(), primary_key=True),
+    sa.Column("assessment_id", sa.String(36), nullable=False, unique=True),
+    sa.Column("assessed_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("context_version", sa.Integer(), nullable=False),
+    sa.CheckConstraint("ordinal >= 0", name="ordinal_non_negative"),
+    sa.CheckConstraint("context_version >= 1", name="context_version_positive"),
+)
+
+incident_resolutions = sa.Table(
+    "incident_resolutions",
+    metadata,
+    sa.Column(
+        "incident_id",
+        sa.String(36),
+        sa.ForeignKey("incidents.incident_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    sa.Column("ordinal", sa.Integer(), primary_key=True),
+    sa.Column("resolution_code", sa.String(32), nullable=False),
+    sa.Column("resolved_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("resolved_by", sa.String(36), sa.ForeignKey("users.user_id"), nullable=False),
+    sa.Column("context_version", sa.Integer(), nullable=False),
+    sa.CheckConstraint("ordinal >= 0", name="ordinal_non_negative"),
+    sa.CheckConstraint("context_version >= 1", name="context_version_positive"),
+    sa.CheckConstraint(
+        "resolution_code IN ('user_cancelled', 'false_positive_reported', "
+        "'no_action_needed', 'transferred_to_support')",
+        name="resolution_code_valid",
+    ),
+)
+
+namespace_risk_states = sa.Table(
+    "namespace_risk_states",
+    metadata,
+    sa.Column("namespace_id", sa.String(36), primary_key=True),
+    sa.Column("owner_id", sa.String(36), sa.ForeignKey("users.user_id"), nullable=False),
+    sa.Column("session_id", sa.String(36), sa.ForeignKey("sessions.session_id"), nullable=False),
+    sa.Column("ingress_risk_epoch", sa.Integer(), nullable=False),
+    sa.Column("revision", sa.Integer(), nullable=False),
+    sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("execution_mode", sa.String(16), nullable=False),
+    sa.CheckConstraint("ingress_risk_epoch >= 1", name="ingress_risk_epoch_positive"),
+    sa.CheckConstraint("revision >= 0", name="revision_non_negative"),
+    sa.CheckConstraint("execution_mode IN ('mock', 'live')", name="execution_mode_valid"),
+)
+
+namespace_pending_analyses = sa.Table(
+    "namespace_pending_analyses",
+    metadata,
+    sa.Column(
+        "namespace_id",
+        sa.String(36),
+        sa.ForeignKey("namespace_risk_states.namespace_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    sa.Column(
+        "observation_id",
+        sa.String(36),
+        sa.ForeignKey("observations.observation_id"),
+        primary_key=True,
+        unique=True,
+    ),
+    sa.Column("incident_id", sa.String(36), sa.ForeignKey("incidents.incident_id"), nullable=False),
+    sa.Column("accepted_at", sa.DateTime(timezone=True), nullable=False),
+)

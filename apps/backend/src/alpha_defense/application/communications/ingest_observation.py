@@ -17,6 +17,7 @@ from alpha_defense.application.ports import (
     AuditRecord,
     Clock,
     CommunicationsUnitOfWorkFactory,
+    CommunicationsUnitOfWorkPort,
     EventEnvelope,
     IdGenerator,
 )
@@ -61,6 +62,26 @@ class IngestObservation:
         source: str,
         observation_input: ObservationInput,
     ) -> IngestObservationResult:
+        with self._unit_of_work() as uow:
+            result = self.execute_in_unit_of_work(
+                uow=uow,
+                actor=actor,
+                source=source,
+                observation_input=observation_input,
+            )
+            uow.commit()
+        return result
+
+    def execute_in_unit_of_work(
+        self,
+        *,
+        uow: CommunicationsUnitOfWorkPort,
+        actor: ActorContext,
+        source: str,
+        observation_input: ObservationInput,
+    ) -> IngestObservationResult:
+        """Apply intake without committing so a coordinating workflow can stay atomic."""
+
         received_at = self._clock.now_utc()
         try:
             _validate_input_metadata(
@@ -117,84 +138,82 @@ class IngestObservation:
                 ),
             )
 
-        with self._unit_of_work() as uow:
-            existing = uow.observations.get_by_source_event(
-                namespace_id=actor.namespace_id,
-                source=source,
-                source_event_id=observation_input.source_event_id,
-            )
-            if existing is not None:
-                if existing.observation.source_event_fingerprint != source_event_fingerprint:
-                    raise ValidationError(
-                        "Идентификатор события уже использован для другого содержимого.",
-                        field_errors=(
-                            FieldViolation(
-                                field="source_event_id",
-                                code="source_event_conflict",
-                                message="Повторите исходное событие без изменения данных.",
-                            ),
+        existing = uow.observations.get_by_source_event(
+            namespace_id=actor.namespace_id,
+            source=source,
+            source_event_id=observation_input.source_event_id,
+        )
+        if existing is not None:
+            if existing.observation.source_event_fingerprint != source_event_fingerprint:
+                raise ValidationError(
+                    "Идентификатор события уже использован для другого содержимого.",
+                    field_errors=(
+                        FieldViolation(
+                            field="source_event_id",
+                            code="source_event_conflict",
+                            message="Повторите исходное событие без изменения данных.",
                         ),
-                    )
-                return IngestObservationResult(
-                    observation=_view(existing),
-                    duplicate=True,
+                    ),
                 )
+            return IngestObservationResult(
+                observation=_view(existing),
+                duplicate=True,
+            )
 
-            observation_id = self._id_generator.new_id()
-            content_ref = self._id_generator.new_id()
-            correlation = _correlation_fields(observation_input.payload)
-            media_refs = _media_refs(observation_input.payload)
-            observation = Observation(
-                observation_id=observation_id,
-                owner_id=actor.user_id,
+        observation_id = self._id_generator.new_id()
+        content_ref = self._id_generator.new_id()
+        correlation = _correlation_fields(observation_input.payload)
+        media_refs = _media_refs(observation_input.payload)
+        observation = Observation(
+            observation_id=observation_id,
+            owner_id=actor.user_id,
+            session_id=actor.session_id,
+            namespace_id=actor.namespace_id,
+            kind=observation_input.payload.kind,
+            source=source,
+            source_event_id=observation_input.source_event_id,
+            source_event_fingerprint=source_event_fingerprint,
+            occurred_at=observation_input.occurred_at,
+            received_at=received_at,
+            content_ref=content_ref,
+            normalized_indicators=indicators,
+            media_refs=media_refs,
+            execution_mode=actor.execution_mode,
+            conversation_id=correlation[0],
+            call_id=correlation[1],
+            sequence=correlation[2],
+        )
+        content = ObservationContent(
+            content_ref=content_ref,
+            observation_id=observation_id,
+            payload=observation_input.payload,
+            content_sha256=content_sha256,
+        )
+        stored = StoredObservation(observation=observation, content=content)
+        uow.observations.add(stored)
+        uow.audit.append(
+            AuditRecord(
+                event=EventEnvelope(
+                    event_id=self._id_generator.new_id(),
+                    event_type="observation.received",
+                    aggregate_id=observation_id,
+                    aggregate_revision=0,
+                    occurred_at=received_at,
+                    correlation_id=observation_id,
+                    execution_mode=actor.execution_mode,
+                    payload={
+                        "kind": observation.kind.value,
+                        "source": observation.source,
+                        "normalization_version": observation.normalization_version,
+                        "indicator_count": len(observation.normalized_indicators),
+                    },
+                ),
+                actor_id=actor.user_id,
                 session_id=actor.session_id,
                 namespace_id=actor.namespace_id,
-                kind=observation_input.payload.kind,
-                source=source,
-                source_event_id=observation_input.source_event_id,
-                source_event_fingerprint=source_event_fingerprint,
-                occurred_at=observation_input.occurred_at,
-                received_at=received_at,
-                content_ref=content_ref,
-                normalized_indicators=indicators,
-                media_refs=media_refs,
-                execution_mode=actor.execution_mode,
-                conversation_id=correlation[0],
-                call_id=correlation[1],
-                sequence=correlation[2],
+                recorded_at=received_at,
             )
-            content = ObservationContent(
-                content_ref=content_ref,
-                observation_id=observation_id,
-                payload=observation_input.payload,
-                content_sha256=content_sha256,
-            )
-            stored = StoredObservation(observation=observation, content=content)
-            uow.observations.add(stored)
-            uow.audit.append(
-                AuditRecord(
-                    event=EventEnvelope(
-                        event_id=self._id_generator.new_id(),
-                        event_type="observation.received",
-                        aggregate_id=observation_id,
-                        aggregate_revision=0,
-                        occurred_at=received_at,
-                        correlation_id=observation_id,
-                        execution_mode=actor.execution_mode,
-                        payload={
-                            "kind": observation.kind.value,
-                            "source": observation.source,
-                            "normalization_version": observation.normalization_version,
-                            "indicator_count": len(observation.normalized_indicators),
-                        },
-                    ),
-                    actor_id=actor.user_id,
-                    session_id=actor.session_id,
-                    namespace_id=actor.namespace_id,
-                    recorded_at=received_at,
-                )
-            )
-            uow.commit()
+        )
         return IngestObservationResult(observation=_view(stored), duplicate=False)
 
 

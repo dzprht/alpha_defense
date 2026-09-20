@@ -25,6 +25,12 @@ from alpha_defense.application.ports.events import (
     JsonValue,
     OutboxReceipt,
 )
+from alpha_defense.application.ports.incidents import (
+    IncidentRepositoryPort,
+    IncidentUnitOfWorkFactory,
+    IncidentUnitOfWorkPort,
+    NamespaceRiskStateRepositoryPort,
+)
 from alpha_defense.application.ports.readiness import (
     ReadinessCheck,
     ReadinessPort,
@@ -76,7 +82,11 @@ __all__ = [
     "IdempotencyReservation",
     "IdempotencyScope",
     "IdempotencyState",
+    "IncidentRepositoryPort",
+    "IncidentUnitOfWorkFactory",
+    "IncidentUnitOfWorkPort",
     "JsonValue",
+    "NamespaceRiskStateRepositoryPort",
     "ObservationRepositoryPort",
     "OutboxMessage",
     "OutboxReceipt",

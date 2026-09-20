@@ -7,6 +7,10 @@ from types import TracebackType
 from alpha_defense.infrastructure.persistence.in_memory.communications import (
     InMemoryObservationRepository,
 )
+from alpha_defense.infrastructure.persistence.in_memory.incidents import (
+    InMemoryIncidentRepository,
+    InMemoryNamespaceRiskStateRepository,
+)
 from alpha_defense.infrastructure.persistence.in_memory.repositories import (
     InMemoryAuditRepository,
     InMemoryIdempotencyRepository,
@@ -31,6 +35,8 @@ class InMemoryUnitOfWork:
         self._outbox: InMemoryOutboxRepository | None = None
         self._threat_registry: InMemoryThreatRegistryRepository | None = None
         self._observations: InMemoryObservationRepository | None = None
+        self._incidents: InMemoryIncidentRepository | None = None
+        self._namespace_risk_states: InMemoryNamespaceRiskStateRepository | None = None
 
     @property
     def idempotency(self) -> InMemoryIdempotencyRepository:
@@ -68,6 +74,18 @@ class InMemoryUnitOfWork:
             raise RuntimeError("UnitOfWork is not active")
         return self._observations
 
+    @property
+    def incidents(self) -> InMemoryIncidentRepository:
+        if self._incidents is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._incidents
+
+    @property
+    def namespace_risk_states(self) -> InMemoryNamespaceRiskStateRepository:
+        if self._namespace_risk_states is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._namespace_risk_states
+
     def begin(self) -> None:
         if self._active:
             raise RuntimeError("UnitOfWork is already active")
@@ -79,6 +97,8 @@ class InMemoryUnitOfWork:
         self._outbox = InMemoryOutboxRepository(self._state)
         self._threat_registry = InMemoryThreatRegistryRepository(self._state)
         self._observations = InMemoryObservationRepository(self._state)
+        self._incidents = InMemoryIncidentRepository(self._state)
+        self._namespace_risk_states = InMemoryNamespaceRiskStateRepository(self._state)
         self._active = True
         self._finished = False
 

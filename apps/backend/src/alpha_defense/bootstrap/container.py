@@ -11,6 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from alpha_defense.application.communications import GetObservation, IngestObservation
 from alpha_defense.application.identity import IdentityService, IdentityServicePort
+from alpha_defense.application.incidents import AttachObservation, GetIncident, ResolveIncident
 from alpha_defense.application.ports import (
     CatalogLoaderPort,
     Clock,
@@ -23,6 +24,7 @@ from alpha_defense.application.threats import (
     LookupThreatIndicators,
     RefreshThreatRegistry,
 )
+from alpha_defense.application.workflows import AnalyzeContact
 from alpha_defense.bootstrap.settings import Settings
 from alpha_defense.domain.shared import ExecutionMode
 from alpha_defense.infrastructure.content import LocalCatalogLoader
@@ -58,6 +60,10 @@ class Container:
     threat_registry_status: GetThreatRegistryStatus
     ingest_observation: IngestObservation
     get_observation: GetObservation
+    attach_observation: AttachObservation
+    get_incident: GetIncident
+    resolve_incident: ResolveIncident
+    analyze_contact: AnalyzeContact
 
     def close(self) -> None:
         self.engine.dispose()
@@ -100,6 +106,16 @@ def build_container(settings: Settings) -> Container:
         tokens=HmacSecurityTokens(settings.session_secret.get_secret_value()),
         execution_mode=settings.execution_mode,
     )
+    ingest_observation = IngestObservation(
+        unit_of_work=factory,
+        clock=clock,
+        id_generator=id_generator,
+    )
+    attach_observation = AttachObservation(
+        unit_of_work=factory,
+        clock=clock,
+        id_generator=id_generator,
+    )
     return Container(
         settings=settings,
         engine=engine,
@@ -122,12 +138,20 @@ def build_container(settings: Settings) -> Container:
             unit_of_work=factory,
             clock=clock,
         ),
-        ingest_observation=IngestObservation(
+        ingest_observation=ingest_observation,
+        get_observation=GetObservation(unit_of_work=factory),
+        attach_observation=attach_observation,
+        get_incident=GetIncident(unit_of_work=factory),
+        resolve_incident=ResolveIncident(
             unit_of_work=factory,
             clock=clock,
             id_generator=id_generator,
         ),
-        get_observation=GetObservation(unit_of_work=factory),
+        analyze_contact=AnalyzeContact(
+            unit_of_work=factory,
+            ingest_observation=ingest_observation,
+            attach_observation=attach_observation,
+        ),
     )
 
 

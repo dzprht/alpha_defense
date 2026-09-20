@@ -56,6 +56,13 @@ def test_migration_creates_only_technical_tables(tmp_path: Path) -> None:
         "audit_events",
         "consents",
         "idempotency_records",
+        "incident_assessments",
+        "incident_correlation_keys",
+        "incident_observations",
+        "incident_resolutions",
+        "incidents",
+        "namespace_pending_analyses",
+        "namespace_risk_states",
         "observation_content",
         "observation_indicators",
         "observations",
@@ -76,6 +83,13 @@ def test_migration_creates_only_technical_tables(tmp_path: Path) -> None:
     assert {
         index["name"] for index in sa.inspect(current_engine).get_indexes("observation_indicators")
     } == {"ix_observation_indicators_lookup"}
+    assert {index["name"] for index in sa.inspect(current_engine).get_indexes("incidents")} == {
+        "ix_incidents_scope_updated"
+    }
+    assert {
+        index["name"]
+        for index in sa.inspect(current_engine).get_indexes("incident_correlation_keys")
+    } == {"ix_incident_correlation_keys_lookup"}
     current_engine.dispose()
 
 

@@ -12,6 +12,10 @@ from alpha_defense.application.shared import ServiceUnavailableError
 from alpha_defense.infrastructure.persistence.sqlalchemy.communications import (
     SqlAlchemyObservationRepository,
 )
+from alpha_defense.infrastructure.persistence.sqlalchemy.incidents import (
+    SqlAlchemyIncidentRepository,
+    SqlAlchemyNamespaceRiskStateRepository,
+)
 from alpha_defense.infrastructure.persistence.sqlalchemy.repositories import (
     SqlAlchemyAuditRepository,
     SqlAlchemyIdempotencyRepository,
@@ -37,6 +41,8 @@ class SqlAlchemyUnitOfWork:
         self._outbox: SqlAlchemyOutboxRepository | None = None
         self._threat_registry: SqlAlchemyThreatRegistryRepository | None = None
         self._observations: SqlAlchemyObservationRepository | None = None
+        self._incidents: SqlAlchemyIncidentRepository | None = None
+        self._namespace_risk_states: SqlAlchemyNamespaceRiskStateRepository | None = None
 
     @property
     def idempotency(self) -> SqlAlchemyIdempotencyRepository:
@@ -74,6 +80,18 @@ class SqlAlchemyUnitOfWork:
             raise RuntimeError("UnitOfWork is not active")
         return self._observations
 
+    @property
+    def incidents(self) -> SqlAlchemyIncidentRepository:
+        if self._incidents is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._incidents
+
+    @property
+    def namespace_risk_states(self) -> SqlAlchemyNamespaceRiskStateRepository:
+        if self._namespace_risk_states is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._namespace_risk_states
+
     def begin(self) -> None:
         if self._active:
             raise RuntimeError("UnitOfWork is already active")
@@ -85,6 +103,8 @@ class SqlAlchemyUnitOfWork:
         self._outbox = SqlAlchemyOutboxRepository(self._session)
         self._threat_registry = SqlAlchemyThreatRegistryRepository(self._session)
         self._observations = SqlAlchemyObservationRepository(self._session)
+        self._incidents = SqlAlchemyIncidentRepository(self._session)
+        self._namespace_risk_states = SqlAlchemyNamespaceRiskStateRepository(self._session)
         self._active = True
         self._finished = False
 
