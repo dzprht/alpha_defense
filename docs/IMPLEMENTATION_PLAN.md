@@ -273,7 +273,7 @@ P-пункт — одна законченная способность или �
 
 ### P09. Реализовать наблюдения и нормализацию коммуникаций
 
-- [ ] Выполнено и проверено. **Статус:** in_progress. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
 
 **Зависимости:** [P05](#p05), [P07](#p07).
 
@@ -1797,3 +1797,70 @@ commit `f46a367` («Реализовать атомарный реестр уг�
 
 **Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P08; активных задач нет.
 P09 разблокирован и является следующим пунктом по порядку плана; P11 теперь ожидает P09.
+
+<a id="log-2026-09-20-p09-01"></a>
+
+#### 2026-09-20-P09-01
+
+**Задача/исполнитель:** P09, Codex.
+
+**Статус и дата:** done, 2026-09-20.
+
+**Проверенная версия архитектуры / существенные решения:** ARCHITECTURE.md v1.0 от
+2026-09-13, §4.2, §5.2, §5.3, §7.3 и §14. Observation неизменяем; исходный payload хранится
+отдельно от метаданных и производных индикаторов. `source` задает доверенный адаптер, а
+бизнес-дедупликация ограничена namespace, source и source event. Transport-схема готова, но
+публичный `POST /observations` не открыт до сборки полного workflow P15.
+
+**Что сделано:** Реализован tagged union для SMS, messenger, call transcript и web resource.
+Текстовые каналы хранят sender и conversation, части звонка — call/sequence и необязательные
+временные сегменты, web — URL и/или ссылку на будущий media object. Телефоны приводятся к E.164,
+если это возможно; иначе raw и явный invalid-status сохраняются. URL и домен остаются разными
+типами; host нормализуется, fragment не входит в ключ, path/query сохраняются. Добавлены in-memory и
+SQLite-репозитории, миграция, защищенное от raw audit-событие, fixture JSON Schema и сборка операций
+через bootstrap.
+
+**Файлы и артефакты:** `domain/communications/`, `application/communications/`,
+`application/ports/communications.py`, persistence-адаптеры, `20260920_0004_observations.py`,
+`observation.v1.schema.json`, transport-схемы, обновленный fixture S01, unit/contract/integration-тесты,
+README, AGENTS, runbook, архитектурный status, defense guide и этот чеклист. Реализация
+зафиксирована commit `a8d8342` («Реализовать прием наблюдений P09»); эта документационная
+фиксация добавляет evidence перед отправкой обоих commit в `origin/main`.
+
+**Проверки:**
+
+- `uv lock --check`, `ruff check`, `ruff format --check`, `mypy`, cwd `apps/backend`,
+  2026-09-20: все exit 0; lock согласован, 128 Python-файлов отформатированы, strict-типизация
+  прошла для 96 source-файлов.
+- `pytest`, cwd `apps/backend`, 2026-09-20: exit 0, `131 passed`; два warning относятся к
+  deprecation в закрепленной связке FastAPI/Starlette TestClient. Общий contract-набор для in-memory
+  и SQLite проверил разделение raw/normalized, четыре payload-варианта, лимиты,
+  invalid phone, URL path/query, дедупликацию/конфликт, изоляцию namespace, rollback, owner guard и
+  восстановление SQLite после restart.
+- `lint-imports --config pyproject.toml`, cwd `apps/backend`, 2026-09-20: exit 0,
+  `4 kept, 0 broken`, 119 файлов и 444 зависимости.
+- `python ../../scripts/validate_catalog.py`, cwd `apps/backend`, 2026-09-20: exit 0,
+  policy `demo-risk-v1`, 2 fixtures, итоговый catalog sha256
+  `e40373bc513fd1783465d217a828fb56c2392133be5a63e8a738b6303de89911`.
+- Два экспорта OpenAPI во временные файлы и `cmp` между ними и committed contract,
+  2026-09-20: все exit 0; HTTP-схема не изменилась. `uv build` создал sdist и wheel.
+- `npm run lint`, `npm run typecheck`, `npm test -- --run`, `npm run build`,
+  `npm run format:check`, `npm audit --audit-level=high`, cwd `apps/web`, 2026-09-20:
+  все exit 0; Vitest `9 passed`, production build преобразовал 88 модулей, известных
+  уязвимостей нет. `git diff --check`: exit 0.
+
+**Что не проверено и почему:** Публичного intake-маршрута и полного HTTP workflow нет до P15,
+поэтому browser/E2E сценарий приема не запускался. Screenshot пока только ссылка на media ID до P18;
+байты изображения не принимаются. Speech-to-text, реальные каналы, инциденты и оценка риска не
+реализованы. Успешная нормализация или отсутствие индикатора не означают безопасность.
+
+**Остаток / блокер:** По P09 остатка и блокера нет.
+
+**Условие разблокировки:** Не применимо.
+
+**Следующее конкретное действие:** Начать [P10](#p10): создавать предварительный инцидент вместе с
+наблюдением, коррелировать timeline внутри namespace и немедленно помечать контекст риска устаревшим,
+пока анализ не завершен.
+
+**Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P09; активных задач нет.
+P10 и P11 разблокированы; по порядку плана следующая P10.
