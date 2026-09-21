@@ -219,7 +219,7 @@ curl -sS -c "$cookie_jar" -b "$cookie_jar" -X PATCH \
   http://127.0.0.1:8000/api/v1/consents/analyze_communications
 ```
 
-Это synthetic-вход локального MVP, а не интеграция Alfa ID и не проверка происхождения
+Это synthetic-вход локального MVP, а не полноценный вход зарегистрированного пользователя и не проверка происхождения
 звонка. Доступны только allowlisted-профили `demo-user` и `demo-senior`; оба получают
 серверную роль `demo_user`.
 
