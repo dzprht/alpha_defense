@@ -1,6 +1,6 @@
 # Локальная разработка
 
-Статус: проверено для P01–P11 2026-09-21. Здесь зафиксированы инструменты и команды;
+Статус: проверено для P01–P12 2026-09-21. Здесь зафиксированы инструменты и команды;
 backend HTTP-контур, synthetic demo-сессии, onboarding web-shell и валидатор обязательного
 каталога исполнимы. Синтетический threat registry можно идемпотентно заполнить и обновить
 отдельной операторской командой.
@@ -47,7 +47,7 @@ UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --fro
 Запуск unit-, contract-, integration- и architecture-тестов backend:
 
 ```bash
-UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen pytest
+UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen python -m pytest
 ```
 
 ### Локальная SQLite и миграции
@@ -67,7 +67,7 @@ observations, incidents и pending-контекста после restart, а т�
 lease входит в интеграционный набор:
 
 ```bash
-UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen pytest tests/integration/test_sqlite_persistence.py
+UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen python -m pytest tests/integration/test_sqlite_persistence.py
 ```
 
 Outbox имеет семантику at-least-once: handler вызывается вне локальной транзакции, успешный
@@ -165,6 +165,29 @@ partial либо unavailable, а не ложный низкий риск.
 баллов. Публичного route пока нет: запись результата в incident и атомарное снятие pending
 относятся к P15. Приемка выполняется общей backend-командой `pytest`; сквозная внутренняя
 проверка находится в `tests/integration/test_detection.py`.
+
+### Рекомендации и учебные карточки
+
+P12 добавляет обязательные русскоязычные каталоги рекомендаций и опубликованных учебных
+карточек. При запуске loader проверяет JSON Schema, canonical hash, уникальность и взаимные
+ссылки, а Markdown принимает только с ограниченным front matter и без raw HTML/MDX. Поэтому
+изменение текста требует пересчитать его `content_sha256`; поврежденный контент делает
+readiness красной, а не попадает в ответ частично.
+
+После старта demo-сессии опубликованный каталог можно читать с пагинацией:
+
+```bash
+curl -sS -c "$cookie_jar" -b "$cookie_jar" \
+  'http://127.0.0.1:8000/api/v1/education/cards?locale=ru-RU&limit=20'
+curl -sS -c "$cookie_jar" -b "$cookie_jar" \
+  'http://127.0.0.1:8000/api/v1/education/cards/general_safety?locale=ru-RU'
+```
+
+Неподдерживаемая локаль явно возвращает русский fallback. Неизвестный code или version
+возвращает общую карточку безопасности с `fallback_reason`, а не 404 с потерей безопасного
+совета. Внутренняя guidance-операция связывает результат P11 с проверенным текстом и передает
+`allowed_actions` без изменения; номер поддержки берется только из trusted catalog. Публичный
+incident guidance route и UI карточек появятся после сборки соответствующих workflow.
 
 ### Проверка demo-сессии и согласий
 

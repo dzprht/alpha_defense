@@ -333,7 +333,7 @@ P-пункт — одна законченная способность или �
 
 ### P12. Реализовать рекомендации, учебные карточки и structured assistant
 
-- [ ] Выполнено и проверено. **Статус:** todo. **Исполнитель:** —.
+- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
 
 **Зависимости:** [P07](#p07), [P11](#p11).
 
@@ -347,7 +347,7 @@ P-пункт — одна законченная способность или �
 
 **Приемка и качество:** Карточки валидируются и читаются через education API. Нет raw HTML/MDX; неподдерживаемый code/locale имеет предсказуемый fallback без выдуманной причины. Контакт помощи берется из trusted catalog, не из подозрительного сообщения.
 
-**Запись выполнения:** —. После начала работ заменить на ссылку на запись [журнала](#work-log).
+**Запись выполнения:** [2026-09-21-P12-01](#log-2026-09-21-p12-01).
 
 <a id="p13"></a>
 
@@ -2005,3 +2005,77 @@ policy, а не вероятность мошенничества и не изм
 
 **Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P11; активных задач нет.
 P12 разблокирован и является следующим пунктом по порядку плана.
+
+<a id="log-2026-09-21-p12-01"></a>
+
+#### 2026-09-21-P12-01
+
+**Задача/исполнитель:** P12, Codex.
+
+**Статус и дата:** done, 2026-09-21.
+
+**Проверенная версия архитектуры / существенные решения:** ARCHITECTURE.md v1.0 от
+2026-09-13, §3.1, §4.8, §8 и §9. Guidance остается структурированным представлением оценки:
+выбирает только проверенный редакционный текст и не создает исполняемые действия. Server
+`allowed_actions` передаются без изменения. Публичный incident guidance route не открыт до
+P15, потому что P11 assessment пока не сохраняется в incident; P12 публикует только
+независимый каталог карточек.
+
+**Что сделано:** Добавлены доменные инварианты опубликованной карточки и детерминированное
+сопоставление severity/completeness/reason codes с русскими объяснениями, рекомендациями и
+ссылками на карточки. Версионированные JSON/Markdown-каталоги входят в общий readiness hash;
+loader проверяет JSON Schema, hash, уникальность, ссылки, ограниченный front matter и запрет
+raw HTML/MDX. Неизвестная причина дает общий совет, partial/unavailable — явное ограничение,
+неподдерживаемая локаль — русский fallback, неизвестные code/version — общую карточку с
+`fallback_reason`. Контакт помощи читается только из trusted catalog; при его отсутствии
+возвращается совет самостоятельно открыть официальный канал без номера. Добавлены
+session-protected list/detail HTTP endpoints, cursor pagination, OpenAPI/examples и web-типы.
+
+**Файлы и артефакты:** `domain/education/`, `application/education/`, расширенный
+`application/ports/content.py`, `infrastructure/content/loader.py`,
+`content/{recommendations,education}/`, две JSON Schema, education routes/schemas, OpenAPI,
+generated web types, unit/application/contract/integration-тесты, README, AGENTS, runbook,
+архитектурный status, defense guide и этот чеклист. Реализация зафиксирована commit
+`60b258a` («Реализовать структурированные рекомендации P12»); эта документационная фиксация
+добавляет evidence перед отправкой обоих commit в `origin/main`.
+
+**Проверки:**
+
+- `uv lock --check`, `ruff check`, `ruff format --check`, `mypy`, cwd `apps/backend`,
+  2026-09-21: все exit 0; lock согласован, format/lint проверили 175 Python-файлов, strict-
+  типизация прошла для 172 source/test/migration файлов.
+- `python -m pytest` через закрепленный `uv run --frozen`, cwd `apps/backend`, 2026-09-21:
+  exit 0, `183 passed`; два warning относятся к deprecation в закрепленной связке
+  FastAPI/Starlette TestClient. Проверены mapping/fallback, owner scope, неизменность allowed
+  actions, trusted/missing contact, cursor, session guard, list/detail API, raw HTML/MDX,
+  hash и неизвестная ссылка карточки. Старую команду `uv run pytest`, терявшую cwd в
+  `sys.path`, в runbook заменили воспроизводимой `uv run python -m pytest`.
+- `lint-imports --config pyproject.toml`, cwd `apps/backend`, 2026-09-21: exit 0,
+  `4 kept, 0 broken`, 155 файлов и 635 зависимостей.
+- `python ../../scripts/validate_catalog.py`, cwd `apps/backend`, 2026-09-21: exit 0,
+  policy `demo-risk-v1`, 2 fixtures, итоговый catalog sha256
+  `0b28e8b2adf49000208a4370e74652733696b9167f9911b2fba8623486d0876c`.
+- Детерминированный OpenAPI подтвержден contract-тестом, `npm run generate:api` пересоздал
+  типы для семи реализованных HTTP-маршрутов; `uv build` создал sdist и wheel.
+- `npm run lint`, `npm run typecheck`, `npm test -- --run`, `npm run build`,
+  `npm run format:check`, `npm audit --audit-level=high`, cwd `apps/web`, 2026-09-21:
+  все exit 0; Vitest `9 passed`, production build преобразовал 88 модулей, известных
+  уязвимостей нет. `git diff --check`: exit 0.
+
+**Что не проверено и почему:** Guidance пока не опубликован по incident ID и не показан в UI:
+до P15 нет сохраненной assessment и атомарно завершенного intake, а продуктовые экраны идут
+следующими карточками. P12 не показывает warning, не подтверждает его доставку и не выполняет
+allowed actions. Карточки содержат редакционный synthetic demo-контент, а не юридическую или
+персональную консультацию. Свободного LLM-чата, генерации endpoint и реальных каналов помощи
+нет.
+
+**Остаток / блокер:** По P12 остатка и блокера нет.
+
+**Условие разблокировки:** Не применимо.
+
+**Следующее конкретное действие:** Начать [P13](#p13): сформировать предупреждение из оценки
+и рекомендаций, доставить его через in-app и операторский mock-каналы, сохранить попытки и
+подтвердить фактический показ отдельно от пользовательского ответа.
+
+**Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P12; активных задач нет.
+P13 разблокирован и является следующим пунктом по порядку плана; P15 теперь ожидает P13.

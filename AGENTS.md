@@ -14,7 +14,7 @@
 
 ## Текущее состояние
 
-Сейчас завершены P01–P11: зафиксированы зависимости и границы слоев,
+Сейчас завершены P01–P12: зафиксированы зависимости и границы слоев,
 технические UnitOfWork/idempotency/audit/outbox, SQLite-миграции, bootstrap, HTTP-
 граница и synthetic identity. Доступны health, `GET /api/v1/session`,
 `POST /api/v1/sessions/demo` и `PATCH /api/v1/consents/{scope}`. Сессия и manual namespace
@@ -35,8 +35,12 @@ epoch и держит analysis pending до будущей финализаци�
 analysis plan, различает applicable/not applicable, complete/partial/unavailable и применяет
 детерминированную policy v1 к текстовым, URL- и переданным threat-свидетельствам. Результат
 immutable, объясним и помечен mock. Он пока не сохраняется в incident, не снимает pending и
-не опубликован по HTTP — это сборка P15. CV/behavior/network-модели, UI оценки и остальные
-продуктовые экраны пока не реализованы.
+не опубликован по HTTP — это сборка P15. Версионированный русский guidance-каталог связывает
+severity/completeness/reason codes с проверенным текстом, ссылками на семь учебных карточек и
+переданными сервером allowed actions. Карточки валидируются вместе с readiness и опубликованы
+через session-protected list/detail API; неизвестные локаль, code и version дают явный fallback.
+Контакт помощи читается только из trusted catalog. Свободного чата, incident guidance route,
+warning-доставки, UI карточек и CV/behavior/network-моделей пока нет.
 Остальные будущие файлы в архитектуре — спецификация, а не свидетельство реализации.
 
 Переходить к реализации только в рамках следующего запроса пользователя на код. Не устанавливать зависимости, не обучать модели и не подключать реальные сервисы в рамках задачи на проектирование.
