@@ -9,6 +9,8 @@ from alpha_defense.bootstrap.openapi import export_openapi
 from alpha_defense.transport.http.v1.schemas import (
     AnonymousSessionResponse,
     ConsentResponse,
+    EducationCardPageResponse,
+    EducationCardResponse,
     LivenessResponse,
     ProblemDetails,
     ReadinessResponse,
@@ -39,6 +41,12 @@ def test_committed_examples_match_public_schemas() -> None:
     consent = ConsentResponse.model_validate_json(
         (examples / "consent-granted.v1.json").read_text(encoding="utf-8")
     )
+    education_page = EducationCardPageResponse.model_validate_json(
+        (examples / "education-cards-page.v1.json").read_text(encoding="utf-8")
+    )
+    education_fallback = EducationCardResponse.model_validate_json(
+        (examples / "education-card-fallback.v1.json").read_text(encoding="utf-8")
+    )
 
     assert live.status == "alive"
     assert tuple(check.name for check in ready.checks) == ("database", "catalog")
@@ -47,6 +55,8 @@ def test_committed_examples_match_public_schemas() -> None:
     assert anonymous.status == "anonymous"
     assert active.status == "active"
     assert consent.status.value == "granted"
+    assert education_page.items[0].code == "credential_requests"
+    assert education_fallback.fallback_reason == "unsupported_code"
 
 
 def test_openapi_contains_only_implemented_endpoints_and_problem_media() -> None:
@@ -56,6 +66,8 @@ def test_openapi_contains_only_implemented_endpoints_and_problem_media() -> None
 
     assert set(contract["paths"]) == {
         "/api/v1/consents/{scope}",
+        "/api/v1/education/cards",
+        "/api/v1/education/cards/{code}",
         "/api/v1/health/live",
         "/api/v1/health/ready",
         "/api/v1/session",
@@ -96,3 +108,5 @@ def test_generated_web_types_cover_implemented_routes() -> None:
     assert '"/api/v1/session"' in generated
     assert '"/api/v1/sessions/demo"' in generated
     assert '"/api/v1/consents/{scope}"' in generated
+    assert '"/api/v1/education/cards"' in generated
+    assert '"/api/v1/education/cards/{code}"' in generated

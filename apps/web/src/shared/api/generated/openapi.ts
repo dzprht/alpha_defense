@@ -21,6 +21,40 @@ export interface paths {
         patch: operations["update_consent"];
         trace?: never;
     };
+    "/api/v1/education/cards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Education Cards */
+        get: operations["list_education_cards"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/education/cards/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Education Card */
+        get: operations["get_education_card"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/health/live": {
         parameters: {
             query?: never;
@@ -147,6 +181,71 @@ export interface components {
              * @constant
              */
             status: "ready";
+        };
+        /** EducationCardPageResponse */
+        EducationCardPageResponse: {
+            /** Content Version */
+            content_version: string;
+            /** Items */
+            items: components["schemas"]["EducationCardSummaryResponse"][];
+            /** Locale */
+            locale: string;
+            /** Locale Fallback */
+            locale_fallback: boolean;
+            /** Next Cursor */
+            next_cursor: string | null;
+            /** Requested Locale */
+            requested_locale: string;
+        };
+        /** EducationCardResponse */
+        EducationCardResponse: {
+            /** Body */
+            body: string;
+            /** Code */
+            code: string;
+            /** Content Version */
+            content_version: string;
+            /** Fallback Reason */
+            fallback_reason: ("unsupported_code" | "unsupported_version") | null;
+            /** Locale */
+            locale: string;
+            /** Locale Fallback */
+            locale_fallback: boolean;
+            /** Requested Code */
+            requested_code: string;
+            /** Requested Locale */
+            requested_locale: string;
+            /** Requested Version */
+            requested_version: string | null;
+            /**
+             * Reviewed At
+             * Format: date-time
+             */
+            reviewed_at: string;
+            /** Source Links */
+            source_links: string[];
+            /** Summary */
+            summary: string;
+            /** Title */
+            title: string;
+            /** Version */
+            version: string;
+        };
+        /** EducationCardSummaryResponse */
+        EducationCardSummaryResponse: {
+            /** Code */
+            code: string;
+            /**
+             * Reviewed At
+             * Format: date-time
+             */
+            reviewed_at: string;
+            /** Summary */
+            summary: string;
+            /** Title */
+            title: string;
+            /** Version */
+            version: string;
         };
         /** FieldError */
         FieldError: {
@@ -315,6 +414,109 @@ export interface operations {
             };
             /** @description Problem Details */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    list_education_cards: {
+        parameters: {
+            query?: {
+                locale?: string;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EducationCardPageResponse"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    get_education_card: {
+        parameters: {
+            query?: {
+                locale?: string;
+                version?: string | null;
+            };
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EducationCardResponse"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

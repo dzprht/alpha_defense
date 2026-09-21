@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "code": "credential_requests",
+      "version": "1.0.0",
+      "title": "Запрос секретных данных",
+      "summary": "Какие данные нельзя передавать человеку из входящего обращения.",
+      "reviewed_at": "2026-09-21T00:00:00Z"
+    }
+  ],
+  "next_cursor": null,
+  "locale": "ru-RU",
+  "requested_locale": "ru-RU",
+  "locale_fallback": false,
+  "content_version": "66bc55cf4bc40982fd40a0aaeaa3f357dc2777232138809b185b52114ce33879"
+}

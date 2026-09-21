@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
@@ -14,6 +15,7 @@ from jsonschema.exceptions import SchemaError
 
 from alpha_defense.application.ports import (
     CatalogSnapshot,
+    EducationCatalogSnapshot,
     FixtureEnvelope,
     FixtureReference,
     JsonValue,
@@ -23,15 +25,29 @@ from alpha_defense.application.ports import (
     TrustedEntitiesSnapshot,
     TrustedEntity,
 )
+from alpha_defense.domain.education import (
+    ClassificationCopy,
+    CompletenessCopy,
+    EducationCard,
+    GuidanceCatalog,
+    GuidanceCompleteness,
+    Recommendation,
+)
+from alpha_defense.domain.shared import Severity
 
 SCHEMA_VERSION = "1.0"
 FIXTURE_VERSION = "1.0.0"
 TRUSTED_ENTITIES_FILE = "demo-trusted-entities-v1.json"
 MAX_JSON_BYTES = 1_048_576
+MAX_MARKDOWN_BYTES = 65_536
+DEFAULT_LOCALE = "ru-RU"
+GUIDANCE_FILE = "demo-guidance-ru-v1.json"
 
 _POLICY_SCHEMA = "policy.v1.schema.json"
 _TRUSTED_SCHEMA = "trusted-entities.v1.schema.json"
 _FIXTURE_SCHEMA = "fixture-envelope.v1.schema.json"
+_GUIDANCE_SCHEMA = "recommendations.v1.schema.json"
+_EDUCATION_CARD_SCHEMA = "education-card.v1.schema.json"
 _FIXTURE_KINDS = {"communications": "communication", "threats": "threat"}
 _SIGNAL_CODES = {
     "active_fraud_network_link",
@@ -79,18 +95,222 @@ class LocalCatalogLoader:
     def load(self) -> CatalogSnapshot:
         policy = self.load_policy()
         trusted = self.load_trusted_entities()
+        guidance = self.load_guidance(DEFAULT_LOCALE)
+        education = self.load_education(DEFAULT_LOCALE)
+        self._validate_guidance_card_references(guidance, education)
         fixtures = self.load_fixtures()
         digest_items = [
             policy.content_sha256,
             trusted.content_sha256,
+            guidance.content_sha256,
+            education.content_sha256,
             *(fixture.file_sha256 for fixture in fixtures),
         ]
         return CatalogSnapshot(
             policy=policy,
             trusted_entities=trusted,
+            guidance=guidance,
+            education=education,
             fixtures=fixtures,
             catalog_sha256=_canonical_sha256(digest_items),
         )
+
+    def load_guidance(self, locale: str) -> GuidanceCatalog:
+        """Load reviewed Russian copy, falling back explicitly for other locales."""
+
+        _require_locale(locale)
+        try:
+            return self._load_guidance()
+        except CatalogValidationError:
+            raise
+        except (TypeError, ValueError) as exc:
+            raise CatalogValidationError(
+                "invalid_catalog",
+                f"recommendations/{GUIDANCE_FILE}",
+                "guidance domain invariants are not satisfied",
+            ) from exc
+
+    def _load_guidance(self) -> GuidanceCatalog:
+        resource = f"recommendations/{GUIDANCE_FILE}"
+        document = self._load_document(
+            self._content_root,
+            resource,
+            schema_name=_GUIDANCE_SCHEMA,
+        )
+        _require_supported_schema(document, resource)
+        _verify_document_hash(document, resource)
+        classifications = tuple(
+            ClassificationCopy(
+                severity=Severity(_string(item_object, "severity", resource)),
+                risk_label=_string(item_object, "risk_label", resource),
+                explanation=_string(item_object, "explanation", resource),
+            )
+            for item_object in (
+                _as_object(item, resource) for item in _array(document, "classifications", resource)
+            )
+        )
+        completeness_copies = tuple(
+            CompletenessCopy(
+                completeness=GuidanceCompleteness(_string(item_object, "completeness", resource)),
+                explanation=_string(item_object, "explanation", resource),
+            )
+            for item_object in (
+                _as_object(item, resource) for item in _array(document, "completeness", resource)
+            )
+        )
+        recommendations = tuple(
+            Recommendation(
+                code=_string(item_object, "code", resource),
+                title=_string(item_object, "title", resource),
+                body=_string(item_object, "body", resource),
+                reason_codes=_string_tuple(item_object, "reason_codes", resource),
+                education_card_codes=_string_tuple(
+                    item_object,
+                    "education_card_codes",
+                    resource,
+                ),
+                uses_trusted_support_contact=_boolean(
+                    item_object,
+                    "uses_trusted_support_contact",
+                    resource,
+                ),
+            )
+            for item_object in (
+                _as_object(item, resource) for item in _array(document, "recommendations", resource)
+            )
+        )
+        selection = _object(document, "selection", resource)
+        support = _object(document, "support", resource)
+        return GuidanceCatalog(
+            catalog_version=_string(document, "catalog_version", resource),
+            locale=_string(document, "locale", resource),
+            reviewed_at=_utc_datetime(_string(document, "reviewed_at", resource), resource),
+            classifications=classifications,
+            completeness_copies=completeness_copies,
+            recommendations=recommendations,
+            default_recommendation_code=_string(selection, "default", resource),
+            unsupported_reason_recommendation_code=_string(
+                selection,
+                "unsupported_reason",
+                resource,
+            ),
+            partial_recommendation_code=_string(selection, "partial", resource),
+            unavailable_recommendation_code=_string(selection, "unavailable", resource),
+            support_with_contact=_string(support, "with_contact", resource),
+            support_without_contact=_string(support, "without_contact", resource),
+            content_sha256=_string(document, "content_sha256", resource),
+        )
+
+    def load_education(self, locale: str) -> EducationCatalogSnapshot:
+        """Load published cards; unsupported locales use the documented Russian fallback."""
+
+        _require_locale(locale)
+        try:
+            return self._load_education()
+        except CatalogValidationError:
+            raise
+        except (TypeError, ValueError) as exc:
+            raise CatalogValidationError(
+                "invalid_catalog",
+                "education",
+                "education domain invariants are not satisfied",
+            ) from exc
+
+    def _load_education(self) -> EducationCatalogSnapshot:
+        effective_locale = DEFAULT_LOCALE
+        directory = _safe_directory(self._content_root, "education")
+        cards = tuple(self._load_education_card(path) for path in _markdown_files(directory))
+        localized = tuple(
+            sorted(
+                (card for card in cards if card.locale == effective_locale),
+                key=lambda card: (card.code, card.version),
+            )
+        )
+        if not localized:
+            raise CatalogValidationError(
+                "catalog_unavailable",
+                "education",
+                "mandatory education catalog has no published cards",
+            )
+        identities = [(card.code, card.locale, card.version) for card in localized]
+        if len(set(identities)) != len(identities):
+            raise CatalogValidationError(
+                "duplicate_entry",
+                "education",
+                "education card identities must be unique",
+            )
+        return EducationCatalogSnapshot(
+            locale=effective_locale,
+            cards=localized,
+            content_sha256=_canonical_sha256([card.content_sha256 for card in localized]),
+        )
+
+    def get_education_card(
+        self,
+        code: str,
+        locale: str,
+        version: str | None = None,
+    ) -> EducationCard | None:
+        snapshot = self.load_education(locale)
+        matches = tuple(
+            card
+            for card in snapshot.cards
+            if card.code == code and (version is None or card.version == version)
+        )
+        return matches[-1] if matches else None
+
+    def trusted_support_contact(self) -> TrustedEntity | None:
+        return next(
+            (
+                entity
+                for entity in self.load_trusted_entities().entities
+                if entity.kind == "support_contact" and entity.status == "trusted"
+            ),
+            None,
+        )
+
+    def _load_education_card(self, path: Path) -> EducationCard:
+        resolved = _require_inside_root(path, self._content_root, "education")
+        resource = resolved.relative_to(self._content_root).as_posix()
+        document = _read_markdown_document(resolved, resource)
+        self._validate_schema(
+            document,
+            resource=resource,
+            schema_name=_EDUCATION_CARD_SCHEMA,
+        )
+        _require_supported_schema(document, resource)
+        _verify_document_hash(document, resource)
+        return EducationCard(
+            code=_string(document, "code", resource),
+            locale=_string(document, "locale", resource),
+            version=_string(document, "version", resource),
+            title=_string(document, "title", resource),
+            summary=_string(document, "summary", resource),
+            body=_string(document, "body", resource),
+            source_links=_string_tuple(document, "source_links", resource),
+            reviewed_at=_utc_datetime(_string(document, "reviewed_at", resource), resource),
+            status=_string(document, "status", resource),
+            content_sha256=_string(document, "content_sha256", resource),
+        )
+
+    @staticmethod
+    def _validate_guidance_card_references(
+        guidance: GuidanceCatalog,
+        education: EducationCatalogSnapshot,
+    ) -> None:
+        card_codes = {card.code for card in education.cards}
+        referenced = {
+            code
+            for recommendation in guidance.recommendations
+            for code in recommendation.education_card_codes
+        }
+        missing = referenced - card_codes
+        if missing:
+            raise CatalogValidationError(
+                "invalid_reference",
+                "recommendations",
+                "recommendation references an unknown education card",
+            )
 
     def load_policy(self) -> PolicySnapshot:
         resource = f"policies/{self._policy_version}.json"
@@ -370,6 +590,73 @@ def _read_json_object(path: Path, resource: str) -> dict[str, JsonValue]:
     return cast(dict[str, JsonValue], decoded)
 
 
+def _read_markdown_document(path: Path, resource: str) -> dict[str, JsonValue]:
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise CatalogValidationError(
+            "catalog_unavailable",
+            resource,
+            "file cannot be read",
+        ) from exc
+    if len(raw) > MAX_MARKDOWN_BYTES:
+        raise CatalogValidationError(
+            "file_too_large",
+            resource,
+            "Markdown file exceeds size limit",
+        )
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise CatalogValidationError(
+            "invalid_markdown",
+            resource,
+            "file is not UTF-8",
+        ) from exc
+    if not text.startswith("---\n") or "\n---\n" not in text[4:]:
+        raise CatalogValidationError(
+            "invalid_markdown",
+            resource,
+            "safe front matter is required",
+        )
+    front_matter, separator, body = text[4:].partition("\n---\n")
+    if not separator or not body.strip():
+        raise CatalogValidationError(
+            "invalid_markdown",
+            resource,
+            "front matter and body are required",
+        )
+    document: dict[str, JsonValue] = {}
+    for line in front_matter.splitlines():
+        key, delimiter, encoded_value = line.partition(":")
+        if not delimiter or not key or key != key.strip() or key in document:
+            raise CatalogValidationError(
+                "invalid_markdown",
+                resource,
+                "front matter keys must be unique and unindented",
+            )
+        try:
+            decoded = json.loads(
+                encoded_value.strip(),
+                parse_constant=_reject_json_constant,
+            )
+        except (json.JSONDecodeError, _NonFiniteNumberError) as exc:
+            raise CatalogValidationError(
+                "invalid_markdown",
+                resource,
+                "front matter values must be safe JSON literals",
+            ) from exc
+        if isinstance(decoded, dict):
+            raise CatalogValidationError(
+                "invalid_markdown",
+                resource,
+                "front matter objects are not supported",
+            )
+        document[key] = cast(JsonValue, decoded)
+    document["body"] = body.strip()
+    return document
+
+
 class _DuplicateKeyError(ValueError):
     pass
 
@@ -442,6 +729,24 @@ def _json_files(directory: Path) -> tuple[Path, ...]:
         raise CatalogValidationError(
             "catalog_unavailable", directory.name, "fixture directory cannot be read"
         ) from exc
+
+
+def _markdown_files(directory: Path) -> tuple[Path, ...]:
+    try:
+        paths = tuple(sorted(path for path in directory.rglob("*.md") if path.is_file()))
+    except OSError as exc:
+        raise CatalogValidationError(
+            "catalog_unavailable",
+            directory.name,
+            "education directory cannot be read",
+        ) from exc
+    if not paths:
+        raise CatalogValidationError(
+            "catalog_unavailable",
+            directory.name,
+            "mandatory education directory has no Markdown files",
+        )
+    return paths
 
 
 def _require_supported_schema(document: Mapping[str, JsonValue], resource: str) -> None:
@@ -558,6 +863,33 @@ def _integer(document: Mapping[str, JsonValue], key: str, resource: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise CatalogValidationError("invalid_catalog", resource, f"{key} must be an integer")
     return value
+
+
+def _boolean(document: Mapping[str, JsonValue], key: str, resource: str) -> bool:
+    value = document.get(key)
+    if not isinstance(value, bool):
+        raise CatalogValidationError("invalid_catalog", resource, f"{key} must be a boolean")
+    return value
+
+
+def _string_tuple(
+    document: Mapping[str, JsonValue],
+    key: str,
+    resource: str,
+) -> tuple[str, ...]:
+    values = _array(document, key, resource)
+    if any(not isinstance(value, str) for value in values):
+        raise CatalogValidationError(
+            "invalid_catalog",
+            resource,
+            f"{key} must contain strings",
+        )
+    return tuple(cast(str, value) for value in values)
+
+
+def _require_locale(locale: object) -> None:
+    if not isinstance(locale, str) or not re.fullmatch(r"[a-z]{2}-[A-Z]{2}", locale):
+        raise ValueError("locale must use language-REGION format")
 
 
 def _utc_datetime(value: str, resource: str) -> datetime:

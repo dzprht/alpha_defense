@@ -14,6 +14,8 @@ from alpha_defense.application.ports.communications import (
 from alpha_defense.application.ports.content import (
     CatalogLoaderPort,
     CatalogSnapshot,
+    ContentCatalogPort,
+    EducationCatalogSnapshot,
     FixtureEnvelope,
     FixtureReference,
     PolicySnapshot,
@@ -77,6 +79,8 @@ __all__ = [
     "Clock",
     "CommunicationsUnitOfWorkFactory",
     "CommunicationsUnitOfWorkPort",
+    "ContentCatalogPort",
+    "EducationCatalogSnapshot",
     "EventEnvelope",
     "EventHandler",
     "EventSinkPort",

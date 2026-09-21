@@ -107,6 +107,212 @@
         "title": "DependencyStatus",
         "type": "object"
       },
+      "EducationCardPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "content_version": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Content Version",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EducationCardSummaryResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "locale": {
+            "pattern": "^[a-z]{2}-[A-Z]{2}$",
+            "title": "Locale",
+            "type": "string"
+          },
+          "locale_fallback": {
+            "title": "Locale Fallback",
+            "type": "boolean"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "requested_locale": {
+            "pattern": "^[a-z]{2}-[A-Z]{2}$",
+            "title": "Requested Locale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "locale",
+          "requested_locale",
+          "locale_fallback",
+          "content_version"
+        ],
+        "title": "EducationCardPageResponse",
+        "type": "object"
+      },
+      "EducationCardResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          },
+          "code": {
+            "pattern": "^[a-z][a-z0-9_]{1,63}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "content_version": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Content Version",
+            "type": "string"
+          },
+          "fallback_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unsupported_code",
+                  "unsupported_version"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Reason"
+          },
+          "locale": {
+            "pattern": "^[a-z]{2}-[A-Z]{2}$",
+            "title": "Locale",
+            "type": "string"
+          },
+          "locale_fallback": {
+            "title": "Locale Fallback",
+            "type": "boolean"
+          },
+          "requested_code": {
+            "pattern": "^[a-z][a-z0-9_]{1,63}$",
+            "title": "Requested Code",
+            "type": "string"
+          },
+          "requested_locale": {
+            "pattern": "^[a-z]{2}-[A-Z]{2}$",
+            "title": "Requested Locale",
+            "type": "string"
+          },
+          "requested_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Version"
+          },
+          "reviewed_at": {
+            "format": "date-time",
+            "title": "Reviewed At",
+            "type": "string"
+          },
+          "source_links": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Links",
+            "type": "array"
+          },
+          "summary": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "version",
+          "title",
+          "summary",
+          "body",
+          "source_links",
+          "reviewed_at",
+          "locale",
+          "requested_locale",
+          "locale_fallback",
+          "requested_code",
+          "requested_version",
+          "fallback_reason",
+          "content_version"
+        ],
+        "title": "EducationCardResponse",
+        "type": "object"
+      },
+      "EducationCardSummaryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "pattern": "^[a-z][a-z0-9_]{1,63}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "reviewed_at": {
+            "format": "date-time",
+            "title": "Reviewed At",
+            "type": "string"
+          },
+          "summary": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "version",
+          "title",
+          "summary",
+          "reviewed_at"
+        ],
+        "title": "EducationCardSummaryResponse",
+        "type": "object"
+      },
       "FieldError": {
         "additionalProperties": false,
         "properties": {
@@ -488,6 +694,191 @@
         "summary": "Update Consent",
         "tags": [
           "identity"
+        ]
+      }
+    },
+    "/api/v1/education/cards": {
+      "get": {
+        "operationId": "list_education_cards",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "locale",
+            "required": false,
+            "schema": {
+              "default": "ru-RU",
+              "pattern": "^[a-z]{2}-[A-Z]{2}$",
+              "title": "Locale",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 1024,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationCardPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          }
+        },
+        "summary": "List Education Cards",
+        "tags": [
+          "education"
+        ]
+      }
+    },
+    "/api/v1/education/cards/{code}": {
+      "get": {
+        "operationId": "get_education_card",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9_]{1,63}$",
+              "title": "Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "locale",
+            "required": false,
+            "schema": {
+              "default": "ru-RU",
+              "pattern": "^[a-z]{2}-[A-Z]{2}$",
+              "title": "Locale",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EducationCardResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          }
+        },
+        "summary": "Get Education Card",
+        "tags": [
+          "education"
         ]
       }
     },

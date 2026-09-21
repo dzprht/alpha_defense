@@ -11,6 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from alpha_defense.application.communications import GetObservation, IngestObservation
 from alpha_defense.application.detection import AssessObservation
+from alpha_defense.application.education import GetCard, GetGuidance, ListCards
 from alpha_defense.application.identity import IdentityService, IdentityServicePort
 from alpha_defense.application.incidents import AttachObservation, GetIncident, ResolveIncident
 from alpha_defense.application.ports import (
@@ -70,6 +71,9 @@ class Container:
     resolve_incident: ResolveIncident
     analyze_contact: AnalyzeContact
     assess_observation: AssessObservation
+    get_guidance: GetGuidance
+    list_cards: ListCards
+    get_card: GetCard
 
     def close(self) -> None:
         self.engine.dispose()
@@ -165,6 +169,9 @@ def build_container(settings: Settings) -> Container:
             clock=clock,
             id_generator=id_generator,
         ),
+        get_guidance=GetGuidance(catalog),
+        list_cards=ListCards(catalog),
+        get_card=GetCard(catalog),
     )
 
 

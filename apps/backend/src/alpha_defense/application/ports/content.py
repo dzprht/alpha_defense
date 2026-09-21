@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Protocol
 
 from alpha_defense.application.ports.events import JsonValue
+from alpha_defense.domain.education import EducationCard, GuidanceCatalog
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,6 +59,13 @@ class TrustedEntitiesSnapshot:
 
 
 @dataclass(frozen=True, slots=True)
+class EducationCatalogSnapshot:
+    locale: str
+    cards: tuple[EducationCard, ...]
+    content_sha256: str
+
+
+@dataclass(frozen=True, slots=True)
 class FixtureReference:
     path: str
     sha256: str
@@ -85,9 +93,28 @@ class CatalogSnapshot:
     trusted_entities: TrustedEntitiesSnapshot
     fixtures: tuple[FixtureEnvelope, ...]
     catalog_sha256: str
+    guidance: GuidanceCatalog | None = None
+    education: EducationCatalogSnapshot | None = None
 
 
 class CatalogLoaderPort(Protocol):
     """Load one fully validated plain view of mandatory local catalogs."""
 
     def load(self) -> CatalogSnapshot: ...
+
+
+class ContentCatalogPort(Protocol):
+    """Read reviewed guidance and education content with deterministic fallback."""
+
+    def load_guidance(self, locale: str) -> GuidanceCatalog: ...
+
+    def load_education(self, locale: str) -> EducationCatalogSnapshot: ...
+
+    def get_education_card(
+        self,
+        code: str,
+        locale: str,
+        version: str | None = None,
+    ) -> EducationCard | None: ...
+
+    def trusted_support_contact(self) -> TrustedEntity | None: ...

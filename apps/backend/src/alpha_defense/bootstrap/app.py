@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.types import Lifespan
 
+from alpha_defense.application.education import GetCard, ListCards
 from alpha_defense.application.identity import IdentityServicePort
 from alpha_defense.application.ports import ReadinessPort
 from alpha_defense.bootstrap.container import build_container
@@ -26,6 +27,8 @@ def create_http_app(
     cors_origins: tuple[str, ...] = ("http://localhost:5173",),
     allowed_hosts: tuple[str, ...] = ("127.0.0.1", "localhost", "testserver"),
     identity_service: IdentityServicePort | None = None,
+    list_cards: ListCards | None = None,
+    get_card: GetCard | None = None,
     secure_cookies: bool = False,
     lifespan: Lifespan[FastAPI] | None = None,
 ) -> FastAPI:
@@ -42,6 +45,8 @@ def create_http_app(
     )
     app.state.readiness = readiness
     app.state.identity_service = identity_service
+    app.state.list_cards = list_cards
+    app.state.get_card = get_card
     app.state.cookie_policy = CookiePolicy(secure=secure_cookies)
     app.include_router(api_v1_router)
     install_exception_handlers(app)
@@ -79,6 +84,8 @@ def create_app() -> FastAPI:
         cors_origins=settings.cors_origins,
         allowed_hosts=settings.allowed_hosts,
         identity_service=container.identity_service,
+        list_cards=container.list_cards,
+        get_card=container.get_card,
         secure_cookies=settings.app_env is AppEnvironment.PRODUCTION,
         lifespan=lifespan,
     )

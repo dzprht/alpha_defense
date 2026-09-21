@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://alpha-defense.local/schemas/education-card.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "code",
+    "locale",
+    "version",
+    "title",
+    "summary",
+    "body",
+    "source_links",
+    "reviewed_at",
+    "status",
+    "content_sha256"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "code": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$" },
+    "locale": { "type": "string", "pattern": "^[a-z]{2}-[A-Z]{2}$" },
+    "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 120, "pattern": "^[^<>{}]+$" },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 300, "pattern": "^[^<>{}]+$" },
+    "body": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10000,
+      "pattern": "^[^<>{}]+$",
+      "not": { "pattern": "(^|\\n)\\s*(import|export)\\s" }
+    },
+    "source_links": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 10,
+      "items": { "type": "string", "format": "uri", "pattern": "^https://" }
+    },
+    "reviewed_at": { "type": "string", "format": "date-time" },
+    "status": { "const": "published" },
+    "content_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}
