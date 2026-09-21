@@ -1,5 +1,11 @@
 """Interfaces implemented by runtime and infrastructure adapters."""
 
+from alpha_defense.application.ports.analysis import (
+    ResourceAnalysisPort,
+    ResourceAnalysisRequest,
+    TextAnalysisPort,
+    TextAnalysisRequest,
+)
 from alpha_defense.application.ports.communications import (
     CommunicationsUnitOfWorkFactory,
     CommunicationsUnitOfWorkPort,
@@ -97,8 +103,12 @@ __all__ = [
     "ReadinessPort",
     "ReadinessReport",
     "RepositoryPort",
+    "ResourceAnalysisPort",
+    "ResourceAnalysisRequest",
     "RiskThresholds",
     "SignalPolicy",
+    "TextAnalysisPort",
+    "TextAnalysisRequest",
     "ThreatBatch",
     "ThreatFeedPort",
     "ThreatFeedRecord",

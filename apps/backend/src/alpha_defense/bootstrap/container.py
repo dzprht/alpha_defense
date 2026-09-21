@@ -10,6 +10,7 @@ from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.exc import SQLAlchemyError
 
 from alpha_defense.application.communications import GetObservation, IngestObservation
+from alpha_defense.application.detection import AssessObservation
 from alpha_defense.application.identity import IdentityService, IdentityServicePort
 from alpha_defense.application.incidents import AttachObservation, GetIncident, ResolveIncident
 from alpha_defense.application.ports import (
@@ -27,6 +28,10 @@ from alpha_defense.application.threats import (
 from alpha_defense.application.workflows import AnalyzeContact
 from alpha_defense.bootstrap.settings import Settings
 from alpha_defense.domain.shared import ExecutionMode
+from alpha_defense.infrastructure.analysis.mock import (
+    DeterministicTextAnalyzer,
+    DeterministicUrlAnalyzer,
+)
 from alpha_defense.infrastructure.content import LocalCatalogLoader
 from alpha_defense.infrastructure.identity.mock import HmacSecurityTokens, SyntheticIdentityProvider
 from alpha_defense.infrastructure.observability import (
@@ -64,6 +69,7 @@ class Container:
     get_incident: GetIncident
     resolve_incident: ResolveIncident
     analyze_contact: AnalyzeContact
+    assess_observation: AssessObservation
 
     def close(self) -> None:
         self.engine.dispose()
@@ -151,6 +157,13 @@ def build_container(settings: Settings) -> Container:
             unit_of_work=factory,
             ingest_observation=ingest_observation,
             attach_observation=attach_observation,
+        ),
+        assess_observation=AssessObservation(
+            catalog=catalog,
+            text_analyzer=DeterministicTextAnalyzer(),
+            resource_analyzer=DeterministicUrlAnalyzer(),
+            clock=clock,
+            id_generator=id_generator,
         ),
     )
 
