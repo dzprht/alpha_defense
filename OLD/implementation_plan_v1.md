@@ -1,6 +1,6 @@
 # Порядок и протокол реализации «Альфа Защиты»
 
-Версия 1.0 от 2026-09-14. Это рабочий чеклист будущей реализации по [ARCHITECTURE.md](ARCHITECTURE.md), а не отчет о готовом приложении. На момент создания документа все задачи реализации открыты. Текущий запрос создает только этот протокол; запуск разработки определяется отдельным запросом пользователя.
+Версия 1.0 от 2026-09-14. Это рабочий чеклист будущей реализации по [ARCHITECTURE.md](architecture_v1.md), а не отчет о готовом приложении. На момент создания документа все задачи реализации открыты. Документ задаёт порядок работы; разработка начинается отдельным этапом.
 
 ## Навигация
 
@@ -22,19 +22,19 @@
 
 <a id="execution-protocol"></a>
 
-## 1. Как другому агенту работать с документом
+## 1. Порядок работы с документом
 
-Источники имеют разные обязанности: [TASK.md](../TASK.md) задает требуемый результат; [ARCHITECTURE.md](ARCHITECTURE.md) — устройство и бизнес-контракты; этот документ — порядок работ, границы задач и доказательства завершения. Новый запрос пользователя может менять объем работы; фиксировать его влияние в документах, не подменять архитектуру незаметно. При ссылке на архитектуру использовать якорь раздела: номера строк изменяются.
+Источники имеют разные обязанности: [TASK.md](case_brief.md) задает требуемый результат; [ARCHITECTURE.md](architecture_v1.md) — устройство и бизнес-контракты; этот документ — порядок работ, границы задач и доказательства завершения. Изменения объёма работы фиксируются в требованиях и архитектуре. При ссылке на архитектуру использовать якорь раздела: номера строк изменяются.
 
 ### 1.1. Выбор следующей задачи
 
 1. Прочитать [AGENTS.md](../AGENTS.md), актуальные TASK/ARCHITECTURE, этот протокол и последнюю запись [журнала](#work-log). Проверить реальные файлы и изменения рабочей копии; прежняя галочка не заменяет проверку наличия результата.
-2. Установить разрешенный текущим запросом объем. При запросе «реализуй по плану» последовательно выполнять P01–P40 в пределах доступных условий; не запрашивать новое разрешение на каждый обычный пункт. При запросе только одной фичи выполнять ее и необходимые технические предпосылки в согласованном объеме; не запускать независимые фичи автоматически.
+2. Определить объём этапа. При реализации всего плана последовательно выполнять P01–P40 в пределах доступных условий. При работе над одной фичей ограничиться ею и её техническими предпосылками; независимые фичи выполнять отдельными задачами.
 3. Выбрать самый ранний незавершенный P-пункт, все зависимости которого завершены и сохраняют пригодность. Блокированный пункт можно обойти только ради независимой задачи с выполненными зависимостями. E-пункты в этот автоматический выбор не входят.
 4. Указать в карточке исполнителя и статус `in_progress`, сохранив чекбокс пустым. Прочитать указанные разделы архитектуры полностью. Уточнять локальные детали реализации в их пределах самостоятельно.
 5. Сделать ограниченный результат карточки, пройти ее проверки и общие условия готовности. Изменения соседней фичи допускаются только как необходимая часть контракта; крупный дополнительный объем оформить отдельной задачей.
 6. Записать фактические файлы, команды и результаты в журнал, затем изменить чекбокс на `[x]` и статус на `done`. Если готова лишь часть — оставить `[ ]`, описать остаток и точное следующее действие.
-7. Перейти к следующему доступному пункту. Не выдавать остановку сессии агента, исчерпание времени или черновик за завершение задачи.
+7. Перейти к следующему доступному пункту. Перерыв, истечение выделенного времени или наличие черновика не означают завершения задачи.
 
 Нельзя выполнять платежный happy path на заглушках «нет сигнала = безопасно». Если зависимость еще не реализована, она либо не используется в текущей законченной подзадаче, либо возвращает предусмотренный unavailable; задача, требующая полноценного поведения этой зависимости, остается открытой.
 
@@ -55,7 +55,7 @@
 
 P-пункт — одна законченная способность или ограниченный технический фундамент. Объем задан выходами и приемкой, а не количеством строк кода/часов. Нет требования создавать все перечисленные в архитектуре будущие файлы заранее.
 
-Основной порядок линейный, зависимости позволяют безопасное распараллеливание. Один агент владеет одной изменяемой карточкой; совместные DTO, migrations и bootstrap согласуются до редактирования. Независимые задания можно делегировать с явными путями и выходами. Итоговую галочку ставит агент, проверивший объединенный результат.
+Основной порядок линейный, зависимости позволяют безопасное распараллеливание. За изменяемую карточку отвечает один исполнитель; совместные DTO, migrations и bootstrap согласуются до редактирования. Независимые задания можно делегировать с явными путями и выходами. Задача отмечается выполненной после проверки объединённого результата.
 
 Если карточка не помещается в разумный рабочий шаг, добавить подзадачи `Pxx.a`, `Pxx.b` с той же структурой полей, зависимостями и журналом. Исходный Pxx становится контрольной точкой и закрывается только после всех обязательных подзадач. Нумерацию существующих ID не менять; при удалении требования оставить объясненную запись и обновить зависимые пункты, не ставить фиктивную галочку.
 
@@ -66,14 +66,14 @@ P-пункт — одна законченная способность или �
 **Общее условие DONE** применяется к каждой карточке вместе с ее собственной приемкой:
 
 - Результат можно вызвать/использовать указанным способом; нет обязательных веток с `pass`, `NotImplementedError`, произвольным константным ответом или TODO вместо требуемого поведения. Полноценный детерминированный fake-адаптер допустим там, где предусмотрен архитектурой.
-- Соблюдены [слои и импорты](ARCHITECTURE.md#dependency-rule), [форматы](ARCHITECTURE.md#contracts) и [правила файлов](ARCHITECTURE.md#naming). У domain нет I/O, фреймворков и глобальных часов; application не зависит от конкретного SDK; межфичевую координацию выполняют workflows.
+- Соблюдены [слои и импорты](architecture_v1.md#dependency-rule), [форматы](architecture_v1.md#contracts) и [правила файлов](architecture_v1.md#naming). У domain нет I/O, фреймворков и глобальных часов; application не зависит от конкретного SDK; межфичевую координацию выполняют workflows.
 - Для сохраняемых сущностей есть mapper, repository, миграция и проверка инвариантов хранения. Для команды — ownership/namespace, валидация, разрешенные переходы, идемпотентность и ошибки в применимой части. Внешний сайд-эффект не выполняется внутри SQL-транзакции.
 - При появлении HTTP-контракта есть transport-схемы, корректные коды/Problem Details, актуальный экспорт OpenAPI, сгенерированные типы web и валидные примеры. Нереализованный endpoint не публикуется как работающий stub.
 - В UI предусмотрены требуемые ready/loading/error/empty и бизнес-состояния, русский текст и доступные действия. Backend остается источником риска и финансового статуса.
 - Проверки подтверждают важное поведение и отказ, а не повторяют строки реализации. Для чистого форматирования/простого обратимого текста отдельные тесты не добавлять без причины. Выполнять тесты карточки, необходимые общие проверки и затронутую регрессию; весь набор запускать на контрольных точках или при широком изменении.
 - Отрицательная проверка подтверждает ожидаемый отказ, а не случайное падение. Незавершенный прогон, skipped обязательный тест, отсутствующий браузер и «должно работать» не считаются PASS.
 - Проверены собственные изменения и `git diff --check`; сохранены пользовательские изменения. Обновлены затронутые документы и [журнал](#work-log). Commit hash указывать, если commit уже существует; создание commit/push не является условием галочки.
-- После каждой завершенной P-карточки обновлен [конспект для защиты](presentation/defense-guide.md): добавленная способность объяснена на уровне устройства, гарантий и ограничений без низкоуровневого перечня функций. В конспект не переносятся планы как свершившиеся факты.
+- После каждой завершенной P-карточки обновлен [конспект для защиты](../docs/presentation/defense-guide.md): добавленная способность объяснена на уровне устройства, гарантий и ограничений без низкоуровневого перечня функций. В конспект не переносятся планы как свершившиеся факты.
 - Остатки, способные нарушить приемку карточки, отсутствуют. Необязательные улучшения можно вынести в отдельный backlog, с объяснением почему они не нужны для ее завершения.
 
 **Среда:** Python по умолчанию — `/Users/Shared/github/MachineLearning/ml_venv/bin/python`. Не выполнять разрушительное синхронизирование общего venv. Node-зависимости устанавливать в `apps/web/`. В P01 зафиксировать точные совместимые версии и проверенные команды; этот документ не утверждает, что они уже установлены.
@@ -97,7 +97,7 @@ P-пункт — одна законченная способность или �
 | Техническая готовность | P32–P36 | Полный прогон, эксплуатация, доступность, комплект демонстрации |
 | Сдача TASK | P37–P40 | Реальные UX-сессии, выводы, презентация, итоговая приемка |
 
-Это детализация [§18 архитектуры](ARCHITECTURE.md#implementation). Минимальный реестр, content, outbox и namespace нужны уже для первого S01; история/behavior/network нужны до законченного transfer check. Поэтому часть компонентов «всех сценариев» намеренно реализуется раньше их общей приемки. Структура слоев и контракты архитектуры не меняются.
+Это детализация [§18 архитектуры](architecture_v1.md#implementation). Минимальный реестр, content, outbox и namespace нужны уже для первого S01; история/behavior/network нужны до законченного transfer check. Поэтому часть компонентов «всех сценариев» намеренно реализуется раньше их общей приемки. Структура слоев и контракты архитектуры не меняются.
 
 Пути в карточках: `B = apps/backend/src/alpha_defense/`, `W = apps/web/src/`; префиксы относятся только к путям внутри кода в карточках. Документальные ссылки ведут к реальным разделам. Имена будущих файлов показаны как спецификация, без неработающих ссылок на еще несуществующие файлы.
 
@@ -109,11 +109,11 @@ P-пункт — одна законченная способность или �
 
 ### P01. Зафиксировать инструменты, зависимости и команды разработки
 
-- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done.
 
 **Зависимости:** нет.
 
-**Архитектура:** [§2.1: стек](ARCHITECTURE.md#stack); [§3.2: форматирование](ARCHITECTURE.md#naming); [§18.2: проверки](ARCHITECTURE.md#verification).
+**Архитектура:** [§2.1: стек](architecture_v1.md#stack); [§3.2: форматирование](architecture_v1.md#naming); [§18.2: проверки](architecture_v1.md#verification).
 
 **Где и какой результат:** apps/backend/pyproject.toml, uv.lock; apps/web/package.json, package-lock.json; ops/runbooks/development.md.
 
@@ -129,11 +129,11 @@ P-пункт — одна законченная способность или �
 
 ### P02. Создать общие типы, ошибки и проверки границ слоев
 
-- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done.
 
 **Зависимости:** [P01](#p01).
 
-**Архитектура:** [§2.2: зависимости](ARCHITECTURE.md#dependency-rule); [§4.11: технические ветки](ARCHITECTURE.md#technical-branches); [§5: контракты](ARCHITECTURE.md#contracts).
+**Архитектура:** [§2.2: зависимости](architecture_v1.md#dependency-rule); [§4.11: технические ветки](architecture_v1.md#technical-branches); [§5: контракты](architecture_v1.md#contracts).
 
 **Где и какой результат:** B/domain/shared/, B/application/shared/, B/application/ports/; backend tests/unit/ и tests/architecture/.
 
@@ -149,11 +149,11 @@ P-пункт — одна законченная способность или �
 
 ### P03. Реализовать хранилище, UnitOfWork и технические гарантии команд
 
-- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done.
 
 **Зависимости:** [P02](#p02).
 
-**Архитектура:** [§7.3: повторы и гонки](ARCHITECTURE.md#idempotency); [§7.4: события](ARCHITECTURE.md#internal-events); [§9: порты](ARCHITECTURE.md#ports); [§14: БД](ARCHITECTURE.md#persistence).
+**Архитектура:** [§7.3: повторы и гонки](architecture_v1.md#idempotency); [§7.4: события](architecture_v1.md#internal-events); [§9: порты](architecture_v1.md#ports); [§14: БД](architecture_v1.md#persistence).
 
 **Где и какой результат:** B/application/ports/{repositories,unit_of_work,events}.py; B/infrastructure/persistence/, runtime/, observability/; apps/backend/migrations/.
 
@@ -169,11 +169,11 @@ P-пункт — одна законченная способность или �
 
 ### P04. Собрать bootstrap, базовый HTTP и генерацию контрактов
 
-- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done.
 
 **Зависимости:** [P03](#p03).
 
-**Архитектура:** [§4.11: сборка](ARCHITECTURE.md#technical-branches); [§8: API](ARCHITECTURE.md#api); [§8.1: ошибки](ARCHITECTURE.md#http-errors); [§11: конфигурация](ARCHITECTURE.md#configuration).
+**Архитектура:** [§4.11: сборка](architecture_v1.md#technical-branches); [§8: API](architecture_v1.md#api); [§8.1: ошибки](architecture_v1.md#http-errors); [§11: конфигурация](architecture_v1.md#configuration).
 
 **Где и какой результат:** B/bootstrap/, B/transport/http/v1/; contracts/http/, contracts/examples/; ops/local/.env.example; scripts/ для экспорта контрактов.
 
@@ -189,11 +189,11 @@ P-пункт — одна законченная способность или �
 
 ### P05. Реализовать demo-сессии, namespace, роли и согласия
 
-- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done.
 
 **Зависимости:** [P04](#p04).
 
-**Архитектура:** [§4.1: identity](ARCHITECTURE.md#feature-identity); [§5.2: ActorContext](ARCHITECTURE.md#data-models); [§7.3: namespace](ARCHITECTURE.md#idempotency); [§8: session API](ARCHITECTURE.md#api).
+**Архитектура:** [§4.1: identity](architecture_v1.md#feature-identity); [§5.2: ActorContext](architecture_v1.md#data-models); [§7.3: namespace](architecture_v1.md#idempotency); [§8: session API](architecture_v1.md#api).
 
 **Где и какой результат:** B/domain/identity/, application/identity/, infrastructure/identity/mock/; session/consent transport и repositories.
 
@@ -209,11 +209,11 @@ P-пункт — одна законченная способность или �
 
 ### P06. Подготовить web-shell, API-клиент и onboarding
 
-- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done.
 
 **Зависимости:** [P05](#p05).
 
-**Архитектура:** [§10: web-слои и фичи](ARCHITECTURE.md#frontend); [§10.3: UX](ARCHITECTURE.md#ux-contract); [§5: форматы](ARCHITECTURE.md#contracts).
+**Архитектура:** [§10: web-слои и фичи](architecture_v1.md#frontend); [§10.3: UX](architecture_v1.md#ux-contract); [§5: форматы](architecture_v1.md#contracts).
 
 **Где и какой результат:** W/app/, pages/, shared/api/, shared/formatting/, shared/i18n/, shared/styles/, shared/ui/; features/onboarding/.
 
@@ -233,11 +233,11 @@ P-пункт — одна законченная способность или �
 
 ### P07. Создать схемы и загрузку версионированных данных
 
-- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done.
 
 **Зависимости:** [P04](#p04).
 
-**Архитектура:** [§3.1: каталоги](ARCHITECTURE.md#supporting-directories); [§6.1: PolicySnapshot](ARCHITECTURE.md#risk-policy); [§12.1: fixtures](ARCHITECTURE.md#fixture-format).
+**Архитектура:** [§3.1: каталоги](architecture_v1.md#supporting-directories); [§6.1: PolicySnapshot](architecture_v1.md#risk-policy); [§12.1: fixtures](architecture_v1.md#fixture-format).
 
 **Где и какой результат:** contracts/fixtures/, fixtures/communications/, fixtures/threats/; content/policies/, trusted_entities/; B/infrastructure/content/.
 
@@ -253,11 +253,11 @@ P-пункт — одна законченная способность или �
 
 ### P08. Реализовать реестр угроз и атомарное обновление снимков
 
-- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done.
 
 **Зависимости:** [P07](#p07), [P05](#p05).
 
-**Архитектура:** [§4.7: threats](ARCHITECTURE.md#feature-threats); [§9: ThreatFeedPort](ARCHITECTURE.md#ports); [§14: хранение](ARCHITECTURE.md#persistence).
+**Архитектура:** [§4.7: threats](architecture_v1.md#feature-threats); [§9: ThreatFeedPort](architecture_v1.md#ports); [§14: хранение](architecture_v1.md#persistence).
 
 **Где и какой результат:** B/domain/threats/, application/threats/, infrastructure/threat_intel/fixtures/, persistence/; fixtures/threats/; scripts/seed и refresh.
 
@@ -273,11 +273,11 @@ P-пункт — одна законченная способность или �
 
 ### P09. Реализовать наблюдения и нормализацию коммуникаций
 
-- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done.
 
 **Зависимости:** [P05](#p05), [P07](#p07).
 
-**Архитектура:** [§4.2: communications](ARCHITECTURE.md#feature-communications); [§5.2: Observation](ARCHITECTURE.md#data-models); [§5.3: входные лимиты](ARCHITECTURE.md#input-limits).
+**Архитектура:** [§4.2: communications](architecture_v1.md#feature-communications); [§5.2: Observation](architecture_v1.md#data-models); [§5.3: входные лимиты](architecture_v1.md#input-limits).
 
 **Где и какой результат:** B/domain/communications/, application/communications/, persistence/; transport schemas observations; contracts/fixtures/observation schema.
 
@@ -293,11 +293,11 @@ P-пункт — одна законченная способность или �
 
 ### P10. Создать инциденты, корреляцию и немедленную инвалидизацию контекста
 
-- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done.
 
 **Зависимости:** [P09](#p09).
 
-**Архитектура:** [§4.4: incidents](ARCHITECTURE.md#feature-incidents); [§7.1: прием](ARCHITECTURE.md#flow-contact); [§7.3: freshness](ARCHITECTURE.md#idempotency).
+**Архитектура:** [§4.4: incidents](architecture_v1.md#feature-incidents); [§7.1: прием](architecture_v1.md#flow-contact); [§7.3: freshness](architecture_v1.md#idempotency).
 
 **Где и какой результат:** B/domain/incidents/, application/incidents/, application/workflows/analyze_contact.py (часть атомарного приема); incident repositories.
 
@@ -313,11 +313,11 @@ P-пункт — одна законченная способность или �
 
 ### P11. Реализовать оценку риска и детерминированный text/URL-анализ
 
-- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done.
 
 **Зависимости:** [P08](#p08), [P09](#p09).
 
-**Архитектура:** [§4.3: detection](ARCHITECTURE.md#feature-detection); [§5.2: AnalysisResult](ARCHITECTURE.md#data-models); [§6.1: политика](ARCHITECTURE.md#risk-policy).
+**Архитектура:** [§4.3: detection](architecture_v1.md#feature-detection); [§5.2: AnalysisResult](architecture_v1.md#data-models); [§6.1: политика](architecture_v1.md#risk-policy).
 
 **Где и какой результат:** B/domain/detection/, application/detection/, application/ports/analysis.py, infrastructure/analysis/mock/; content/policies/demo-risk-v1.json.
 
@@ -333,11 +333,11 @@ P-пункт — одна законченная способность или �
 
 ### P12. Реализовать рекомендации, учебные карточки и structured assistant
 
-- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done.
 
 **Зависимости:** [P07](#p07), [P11](#p11).
 
-**Архитектура:** [§4.8: education](ARCHITECTURE.md#feature-education); [§3.1: content](ARCHITECTURE.md#supporting-directories); [§8: guidance API](ARCHITECTURE.md#api).
+**Архитектура:** [§4.8: education](architecture_v1.md#feature-education); [§3.1: content](architecture_v1.md#supporting-directories); [§8: guidance API](architecture_v1.md#api).
 
 **Где и какой результат:** B/domain/education/, application/education/, infrastructure/content/; content/recommendations/, education/, trusted_entities/.
 
@@ -357,7 +357,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P10](#p10), [P11](#p11), [P12](#p12).
 
-**Архитектура:** [§4.5: protection](ARCHITECTURE.md#feature-protection); [§6.2: warning states](ARCHITECTURE.md#lifecycle); [§7.4: события](ARCHITECTURE.md#internal-events).
+**Архитектура:** [§4.5: protection](architecture_v1.md#feature-protection); [§6.2: warning states](architecture_v1.md#lifecycle); [§7.4: события](architecture_v1.md#internal-events).
 
 **Где и какой результат:** B/domain/protection/warning.py, warning_policy.py; application/protection/; infrastructure/notifications/in_app/; warning repositories/routes.
 
@@ -377,7 +377,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P08](#p08), [P10](#p10), [P13](#p13).
 
-**Архитектура:** [§4.5: ResourceGate](ARCHITECTURE.md#feature-protection); [§9: ResourceEnforcementPort](ARCHITECTURE.md#ports); [§8: resource API](ARCHITECTURE.md#api).
+**Архитектура:** [§4.5: ResourceGate](architecture_v1.md#feature-protection); [§9: ResourceEnforcementPort](architecture_v1.md#ports); [§8: resource API](architecture_v1.md#api).
 
 **Где и какой результат:** B/domain/protection/resource_gate.py, protection_action.py; application/protection/; infrastructure/resources/mock/; resource gates/actions persistence.
 
@@ -397,7 +397,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P08](#p08), [P10](#p10), [P11](#p11), [P12](#p12), [P13](#p13), [P14](#p14).
 
-**Архитектура:** [§7.1: полный поток](ARCHITECTURE.md#flow-contact); [§7.3: consistency](ARCHITECTURE.md#idempotency); [§8: API](ARCHITECTURE.md#api); [§15: deadline/recovery](ARCHITECTURE.md#reliability).
+**Архитектура:** [§7.1: полный поток](architecture_v1.md#flow-contact); [§7.3: consistency](architecture_v1.md#idempotency); [§8: API](architecture_v1.md#api); [§15: deadline/recovery](architecture_v1.md#reliability).
 
 **Где и какой результат:** B/application/workflows/analyze_contact.py; transport observation/assessment/incident/guidance routes; runtime recovery handlers.
 
@@ -417,7 +417,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P06](#p06), [P15](#p15).
 
-**Архитектура:** [§10: UI фичи](ARCHITECTURE.md#frontend); [§10.3: предупреждение](ARCHITECTURE.md#ux-contract); [§12: S01](ARCHITECTURE.md#scenarios).
+**Архитектура:** [§10: UI фичи](architecture_v1.md#frontend); [§10.3: предупреждение](architecture_v1.md#ux-contract); [§12: S01](architecture_v1.md#scenarios).
 
 **Где и какой результат:** W/features/communication-inbox/, incident-details/, risk-warning/, resource-check/, assistant/, education/; соответствующие pages.
 
@@ -441,7 +441,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P15](#p15).
 
-**Архитектура:** [§4.1: CallVerification](ARCHITECTURE.md#feature-identity); [§6.2: состояния proof](ARCHITECTURE.md#lifecycle); [§9: CallAttestationPort](ARCHITECTURE.md#ports).
+**Архитектура:** [§4.1: CallVerification](architecture_v1.md#feature-identity); [§6.2: состояния proof](architecture_v1.md#lifecycle); [§9: CallAttestationPort](architecture_v1.md#ports).
 
 **Где и какой результат:** B/domain/identity/call_verification.py; application/identity/verify_call.py; infrastructure/identity/mock/; fixtures/identities/; call verification route.
 
@@ -461,7 +461,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P15](#p15), [P07](#p07).
 
-**Архитектура:** [§5.3: media](ARCHITECTURE.md#input-limits); [§9: MediaStore/ResourceAnalysis](ARCHITECTURE.md#ports); [§11: изоляция](ARCHITECTURE.md#configuration).
+**Архитектура:** [§5.3: media](architecture_v1.md#input-limits); [§9: MediaStore/ResourceAnalysis](architecture_v1.md#ports); [§11: изоляция](architecture_v1.md#configuration).
 
 **Где и какой результат:** B/infrastructure/media/local/, analysis/mock/; media port/transport; fixtures/screenshots/ и metadata; contracts/fixtures/.
 
@@ -481,7 +481,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P05](#p05), [P07](#p07), [P11](#p11).
 
-**Архитектура:** [§4.3: behavior](ARCHITECTURE.md#feature-detection); [§5.2: BehaviorProfile](ARCHITECTURE.md#data-models); [§6.1: история/пороги](ARCHITECTURE.md#risk-policy); [§9: history port](ARCHITECTURE.md#ports).
+**Архитектура:** [§4.3: behavior](architecture_v1.md#feature-detection); [§5.2: BehaviorProfile](architecture_v1.md#data-models); [§6.1: история/пороги](architecture_v1.md#risk-policy); [§9: history port](architecture_v1.md#ports).
 
 **Где и какой результат:** B/application/detection/, ports/bank.py, infrastructure/bank/mock/, analysis/behavior/; fixtures/profiles/; history/profile repositories.
 
@@ -501,7 +501,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P08](#p08), [P11](#p11).
 
-**Архитектура:** [§4.7: сетевой контекст](ARCHITECTURE.md#feature-threats); [§9: NetworkAnalysisPort](ARCHITECTURE.md#ports); [§12.1: graph fixtures](ARCHITECTURE.md#fixture-format).
+**Архитектура:** [§4.7: сетевой контекст](architecture_v1.md#feature-threats); [§9: NetworkAnalysisPort](architecture_v1.md#ports); [§12.1: graph fixtures](architecture_v1.md#fixture-format).
 
 **Где и какой результат:** B/infrastructure/analysis/network/; network DTO/port; fixtures/network/; graph schema и snapshot repository.
 
@@ -525,7 +525,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P05](#p05), [P03](#p03).
 
-**Архитектура:** [§4.6: transfers](ARCHITECTURE.md#feature-transfers); [§5.2: intent/execution/operation](ARCHITECTURE.md#data-models); [§6.2: состояния](ARCHITECTURE.md#lifecycle); [§9: bank port](ARCHITECTURE.md#ports).
+**Архитектура:** [§4.6: transfers](architecture_v1.md#feature-transfers); [§5.2: intent/execution/operation](architecture_v1.md#data-models); [§6.2: состояния](architecture_v1.md#lifecycle); [§9: bank port](architecture_v1.md#ports).
 
 **Где и какой результат:** B/domain/transfers/, application/transfers/create_transfer.py; infrastructure/bank/mock/; transfer/operation/gate repositories и migrations.
 
@@ -545,7 +545,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P15](#p15), [P17](#p17), [P19](#p19), [P20](#p20), [P21](#p21).
 
-**Архитектура:** [§4.6: check](ARCHITECTURE.md#feature-transfers); [§5.2: evaluation_context](ARCHITECTURE.md#data-models); [§7.2: review_transfer](ARCHITECTURE.md#flow-transfer); [§7.3: stale checks](ARCHITECTURE.md#idempotency).
+**Архитектура:** [§4.6: check](architecture_v1.md#feature-transfers); [§5.2: evaluation_context](architecture_v1.md#data-models); [§7.2: review_transfer](architecture_v1.md#flow-transfer); [§7.3: stale checks](architecture_v1.md#idempotency).
 
 **Где и какой результат:** B/domain/transfers/decision_policy.py, transfer_check.py; application/transfers/check_transfer.py; application/workflows/review_transfer.py (решение); transport check schemas.
 
@@ -565,7 +565,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P22](#p22), [P13](#p13).
 
-**Архитектура:** [§6.2: три оси состояния](ARCHITECTURE.md#lifecycle); [§7.2: execute_protection](ARCHITECTURE.md#flow-transfer); [§7.3: гонки](ARCHITECTURE.md#idempotency); [§8.1: unknown](ARCHITECTURE.md#http-errors).
+**Архитектура:** [§6.2: три оси состояния](architecture_v1.md#lifecycle); [§7.2: execute_protection](architecture_v1.md#flow-transfer); [§7.3: гонки](architecture_v1.md#idempotency); [§8.1: unknown](architecture_v1.md#http-errors).
 
 **Где и какой результат:** B/application/transfers/{confirm_transfer,cancel_transfer,reconcile_execution}.py; workflows/execute_protection.py и финализация review_transfer; runtime recovery; checks/executions/operations transport.
 
@@ -585,7 +585,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P16](#p16), [P23](#p23).
 
-**Архитектура:** [§10: protected-transfer](ARCHITECTURE.md#frontend); [§8.1: polling](ARCHITECTURE.md#http-errors); [§10.3: честный статус](ARCHITECTURE.md#ux-contract).
+**Архитектура:** [§10: protected-transfer](architecture_v1.md#frontend); [§8.1: polling](architecture_v1.md#http-errors); [§10.3: честный статус](architecture_v1.md#ux-contract).
 
 **Где и какой результат:** W/features/protected-transfer/, risk-warning/ через pages; routes /transfers/new и /transfers/:id.
 
@@ -609,7 +609,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P23](#p23), [P17](#p17), [P18](#p18), [P20](#p20).
 
-**Архитектура:** [§4.10: scenarios](ARCHITECTURE.md#feature-scenarios); [§12.1: формат шагов](ARCHITECTURE.md#fixture-format); [§7.3: namespace](ARCHITECTURE.md#idempotency); [§8: scenario API](ARCHITECTURE.md#api).
+**Архитектура:** [§4.10: scenarios](architecture_v1.md#feature-scenarios); [§12.1: формат шагов](architecture_v1.md#fixture-format); [§7.3: namespace](architecture_v1.md#idempotency); [§8: scenario API](architecture_v1.md#api).
 
 **Где и какой результат:** B/application/scenarios/, ports/scenarios.py, infrastructure/content/; ScenarioRun persistence; scenario routes и fixture validators.
 
@@ -629,7 +629,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P25](#p25), [P16](#p16), [P19](#p19).
 
-**Архитектура:** [§12: каталог](ARCHITECTURE.md#scenarios); [§12.1: fixtures](ARCHITECTURE.md#fixture-format); [§18.2: scenario tests](ARCHITECTURE.md#verification).
+**Архитектура:** [§12: каталог](architecture_v1.md#scenarios); [§12.1: fixtures](architecture_v1.md#fixture-format); [§18.2: scenario tests](architecture_v1.md#verification).
 
 **Где и какой результат:** fixtures/scenarios/, communications/, identities/, profiles/, threats/, network/, screenshots/; backend scenario harness и contracts/fixtures/.
 
@@ -649,7 +649,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P24](#p24), [P26](#p26).
 
-**Архитектура:** [§10: все фичи и маршруты](ARCHITECTURE.md#frontend); [§10.3: состояния](ARCHITECTURE.md#ux-contract); [§12: демонстрация](ARCHITECTURE.md#scenarios).
+**Архитектура:** [§10: все фичи и маршруты](architecture_v1.md#frontend); [§10.3: состояния](architecture_v1.md#ux-contract); [§12: демонстрация](architecture_v1.md#scenarios).
 
 **Где и какой результат:** W/features/scenario-player/, call-verification/, resource-check/, communication-inbox/; app/pages и существующие feature public APIs.
 
@@ -673,7 +673,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P26](#p26).
 
-**Архитектура:** [§13: дизайн исследования](ARCHITECTURE.md#ux-research); [§13.2: метрики](ARCHITECTURE.md#ux-metrics); [§13.3: материалы](ARCHITECTURE.md#research-output).
+**Архитектура:** [§13: дизайн исследования](architecture_v1.md#ux-research); [§13.2: метрики](architecture_v1.md#ux-metrics); [§13.3: материалы](architecture_v1.md#research-output).
 
 **Где и какой результат:** research/protocols/, instruments/, report_templates/; docs/research/ для описания процедуры.
 
@@ -693,7 +693,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P28](#p28), [P25](#p25), [P05](#p05).
 
-**Архитектура:** [§4.9: research](ARCHITECTURE.md#feature-research); [§13.1: события](ARCHITECTURE.md#ux-events); [§8: study API](ARCHITECTURE.md#api); [§14: research storage](ARCHITECTURE.md#persistence).
+**Архитектура:** [§4.9: research](architecture_v1.md#feature-research); [§13.1: события](architecture_v1.md#ux-events); [§8: study API](architecture_v1.md#api); [§14: research storage](architecture_v1.md#persistence).
 
 **Где и какой результат:** B/domain/research/, application/research/, persistence/; contracts/events/; study/trial/events/feedback/completion transport.
 
@@ -713,7 +713,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P29](#p29), [P27](#p27).
 
-**Архитектура:** [§10: study-feedback](ARCHITECTURE.md#frontend); [§13.1: timebase](ARCHITECTURE.md#ux-events); [§13.2: измеримость](ARCHITECTURE.md#ux-metrics).
+**Архитектура:** [§10: study-feedback](architecture_v1.md#frontend); [§13.1: timebase](architecture_v1.md#ux-events); [§13.2: измеримость](architecture_v1.md#ux-metrics).
 
 **Где и какой результат:** W/features/study-feedback/; instrumentation существующих feature boundaries через app/pages и shared event transport; /study/:id/feedback.
 
@@ -733,7 +733,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P29](#p29), [P28](#p28).
 
-**Архитектура:** [§13.2: точные формулы](ARCHITECTURE.md#ux-metrics); [§13.3: JSONL/CSV/Report](ARCHITECTURE.md#research-output); [§8: researcher export](ARCHITECTURE.md#api).
+**Архитектура:** [§13.2: точные формулы](architecture_v1.md#ux-metrics); [§13.3: JSONL/CSV/Report](architecture_v1.md#research-output); [§8: researcher export](architecture_v1.md#api).
 
 **Где и какой результат:** B/domain/research/metric_definition.py; application/research/export_study.py и metric use cases; export adapter; synthetic metric test fixtures.
 
@@ -757,7 +757,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P27](#p27), [P30](#p30), [P31](#p31).
 
-**Архитектура:** [§18.2: уровни тестов](ARCHITECTURE.md#verification); [§12: сценарии](ARCHITECTURE.md#scenarios); [§7.3: инварианты](ARCHITECTURE.md#idempotency).
+**Архитектура:** [§18.2: уровни тестов](architecture_v1.md#verification); [§12: сценарии](architecture_v1.md#scenarios); [§7.3: инварианты](architecture_v1.md#idempotency).
 
 **Где и какой результат:** apps/backend/tests/{unit,application,contract,integration,architecture}/; apps/web/tests/{unit,component,e2e}/; contracts/examples/.
 
@@ -777,7 +777,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P32](#p32).
 
-**Архитектура:** [§11: защита данных](ARCHITECTURE.md#configuration); [§14: retention](ARCHITECTURE.md#persistence); [§15: надежность](ARCHITECTURE.md#reliability).
+**Архитектура:** [§11: защита данных](architecture_v1.md#configuration); [§14: retention](architecture_v1.md#persistence); [§15: надежность](architecture_v1.md#reliability).
 
 **Где и какой результат:** B/infrastructure/runtime/, observability/; ops/local/, runbooks/; scripts/seed, backup/restore/cleanup; локальный var/ вне Git.
 
@@ -797,7 +797,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P32](#p32).
 
-**Архитектура:** [§10.3: UX-контракт](ARCHITECTURE.md#ux-contract); [§18.2: web tests](ARCHITECTURE.md#verification).
+**Архитектура:** [§10.3: UX-контракт](architecture_v1.md#ux-contract); [§18.2: web tests](architecture_v1.md#verification).
 
 **Где и какой результат:** W/features/, shared/ui/, formatting/, i18n/; browser checks и запись результатов в журнал.
 
@@ -817,7 +817,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P33](#p33), [P34](#p34).
 
-**Архитектура:** [§18.3: готовый MVP](ARCHITECTURE.md#mvp-acceptance); [§1: границы](ARCHITECTURE.md#scope).
+**Архитектура:** [§18.3: готовый MVP](architecture_v1.md#mvp-acceptance); [§1: границы](architecture_v1.md#scope).
 
 **Где и какой результат:** Этот документ, журнал; README.md и ops/runbooks/ с актуальным состоянием реализации.
 
@@ -837,7 +837,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P35](#p35).
 
-**Архитектура:** [§3.1: документы/ops](ARCHITECTURE.md#supporting-directories); [§13.3: презентация](ARCHITECTURE.md#research-output); [§15: демонстрация](ARCHITECTURE.md#reliability).
+**Архитектура:** [§3.1: документы/ops](architecture_v1.md#supporting-directories); [§13.3: презентация](architecture_v1.md#research-output); [§15: демонстрация](architecture_v1.md#reliability).
 
 **Где и какой результат:** docs/presentation/outline.md; ops/runbooks/demo.md; README.md; ссылки на данные/контракты/сценарии.
 
@@ -845,7 +845,7 @@ P-пункт — одна законченная способность или �
 
 **Граница объема:** Только outline/демо-комплект; места фактических UX-результатов остаются пустыми до P38. Публикация сайта не требуется для локального web-прототипа.
 
-**Приемка и качество:** Другой агент/демонстратор запускает пакет по инструкции, воспроизводит эффект защиты и восстановление. На демонстрации видны mocks и scope. Подготовленный outline не назван готовой финальной презентацией.
+**Приемка и качество:** Демонстратор запускает пакет по инструкции, воспроизводит эффект защиты и восстановление. На демонстрации видны mocks и scope. Подготовленный outline не назван готовой финальной презентацией.
 
 **Запись выполнения:** —. После начала работ заменить на ссылку на запись [журнала](#work-log).
 
@@ -861,7 +861,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P28](#p28), [P35](#p35), [P36](#p36).
 
-**Архитектура:** [§13: проведение исследования](ARCHITECTURE.md#ux-research); [§17: организационные условия](ARCHITECTURE.md#open-questions); [§18.3: полная сдача](ARCHITECTURE.md#mvp-acceptance).
+**Архитектура:** [§13: проведение исследования](architecture_v1.md#ux-research); [§17: организационные условия](architecture_v1.md#open-questions); [§18.3: полная сдача](architecture_v1.md#mvp-acceptance).
 
 **Где и какой результат:** Research runtime records в var/ с доступом по роли; журнал проведения и обезличенная процедура в docs/research/.
 
@@ -881,7 +881,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P37](#p37), [P31](#p31).
 
-**Архитектура:** [§13.2: расчет/ограничения](ARCHITECTURE.md#ux-metrics); [§13.3: отчет](ARCHITECTURE.md#research-output).
+**Архитектура:** [§13.2: расчет/ограничения](architecture_v1.md#ux-metrics); [§13.3: отчет](architecture_v1.md#research-output).
 
 **Где и какой результат:** docs/research/ux-results.md и обезличенные агрегаты; приватные исходные экспорты остаются вне Git.
 
@@ -901,7 +901,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P38](#p38), [P36](#p36).
 
-**Архитектура:** [§13.3: содержание слайдов](ARCHITECTURE.md#research-output); [§1.1: ожидаемые результаты](ARCHITECTURE.md#scope).
+**Архитектура:** [§13.3: содержание слайдов](architecture_v1.md#research-output); [§1.1: ожидаемые результаты](architecture_v1.md#scope).
 
 **Где и какой результат:** docs/presentation/ — финальный deck и/или PDF, outline и разрешенные изображения.
 
@@ -921,7 +921,7 @@ P-пункт — одна законченная способность или �
 
 **Зависимости:** [P39](#p39).
 
-**Архитектура:** [§1.1: требования](ARCHITECTURE.md#scope); [§18.3: полная приемка](ARCHITECTURE.md#mvp-acceptance).
+**Архитектура:** [§1.1: требования](architecture_v1.md#scope); [§18.3: полная приемка](architecture_v1.md#mvp-acceptance).
 
 **Где и какой результат:** README.md, этот чеклист/журнал, ops/runbooks/, docs/research/, docs/presentation/.
 
@@ -937,7 +937,7 @@ P-пункт — одна законченная способность или �
 
 ## 12. Приемка каждого сценария
 
-Источник ожидаемого поведения — [каталог архитектуры](ARCHITECTURE.md#scenarios). Здесь хранится отметка первого полного backend/harness прогона P26, с fixture_version/policy_version и записью результата в журнале. P32 добавляет к этим результатам evidence итогового E2E, а не считает успешный backend-прогон проверкой UI. После изменения сценария/политики затронутая отметка снимается до повторной проверки.
+Источник ожидаемого поведения — [каталог архитектуры](architecture_v1.md#scenarios). Здесь хранится отметка первого полного backend/harness прогона P26, с fixture_version/policy_version и записью результата в журнале. P32 добавляет к этим результатам evidence итогового E2E, а не считает успешный backend-прогон проверкой UI. После изменения сценария/политики затронутая отметка снимается до повторной проверки.
 
 - [ ] **S01** — Фишинговое SMS из active реестра → critical → warning → фактический запрет demo-перехода. **Evidence:** —.
 - [ ] **S02** — Звонок «службы безопасности» без proof: high; связанный перевод critical; номер не подтверждает источник. **Evidence:** —.
@@ -957,13 +957,13 @@ P-пункт — одна законченная способность или �
 - [ ] **S09.false_positive** — Законная операция ошибочно получила hold; жалоба сохраняется, gate автоматически не снимается; доступен допустимый выход. **Evidence:** —.
 - [ ] **S15.declined_after_accepted** — Принятый submit позже declined: сервер сохраняет intent failed / BankOperation declined. Отображение без ложного completed отдельно проверяет P32. **Evidence:** —.
 
-S11–S13 — контрольные случаи, S14–S15 — устойчивость. Именованные варианты не увеличивают количество основных сценариев. Дополнительно проверять общие отказы из [§12 архитектуры](ARCHITECTURE.md#scenarios): consent revoked, другой owner, expired registry, duplicate/reordered observation, измененные реквизиты, delivery failure и выход пользователя. Приемкой отрицательного случая считается ожидаемый результат, а не падение теста.
+S11–S13 — контрольные случаи, S14–S15 — устойчивость. Именованные варианты не увеличивают количество основных сценариев. Дополнительно проверять общие отказы из [§12 архитектуры](architecture_v1.md#scenarios): consent revoked, другой owner, expired registry, duplicate/reordered observation, измененные реквизиты, delivery failure и выход пользователя. Приемкой отрицательного случая считается ожидаемый результат, а не падение теста.
 
 <a id="api-coverage"></a>
 
 ## 13. Карта API: кто обязан довести каждый контракт
 
-Все пути ниже имеют префикс `/api/v1`. Полные входы/выходы/статусы определяет [§8 архитектуры](ARCHITECTURE.md#api); таблица не создает второй источник схем. P32 сверяет ее с итоговым OpenAPI, положительными и отрицательными проверками.
+Все пути ниже имеют префикс `/api/v1`. Полные входы/выходы/статусы определяет [§8 архитектуры](architecture_v1.md#api); таблица не создает второй источник схем. P32 сверяет ее с итоговым OpenAPI, положительными и отрицательными проверками.
 
 | API / способность | Основной владелец | Что дополнительно проверить |
 | --- | --- | --- |
@@ -998,7 +998,7 @@ S11–S13 — контрольные случаи, S14–S15 — устойчи�
 
 ## 14. Условные расширения после прототипа
 
-E-пункты — отдельный backlog по [§16–17 архитектуры](ARCHITECTURE.md#evolution). Их пустые чекбоксы не мешают закрыть P40. Они не стартуют автоматически после P40 и не являются скрытой обязанностью запроса «сделать прототип». Для старта нужен запрос на соответствующее расширение и проверка конкретных внешних условий из карточки; не надо повторно спрашивать разрешение, если оно уже содержится в текущем запросе.
+E-пункты — отдельный backlog по [§16–17 архитектуры](architecture_v1.md#evolution). Их пустые чекбоксы не мешают закрыть P40. Расширения не начинаются автоматически после P40: каждое планируется отдельно после проверки внешних условий из карточки.
 
 `todo` здесь означает «еще не выполнялось», а не «доступ к провайдеру подтвержден». Когда работа началась и уперлась в недоступное условие, использовать `blocked` с evidence. При активации нескольких независимых capability разделять их на подзадачи и не считать готовность одного провайдера готовностью всей ветки.
 
@@ -1010,13 +1010,13 @@ E-пункты — отдельный backlog по [§16–17 архитекту
 
 **Зависимости:** [P35](#p35).
 
-**Архитектура:** [§16: ML-расширение](ARCHITECTURE.md#evolution); [§3.1: ml/](ARCHITECTURE.md#supporting-directories).
+**Архитектура:** [§16: ML-расширение](architecture_v1.md#evolution); [§3.1: ml/](architecture_v1.md#supporting-directories).
 
 **Где и какой результат:** ml/datasets/, evaluation/, model_cards/.
 
 **Реализовать:** Описать разрешенные источники/условия доступа, label policy, временные/групповые splits, leakage checks и per-class/slice/false-positive метрики.
 
-**Граница объема:** Старт только при отдельном запросе на ML и доступных разрешенных данных. Не скачивать случайный датасет и не считать fixture-каталог независимой выборкой.
+**Граница объема:** Старт отдельным ML-этапом при наличии разрешённых данных. Не скачивать случайный датасет и не считать fixture-каталог независимой выборкой.
 
 **Приемка и качество:** Есть проверенные манифесты/hash/разбиения и воспроизводимый протокол. Если данных нет, остается открытым соответствующий результат; доступность каталога не означает готовность датасета.
 
@@ -1030,7 +1030,7 @@ E-пункты — отдельный backlog по [§16–17 архитекту
 
 **Зависимости:** [E01](#e01).
 
-**Архитектура:** [§4.3: analysis ports](ARCHITECTURE.md#feature-detection); [§16: shadow-режим](ARCHITECTURE.md#evolution).
+**Архитектура:** [§4.3: analysis ports](architecture_v1.md#feature-detection); [§16: shadow-режим](architecture_v1.md#evolution).
 
 **Где и какой результат:** ml/experiments/, evaluation/, model_cards/; B/infrastructure/analysis/{nlp,vision,behavior}/.
 
@@ -1050,7 +1050,7 @@ E-пункты — отдельный backlog по [§16–17 архитекту
 
 **Зависимости:** [P35](#p35).
 
-**Архитектура:** [§4.2: ObservationInput](ARCHITECTURE.md#feature-communications); [§16: каналы](ARCHITECTURE.md#evolution).
+**Архитектура:** [§4.2: ObservationInput](architecture_v1.md#feature-communications); [§16: каналы](architecture_v1.md#evolution).
 
 **Где и какой результат:** Новый входной adapter по ADR; B/application/ports/analysis.py для STT; источник приводит данные к ObservationInput.
 
@@ -1070,7 +1070,7 @@ E-пункты — отдельный backlog по [§16–17 архитекту
 
 **Зависимости:** [P35](#p35).
 
-**Архитектура:** [§4.1: login](ARCHITECTURE.md#feature-identity); [§9: IdentityProviderPort](ARCHITECTURE.md#ports); [§17: доступ](ARCHITECTURE.md#open-questions).
+**Архитектура:** [§4.1: login](architecture_v1.md#feature-identity); [§9: IdentityProviderPort](architecture_v1.md#ports); [§17: доступ](architecture_v1.md#open-questions).
 
 **Где и какой результат:** B/infrastructure/identity/alfa_id/; согласованные login/callback routes и settings.
 
@@ -1090,7 +1090,7 @@ E-пункты — отдельный backlog по [§16–17 архитекту
 
 **Зависимости:** [P35](#p35).
 
-**Архитектура:** [§4.1: call proof](ARCHITECTURE.md#feature-identity); [§9: CallAttestationPort](ARCHITECTURE.md#ports); [§16: независимые контракты](ARCHITECTURE.md#evolution).
+**Архитектура:** [§4.1: call proof](architecture_v1.md#feature-identity); [§9: CallAttestationPort](architecture_v1.md#ports); [§16: независимые контракты](architecture_v1.md#evolution).
 
 **Где и какой результат:** B/infrastructure/identity/call_attestation/.
 
@@ -1110,7 +1110,7 @@ E-пункты — отдельный backlog по [§16–17 архитекту
 
 **Зависимости:** [P35](#p35).
 
-**Архитектура:** [§9: TransactionHistoryPort](ARCHITECTURE.md#ports); [§16: банк](ARCHITECTURE.md#evolution); [§11: согласия](ARCHITECTURE.md#configuration).
+**Архитектура:** [§9: TransactionHistoryPort](architecture_v1.md#ports); [§16: банк](architecture_v1.md#evolution); [§11: согласия](architecture_v1.md#configuration).
 
 **Где и какой результат:** B/infrastructure/bank/open_api/; history adapter и provider-specific configuration.
 
@@ -1130,7 +1130,7 @@ E-пункты — отдельный backlog по [§16–17 архитекту
 
 **Зависимости:** [P35](#p35).
 
-**Архитектура:** [§9: BankOperationsPort](ARCHITECTURE.md#ports); [§7.3: atomic authorization](ARCHITECTURE.md#idempotency); [§16: bank pilot](ARCHITECTURE.md#evolution).
+**Архитектура:** [§9: BankOperationsPort](architecture_v1.md#ports); [§7.3: atomic authorization](architecture_v1.md#idempotency); [§16: bank pilot](architecture_v1.md#evolution).
 
 **Где и какой результат:** B/infrastructure/bank/open_api/; конфигурация capabilities, execution/reconciliation integration tests и runbook.
 
@@ -1150,7 +1150,7 @@ E-пункты — отдельный backlog по [§16–17 архитекту
 
 **Зависимости:** [P35](#p35).
 
-**Архитектура:** [§4.7: registry](ARCHITECTURE.md#feature-threats); [§16: Big Data](ARCHITECTURE.md#evolution).
+**Архитектура:** [§4.7: registry](architecture_v1.md#feature-threats); [§16: Big Data](architecture_v1.md#evolution).
 
 **Где и какой результат:** B/infrastructure/threat_intel/providers/, analysis/network/; ingestion pipeline по согласованному ADR.
 
@@ -1170,7 +1170,7 @@ E-пункты — отдельный backlog по [§16–17 архитекту
 
 **Зависимости:** [P35](#p35).
 
-**Архитектура:** [§9: Notification/ResourceEnforcement](ARCHITECTURE.md#ports); [§4.5: scope/effect](ARCHITECTURE.md#feature-protection); [§16: операторы/ресурсы](ARCHITECTURE.md#evolution).
+**Архитектура:** [§9: Notification/ResourceEnforcement](architecture_v1.md#ports); [§4.5: scope/effect](architecture_v1.md#feature-protection); [§16: операторы/ресурсы](architecture_v1.md#evolution).
 
 **Где и какой результат:** B/infrastructure/notifications/operator/, resources/providers/.
 
@@ -1190,7 +1190,7 @@ E-пункты — отдельный backlog по [§16–17 архитекту
 
 **Зависимости:** [P35](#p35).
 
-**Архитектура:** [§14: БД](ARCHITECTURE.md#persistence); [§15: измерения](ARCHITECTURE.md#reliability); [§16: scaling](ARCHITECTURE.md#evolution).
+**Архитектура:** [§14: БД](architecture_v1.md#persistence); [§15: измерения](architecture_v1.md#reliability); [§16: scaling](architecture_v1.md#evolution).
 
 **Где и какой результат:** B/infrastructure/persistence/sqlalchemy/, runtime/; ops/containers/, runbooks/; контрактные изменения по ADR.
 
@@ -1206,7 +1206,7 @@ E-пункты — отдельный backlog по [§16–17 архитекту
 
 ## 15. Журнал выполнения и протокол передачи
 
-Журнал дополняется, старые записи не заменяются. В карточке остается актуальная отметка и ссылка на последнюю запись. При перерыве записи должно хватить, чтобы новый агент продолжил без чтения полного чата. Полные чувствительные логи/данные в этот файл не копируются.
+Журнал дополняется, старые записи не заменяются. В карточке остается актуальная отметка и ссылка на последнюю запись. После перерыва запись должна позволять продолжить работу без восстановления всей истории обсуждений. Полные чувствительные логи/данные в этот файл не копируются.
 
 Формат записи (заполнить реальными значениями; это шаблон, не evidence):
 
@@ -1229,7 +1229,7 @@ ID записи: YYYY-MM-DD-Pxx-NN
 
 Для отдельной записи использовать заголовок с ID и стабильный HTML-якорь, например `log-YYYY-MM-DD-pxx-nn`. Ссылки на артефакты должны вести к существующим файлам; для приватного локального результата указать разрешенное место хранения без публикации данных. Если тест не запускался, писать «не запускался», без предполагаемого exit code.
 
-### Правило завершения сессии агента
+### Завершение рабочего этапа
 
 В последней записи явно указать: какие ID закрыты; какой ID активен; что сейчас блокирует работу; следующее допустимое действие; какие незавершенные проверки обязательны. Не оставлять `in_progress` без исполнителя и инструкции. Независимые задачи можно продолжать, пока внешний блокер P37/E-пункта сохраняется.
 
@@ -1243,7 +1243,7 @@ ID записи: YYYY-MM-DD-Pxx-NN
 
 #### 2026-09-15-P01-01
 
-**Задача/исполнитель:** P01, Codex.
+**Задача:** P01.
 
 **Статус и дата:** done, 2026-09-15.
 
@@ -1308,7 +1308,7 @@ exit 1 из-за ранее существующих конфликтов `recto
 
 #### 2026-09-15-P02-01
 
-**Задача/исполнитель:** P02, Codex.
+**Задача:** P02.
 
 **Статус и дата:** done, 2026-09-15.
 
@@ -1375,7 +1375,7 @@ P03 стал доступен, но не запускался.
 
 #### 2026-09-15-P03-01
 
-**Задача/исполнитель:** P03, Codex.
+**Задача:** P03.
 
 **Статус и дата:** done, 2026-09-15.
 
@@ -1446,7 +1446,7 @@ P04 стал доступен, но не запускался.
 
 #### 2026-09-17-P04-01
 
-**Задача/исполнитель:** P04, Codex.
+**Задача:** P04.
 
 **Статус и дата:** done, 2026-09-17.
 
@@ -1523,7 +1523,7 @@ owner/namespace, серверные роли, согласия и подключ
 
 #### 2026-09-18-P05-01
 
-**Задача/исполнитель:** P05, Codex.
+**Задача:** P05.
 
 **Статус и дата:** done, 2026-09-19.
 
@@ -1595,7 +1595,7 @@ P06 и P07 разблокированы; по порядку плана след
 
 #### 2026-09-19-P06-01
 
-**Задача/исполнитель:** P06, Codex.
+**Задача:** P06.
 
 **Статус и дата:** done, 2026-09-19.
 
@@ -1659,7 +1659,7 @@ P07 разблокирован и является следующим пункт
 
 #### 2026-09-19-P07-01
 
-**Задача/исполнитель:** P07, Codex.
+**Задача:** P07.
 
 **Статус и дата:** done, 2026-09-19.
 
@@ -1728,7 +1728,7 @@ P08 и P09 разблокированы; по порядку плана след
 
 #### 2026-09-19-P08-01
 
-**Задача/исполнитель:** P08, Codex.
+**Задача:** P08.
 
 **Статус и дата:** done, 2026-09-19.
 
@@ -1802,7 +1802,7 @@ P09 разблокирован и является следующим пункт
 
 #### 2026-09-20-P09-01
 
-**Задача/исполнитель:** P09, Codex.
+**Задача:** P09.
 
 **Статус и дата:** done, 2026-09-20.
 
@@ -1869,7 +1869,7 @@ P10 и P11 разблокированы; по порядку плана след
 
 #### 2026-09-20-P10-01
 
-**Задача/исполнитель:** P10, Codex.
+**Задача:** P10.
 
 **Статус и дата:** done, 2026-09-20.
 
@@ -1940,7 +1940,7 @@ P11 разблокирован и является следующим пункт
 
 #### 2026-09-21-P11-01
 
-**Задача/исполнитель:** P11, Codex.
+**Задача:** P11.
 
 **Статус и дата:** done, 2026-09-21.
 
@@ -2010,7 +2010,7 @@ P12 разблокирован и является следующим пункт
 
 #### 2026-09-21-P12-01
 
-**Задача/исполнитель:** P12, Codex.
+**Задача:** P12.
 
 **Статус и дата:** done, 2026-09-21.
 
