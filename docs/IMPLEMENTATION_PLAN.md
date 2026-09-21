@@ -313,7 +313,7 @@ P-пункт — одна законченная способность или �
 
 ### P11. Реализовать оценку риска и детерминированный text/URL-анализ
 
-- [ ] Выполнено и проверено. **Статус:** in_progress. **Исполнитель:** Codex.
+- [x] Выполнено и проверено. **Статус:** done. **Исполнитель:** Codex.
 
 **Зависимости:** [P08](#p08), [P09](#p09).
 
@@ -1935,3 +1935,73 @@ ML/LLM и без использования scenario expected labels.
 
 **Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P10; активных задач нет.
 P11 разблокирован и является следующим пунктом по порядку плана.
+
+<a id="log-2026-09-21-p11-01"></a>
+
+#### 2026-09-21-P11-01
+
+**Задача/исполнитель:** P11, Codex.
+
+**Статус и дата:** done, 2026-09-21.
+
+**Проверенная версия архитектуры / существенные решения:** ARCHITECTURE.md v1.0 от
+2026-09-13, §4.3, §5.2, §6.1 и §7.1. Analysis plan явно отделяет неприменимую ветвь от
+применимой, но недоступной. Domain policy использует каталог `demo-risk-v1`: максимальный
+базовый сигнал, модификатор срочности только при сигнале другой группы, linked-contact,
+deduplication/absorption и cap 100. Assessment вычисляется отдельно от incident persistence:
+атомарная запись результата и снятие pending остаются в P15.
+
+**Что сделано:** Реализованы immutable Signal/AnalysisResult/RiskAssessment, versioned plan,
+applicability/status/completeness и чистая доменная политика оценки. Добавлены порты текстового
+и URL-анализа, детерминированные русскоязычные mock-правила, trusted/lookalike domain check без
+сетевого открытия ресурса и прием уже проверенного threat evidence. Unavailable и отсутствие
+пригодного анализатора дают unknown без балла; partial сохраняет известную severity и причины
+деградации. Bootstrap собирает внутреннюю assessment-границу. S01 воспроизводимо дает
+`critical`, 95, `complete`; scenario ID и expected labels отсутствуют во входном контракте.
+
+**Файлы и артефакты:** `domain/detection/`, `application/detection/`,
+`application/ports/analysis.py`, `infrastructure/analysis/mock/`, unit/application/integration-
+тесты, README, AGENTS, runbook, архитектурный status, defense guide и этот чеклист. Реализация
+зафиксирована commit `b2ea588` («Реализовать детерминированную оценку риска P11»); эта
+документационная фиксация добавляет evidence перед отправкой обоих commit в `origin/main`.
+
+**Проверки:**
+
+- `uv lock --check`, `ruff check`, `ruff format --check`, `mypy`, cwd `apps/backend`,
+  2026-09-21: все exit 0; lock согласован, формат и lint прошли для 160 Python-файлов,
+  strict-типизация прошла для 160 source/test/migration файлов.
+- `pytest`, cwd `apps/backend`, 2026-09-21: exit 0, `171 passed`; два warning относятся к
+  deprecation в закрепленной связке FastAPI/Starlette TestClient. Новые проверки покрывают
+  границы severity, max-base/modifiers/cap, deduplication/absorption, полную/частичную/
+  недоступную оценку, not applicable, отсутствие пригодных анализаторов, trusted/lookalike URL,
+  no match, детерминизм, owner guard и отсутствие answer labels. Интеграционный S01 использует
+  реальное наблюдение, опубликованный threat snapshot и получает `critical` 95.
+- `lint-imports --config pyproject.toml`, cwd `apps/backend`, 2026-09-21: exit 0,
+  `4 kept, 0 broken`, 143 файла и 570 зависимостей.
+- `python ../../scripts/validate_catalog.py`, cwd `apps/backend`, 2026-09-21: exit 0,
+  policy `demo-risk-v1`, 2 fixtures, итоговый catalog sha256
+  `e40373bc513fd1783465d217a828fb56c2392133be5a63e8a738b6303de89911`.
+- Два экспорта OpenAPI во временные файлы и `cmp` между ними и committed contract,
+  2026-09-21: все exit 0; HTTP-схема не изменилась. `uv build` создал sdist и wheel.
+- `npm run lint`, `npm run typecheck`, `npm test -- --run`, `npm run build`,
+  `npm run format:check`, `npm audit --audit-level=high`, cwd `apps/web`, 2026-09-21:
+  все exit 0; Vitest `9 passed`, production build преобразовал 88 модулей, известных
+  уязвимостей нет. `git diff --check`: exit 0.
+
+**Что не проверено и почему:** Публичного intake/assessment HTTP и browser/E2E-потока нет до
+P15. Assessment пока не сохраняется в incident и не снимает `analysis_pending`; это намеренно
+оставляет окно закрытым до атомарной сборки workflow. Visual, behavior и network применимые
+анализаторы пока возвращают unavailable либо еще не входят в план до P18–P20. Реальные ML/LLM,
+Alfa ID, каналы и внешние threat providers не подключались. Балл — детерминированная demo-
+policy, а не вероятность мошенничества и не измеренная эффективность.
+
+**Остаток / блокер:** По P11 остатка и блокера нет.
+
+**Условие разблокировки:** Не применимо.
+
+**Следующее конкретное действие:** Начать [P12](#p12): связать reason/severity с
+валидируемым русскоязычным recommendation/education-контентом и server allowed actions,
+сделать предсказуемый fallback и брать контакт помощи только из trusted catalog.
+
+**Затронутые или повторно открытые зависимые задачи:** Закрыты P01–P11; активных задач нет.
+P12 разблокирован и является следующим пунктом по порядку плана.
