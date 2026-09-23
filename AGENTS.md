@@ -17,7 +17,7 @@ OLD содержит исторические источники, а не дей
 
 ## Текущее состояние
 
-Сейчас завершены P01–P12: зафиксированы зависимости и границы слоев,
+Сейчас завершены P01–P13: зафиксированы зависимости и границы слоев,
 технические UnitOfWork/idempotency/audit/outbox, SQLite-миграции, bootstrap, HTTP-
 граница и synthetic identity. Доступны health, `GET /api/v1/session`,
 `POST /api/v1/sessions/demo` и `PATCH /api/v1/consents/{scope}`. Сессия и manual namespace
@@ -42,8 +42,11 @@ immutable, объясним и помечен mock. Он пока не сохр�
 severity/completeness/reason codes с проверенным текстом, ссылками на семь учебных карточек и
 переданными сервером allowed actions. Карточки валидируются вместе с readiness и опубликованы
 через session-protected list/detail API; неизвестные локаль, code и version дают явный fallback.
-Контакт помощи читается только из trusted catalog. Свободного чата, incident guidance route,
-warning-доставки, UI карточек и CV/behavior/network-моделей пока нет.
+Контакт помощи читается только из trusted catalog. Внутреннее предупреждение P13 хранит
+снимок server allowed actions и отдельно учитывает dispatch в in-app inbox, фактический
+presentation и ответ. Повтор перехода безопасен, закрытие не разрешает перевод.
+Публичного warning route, реально показанного пользователю экрана, свободного чата,
+incident guidance route, UI карточек и CV/behavior/network-моделей пока нет.
 Остальные будущие файлы в архитектуре — спецификация, а не свидетельство реализации.
 
 В актуальный план добавлены обязательные M01–M03 (собственный текстовый набор и

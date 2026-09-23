@@ -1,6 +1,6 @@
 # Локальная разработка
 
-Статус: проверено для P01–P12 2026-09-21. Здесь зафиксированы инструменты и команды;
+Статус: проверено для P01–P13 2026-09-24. Здесь зафиксированы инструменты и команды;
 backend HTTP-контур, synthetic demo-сессии, onboarding web-shell и валидатор обязательного
 каталога исполнимы. Синтетический threat registry можно идемпотентно заполнить и обновить
 отдельной операторской командой.
@@ -63,7 +63,7 @@ UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --fro
 ```
 
 Проверка upgrade/downgrade, отсутствия drift, сохранения audit/outbox, threat snapshot,
-observations, incidents и pending-контекста после restart, а также восстановления истекшего
+observations, incidents, pending-контекста и warning после restart, а также восстановления истекшего
 lease входит в интеграционный набор:
 
 ```bash
