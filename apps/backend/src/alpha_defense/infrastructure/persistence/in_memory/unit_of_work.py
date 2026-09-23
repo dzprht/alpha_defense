@@ -11,6 +11,7 @@ from alpha_defense.infrastructure.persistence.in_memory.incidents import (
     InMemoryIncidentRepository,
     InMemoryNamespaceRiskStateRepository,
 )
+from alpha_defense.infrastructure.persistence.in_memory.protection import InMemoryWarningRepository
 from alpha_defense.infrastructure.persistence.in_memory.repositories import (
     InMemoryAuditRepository,
     InMemoryIdempotencyRepository,
@@ -37,6 +38,7 @@ class InMemoryUnitOfWork:
         self._observations: InMemoryObservationRepository | None = None
         self._incidents: InMemoryIncidentRepository | None = None
         self._namespace_risk_states: InMemoryNamespaceRiskStateRepository | None = None
+        self._warnings: InMemoryWarningRepository | None = None
 
     @property
     def idempotency(self) -> InMemoryIdempotencyRepository:
@@ -86,6 +88,12 @@ class InMemoryUnitOfWork:
             raise RuntimeError("UnitOfWork is not active")
         return self._namespace_risk_states
 
+    @property
+    def warnings(self) -> InMemoryWarningRepository:
+        if self._warnings is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._warnings
+
     def begin(self) -> None:
         if self._active:
             raise RuntimeError("UnitOfWork is already active")
@@ -99,6 +107,7 @@ class InMemoryUnitOfWork:
         self._observations = InMemoryObservationRepository(self._state)
         self._incidents = InMemoryIncidentRepository(self._state)
         self._namespace_risk_states = InMemoryNamespaceRiskStateRepository(self._state)
+        self._warnings = InMemoryWarningRepository(self._state)
         self._active = True
         self._finished = False
 

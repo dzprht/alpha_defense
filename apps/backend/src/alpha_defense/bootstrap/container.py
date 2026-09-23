@@ -21,12 +21,13 @@ from alpha_defense.application.ports import (
     ReadinessPort,
     UnitOfWorkFactory,
 )
+from alpha_defense.application.protection import WarningService
 from alpha_defense.application.threats import (
     GetThreatRegistryStatus,
     LookupThreatIndicators,
     RefreshThreatRegistry,
 )
-from alpha_defense.application.workflows import AnalyzeContact
+from alpha_defense.application.workflows import AnalyzeContact, PublishWarning
 from alpha_defense.bootstrap.settings import Settings
 from alpha_defense.domain.shared import ExecutionMode
 from alpha_defense.infrastructure.analysis.mock import (
@@ -72,6 +73,8 @@ class Container:
     analyze_contact: AnalyzeContact
     assess_observation: AssessObservation
     get_guidance: GetGuidance
+    warnings: WarningService
+    publish_warning: PublishWarning
     list_cards: ListCards
     get_card: GetCard
 
@@ -126,6 +129,8 @@ def build_container(settings: Settings) -> Container:
         clock=clock,
         id_generator=id_generator,
     )
+    guidance = GetGuidance(catalog)
+    warnings = WarningService(unit_of_work=factory, clock=clock, id_generator=id_generator)
     return Container(
         settings=settings,
         engine=engine,
@@ -169,7 +174,9 @@ def build_container(settings: Settings) -> Container:
             clock=clock,
             id_generator=id_generator,
         ),
-        get_guidance=GetGuidance(catalog),
+        get_guidance=guidance,
+        warnings=warnings,
+        publish_warning=PublishWarning(guidance=guidance, warnings=warnings),
         list_cards=ListCards(catalog),
         get_card=GetCard(catalog),
     )

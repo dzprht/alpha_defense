@@ -530,3 +530,65 @@ namespace_pending_analyses = sa.Table(
     sa.Column("incident_id", sa.String(36), sa.ForeignKey("incidents.incident_id"), nullable=False),
     sa.Column("accepted_at", sa.DateTime(timezone=True), nullable=False),
 )
+
+warnings = sa.Table(
+    "warnings",
+    metadata,
+    sa.Column("warning_id", sa.String(36), primary_key=True),
+    sa.Column("assessment_id", sa.String(36), nullable=False, unique=True),
+    sa.Column("owner_id", sa.String(36), sa.ForeignKey("users.user_id"), nullable=False),
+    sa.Column("session_id", sa.String(36), sa.ForeignKey("sessions.session_id"), nullable=False),
+    sa.Column("namespace_id", sa.String(36), nullable=False),
+    sa.Column("target_kind", sa.String(16), nullable=False),
+    sa.Column("target_id", sa.String(36), nullable=False),
+    sa.Column("context_version", sa.Integer(), nullable=False),
+    sa.Column("severity", sa.String(16), nullable=False),
+    sa.Column("completeness", sa.String(16), nullable=False),
+    sa.Column("risk_label", sa.String(160), nullable=False),
+    sa.Column("explanation", sa.String(4000), nullable=False),
+    sa.Column("content_version", sa.String(128), nullable=False),
+    sa.Column("allowed_actions_json", sa.Text(), nullable=False),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("execution_mode", sa.String(16), nullable=False),
+    sa.Column("dispatched_at", sa.DateTime(timezone=True), nullable=True),
+    sa.Column("presented_at", sa.DateTime(timezone=True), nullable=True),
+    sa.Column("responded_at", sa.DateTime(timezone=True), nullable=True),
+    sa.Column("response", sa.String(32), nullable=True),
+    sa.Column("selected_action_code", sa.String(64), nullable=True),
+    sa.Column("revision", sa.Integer(), nullable=False),
+    sa.CheckConstraint("context_version >= 1", name="context_version_positive"),
+    sa.CheckConstraint("revision >= 0", name="revision_non_negative"),
+    sa.CheckConstraint("target_kind IN ('observation', 'transfer')", name="target_kind_valid"),
+    sa.CheckConstraint(
+        "severity IN ('low', 'medium', 'high', 'critical', 'unknown')",
+        name="severity_valid",
+    ),
+    sa.CheckConstraint(
+        "completeness IN ('complete', 'partial', 'unavailable')",
+        name="completeness_valid",
+    ),
+    sa.CheckConstraint("execution_mode IN ('mock', 'live')", name="execution_mode_valid"),
+    sa.CheckConstraint(
+        "(dispatched_at IS NULL OR dispatched_at >= created_at) AND "
+        "(presented_at IS NULL OR (dispatched_at IS NOT NULL AND "
+        "presented_at >= dispatched_at)) AND "
+        "(responded_at IS NULL OR (presented_at IS NOT NULL AND responded_at >= presented_at))",
+        name="lifecycle_order_valid",
+    ),
+    sa.CheckConstraint(
+        "(responded_at IS NULL AND response IS NULL AND selected_action_code IS NULL) OR "
+        "(responded_at IS NOT NULL AND response IN ('acknowledged', 'dismissed') "
+        "AND selected_action_code IS NULL) OR "
+        "(responded_at IS NOT NULL AND response = 'action_selected' "
+        "AND selected_action_code IS NOT NULL)",
+        name="response_valid",
+    ),
+)
+
+sa.Index(
+    "ix_warnings_inbox",
+    warnings.c.owner_id,
+    warnings.c.session_id,
+    warnings.c.namespace_id,
+    warnings.c.dispatched_at,
+)

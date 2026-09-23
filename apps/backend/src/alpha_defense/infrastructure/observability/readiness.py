@@ -12,7 +12,7 @@ from alpha_defense.application.ports import (
     ReadinessReport,
 )
 
-EXPECTED_SCHEMA_REVISION = "20260920_0005"
+EXPECTED_SCHEMA_REVISION = "20260924_0006"
 
 
 class LocalReadinessChecker:

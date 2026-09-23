@@ -39,6 +39,11 @@ from alpha_defense.application.ports.incidents import (
     IncidentUnitOfWorkPort,
     NamespaceRiskStateRepositoryPort,
 )
+from alpha_defense.application.ports.protection import (
+    WarningRepositoryPort,
+    WarningUnitOfWorkFactory,
+    WarningUnitOfWorkPort,
+)
 from alpha_defense.application.ports.readiness import (
     ReadinessCheck,
     ReadinessPort,
@@ -124,4 +129,7 @@ __all__ = [
     "TrustedEntity",
     "UnitOfWorkFactory",
     "UnitOfWorkPort",
+    "WarningRepositoryPort",
+    "WarningUnitOfWorkFactory",
+    "WarningUnitOfWorkPort",
 ]

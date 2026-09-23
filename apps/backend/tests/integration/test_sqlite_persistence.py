@@ -73,6 +73,7 @@ def test_migration_creates_only_technical_tables(tmp_path: Path) -> None:
         "threat_registry_state",
         "threat_snapshots",
         "users",
+        "warnings",
     }
     assert {
         index["name"] for index in sa.inspect(current_engine).get_indexes("threat_records")

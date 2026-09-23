@@ -21,6 +21,7 @@ from alpha_defense.domain.identity import (
     SyntheticUser,
 )
 from alpha_defense.domain.incidents import Incident, NamespaceRiskState
+from alpha_defense.domain.protection import Warning
 from alpha_defense.domain.shared import EntityId
 from alpha_defense.domain.threats import RegistrySnapshot
 
@@ -50,6 +51,8 @@ class InMemoryState:
     incidents: dict[EntityId, Incident] = field(default_factory=dict)
     incidents_by_observation: dict[EntityId, EntityId] = field(default_factory=dict)
     namespace_risk_states: dict[EntityId, NamespaceRiskState] = field(default_factory=dict)
+    warnings: dict[EntityId, Warning] = field(default_factory=dict)
+    warning_by_assessment: dict[EntityId, EntityId] = field(default_factory=dict)
 
     def clone(self) -> InMemoryState:
         return deepcopy(self)
