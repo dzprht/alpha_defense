@@ -35,11 +35,7 @@ class GetGuidance:
         locale: str = "ru-RU",
     ) -> GuidanceView:
         _validate_locale(locale)
-        if (
-            assessment.owner_id != actor.user_id
-            or assessment.session_id != actor.session_id
-            or assessment.namespace_id != actor.namespace_id
-        ):
+        if assessment.owner_id != actor.user_id or assessment.namespace_id != actor.namespace_id:
             raise ResourceNotFoundError("Оценка риска не найдена.")
         if not isinstance(allowed_actions, tuple) or any(
             not isinstance(action, AllowedActionView) for action in allowed_actions

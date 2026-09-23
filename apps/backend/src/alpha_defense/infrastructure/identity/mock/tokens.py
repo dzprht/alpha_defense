@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import json
 import secrets
 from collections.abc import Mapping, Sequence
 
@@ -38,6 +39,13 @@ class HmacSecurityTokens:
 
     def derive_csrf_token(self, bearer_token: str) -> str:
         return self._derive(f"csrf:{bearer_token}")
+
+    def fingerprint_credentials(self, login: str, password: str) -> str:
+        command = json.dumps([login, password], ensure_ascii=False, separators=(",", ":"))
+        return hmac.new(self._secret, f"credentials:{command}".encode(), "sha256").hexdigest()
+
+    def fingerprint_login(self, login: str) -> str:
+        return hmac.new(self._secret, f"login:{login}".encode(), "sha256").hexdigest()
 
     def _derive(self, message: str) -> str:
         digest = hmac.digest(self._secret, message.encode("utf-8"), "sha256")

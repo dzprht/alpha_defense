@@ -6,18 +6,25 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Request, Response, status
 
-from alpha_defense.application.identity import AnonymousSessionView, ConsentScope, SessionView
+from alpha_defense.application.identity import (
+    AnonymousSessionView,
+    ConsentScope,
+    SessionView,
+    StartSessionResult,
+)
 from alpha_defense.application.shared import ActorContext, SessionRequiredError
 from alpha_defense.transport.http.v1.dependencies import (
     CSRF_COOKIE_NAME,
     PRE_SESSION_COOKIE_NAME,
     SESSION_COOKIE_NAME,
     CookiePolicy,
+    account_service,
     current_actor,
     identity_service,
 )
 from alpha_defense.transport.http.v1.guards import require_csrf, require_idempotency_key
 from alpha_defense.transport.http.v1.schemas import (
+    AccountCredentialsRequest,
     AnonymousSessionResponse,
     ConsentResponse,
     SessionResponse,
@@ -34,7 +41,7 @@ PROBLEM_RESPONSES: dict[int | str, dict[str, Any]] = {
             "application/problem+json": {"schema": {"$ref": "#/components/schemas/ProblemDetails"}}
         },
     }
-    for code in (400, 401, 403, 409, 422, 503)
+    for code in (400, 401, 403, 409, 422, 429, 503)
 }
 
 
@@ -100,6 +107,91 @@ def start_demo_session(
         idempotency_key=idempotency_key,
         profile_code=payload.profile_code,
     )
+    policy = _cookie_policy(request)
+    _set_private_cookie(
+        response,
+        SESSION_COOKIE_NAME,
+        result.session_token,
+        max_age=policy.session_max_age,
+        policy=policy,
+    )
+    _set_csrf_cookie(response, result.csrf_token, policy)
+    response.delete_cookie(PRE_SESSION_COOKIE_NAME, path="/", samesite="lax")
+    return SessionResponse.from_view(result.view)
+
+
+@router.post(
+    "/accounts",
+    operation_id="register_account",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SessionResponse,
+    responses=PROBLEM_RESPONSES,
+)
+def register_account(
+    payload: AccountCredentialsRequest,
+    request: Request,
+    response: Response,
+) -> SessionResponse:
+    require_csrf(request)
+    key = require_idempotency_key(request)
+    pre_token = request.cookies.get(PRE_SESSION_COOKIE_NAME)
+    if not pre_token:
+        raise SessionRequiredError("Сначала получите pre-session через GET /session.")
+    result = account_service(request).register(
+        pre_session_token=pre_token,
+        idempotency_key=key,
+        login=payload.login,
+        password=payload.password,
+    )
+    return _deliver_account_session(request, response, result)
+
+
+@router.post(
+    "/sessions",
+    operation_id="login_account",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SessionResponse,
+    responses=PROBLEM_RESPONSES,
+)
+def login_account(
+    payload: AccountCredentialsRequest,
+    request: Request,
+    response: Response,
+) -> SessionResponse:
+    require_csrf(request)
+    key = require_idempotency_key(request)
+    pre_token = request.cookies.get(PRE_SESSION_COOKIE_NAME)
+    if not pre_token:
+        raise SessionRequiredError("Сначала получите pre-session через GET /session.")
+    result = account_service(request).login(
+        pre_session_token=pre_token,
+        idempotency_key=key,
+        login=payload.login,
+        password=payload.password,
+    )
+    return _deliver_account_session(request, response, result)
+
+
+@router.post(
+    "/sessions/logout",
+    operation_id="logout_session",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=PROBLEM_RESPONSES,
+)
+def logout_session(request: Request, response: Response) -> None:
+    require_csrf(request)
+    key = require_idempotency_key(request)
+    token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not token:
+        raise SessionRequiredError("Требуется действующая сессия.")
+    account_service(request).logout(session_token=token, idempotency_key=key)
+    for cookie in (SESSION_COOKIE_NAME, PRE_SESSION_COOKIE_NAME, CSRF_COOKIE_NAME):
+        response.delete_cookie(cookie, path="/", samesite="lax")
+
+
+def _deliver_account_session(
+    request: Request, response: Response, result: StartSessionResult
+) -> SessionResponse:
     policy = _cookie_policy(request)
     _set_private_cookie(
         response,

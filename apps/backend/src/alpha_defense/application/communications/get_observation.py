@@ -18,7 +18,6 @@ class GetObservation:
             stored = uow.observations.get(observation_id)
         if stored is None or (
             stored.observation.owner_id != actor.user_id
-            or stored.observation.session_id != actor.session_id
             or stored.observation.namespace_id != actor.namespace_id
         ):
             raise ResourceNotFoundError("Наблюдение не найдено.")

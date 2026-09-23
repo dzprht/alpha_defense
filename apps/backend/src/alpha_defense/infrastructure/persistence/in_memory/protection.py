@@ -19,16 +19,13 @@ class InMemoryWarningRepository:
         warning_id = self._state.warning_by_assessment.get(assessment_id)
         return None if warning_id is None else self.get(warning_id)
 
-    def list_dispatched(
-        self, *, owner_id: EntityId, session_id: EntityId, namespace_id: EntityId
-    ) -> tuple[Warning, ...]:
+    def list_dispatched(self, *, owner_id: EntityId, namespace_id: EntityId) -> tuple[Warning, ...]:
         return tuple(
             sorted(
                 (
                     warning
                     for warning in self._state.warnings.values()
                     if warning.owner_id == owner_id
-                    and warning.session_id == session_id
                     and warning.namespace_id == namespace_id
                     and warning.dispatched_at is not None
                 ),

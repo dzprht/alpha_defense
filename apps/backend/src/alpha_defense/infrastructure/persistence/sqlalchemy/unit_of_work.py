@@ -20,6 +20,7 @@ from alpha_defense.infrastructure.persistence.sqlalchemy.protection import (
     SqlAlchemyWarningRepository,
 )
 from alpha_defense.infrastructure.persistence.sqlalchemy.repositories import (
+    SqlAlchemyAccountRepository,
     SqlAlchemyAuditRepository,
     SqlAlchemyIdempotencyRepository,
     SqlAlchemyIdentityRepository,
@@ -40,6 +41,7 @@ class SqlAlchemyUnitOfWork:
         self._finished = False
         self._idempotency: SqlAlchemyIdempotencyRepository | None = None
         self._identity: SqlAlchemyIdentityRepository | None = None
+        self._accounts: SqlAlchemyAccountRepository | None = None
         self._audit: SqlAlchemyAuditRepository | None = None
         self._outbox: SqlAlchemyOutboxRepository | None = None
         self._threat_registry: SqlAlchemyThreatRegistryRepository | None = None
@@ -65,6 +67,12 @@ class SqlAlchemyUnitOfWork:
         if self._identity is None:
             raise RuntimeError("UnitOfWork is not active")
         return self._identity
+
+    @property
+    def accounts(self) -> SqlAlchemyAccountRepository:
+        if self._accounts is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._accounts
 
     @property
     def outbox(self) -> SqlAlchemyOutboxRepository:
@@ -109,6 +117,7 @@ class SqlAlchemyUnitOfWork:
         self._session.begin()
         self._idempotency = SqlAlchemyIdempotencyRepository(self._session)
         self._identity = SqlAlchemyIdentityRepository(self._session)
+        self._accounts = SqlAlchemyAccountRepository(self._session)
         self._audit = SqlAlchemyAuditRepository(self._session)
         self._outbox = SqlAlchemyOutboxRepository(self._session)
         self._threat_registry = SqlAlchemyThreatRegistryRepository(self._session)

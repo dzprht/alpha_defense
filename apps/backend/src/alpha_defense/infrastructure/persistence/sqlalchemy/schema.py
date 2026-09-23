@@ -20,6 +20,32 @@ users = sa.Table(
     sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
 )
 
+accounts = sa.Table(
+    "accounts",
+    metadata,
+    sa.Column("user_id", sa.String(36), sa.ForeignKey("users.user_id"), primary_key=True),
+    sa.Column("normalized_login", sa.String(64), nullable=False, unique=True),
+    sa.Column("password_hash", sa.String(512), nullable=False),
+    sa.Column("namespace_id", sa.String(36), nullable=False, unique=True),
+    sa.Column("status", sa.String(16), nullable=False),
+    sa.Column("consent_revision", sa.Integer(), nullable=False),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    sa.CheckConstraint("status IN ('active', 'disabled')", name="status_valid"),
+    sa.CheckConstraint("consent_revision >= 0", name="consent_revision_non_negative"),
+)
+
+login_throttles = sa.Table(
+    "login_throttles",
+    metadata,
+    sa.Column("login_fingerprint", sa.String(64), primary_key=True),
+    sa.Column("failures", sa.Integer(), nullable=False),
+    sa.Column("window_started_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("blocked_until", sa.DateTime(timezone=True), nullable=True),
+    sa.Column("revision", sa.Integer(), nullable=False),
+    sa.CheckConstraint("failures >= 0", name="failures_non_negative"),
+    sa.CheckConstraint("revision >= 0", name="revision_non_negative"),
+)
+
 sessions = sa.Table(
     "sessions",
     metadata,
@@ -31,6 +57,9 @@ sessions = sa.Table(
     sa.Column("consent_revision", sa.Integer(), nullable=False),
     sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
     sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("auth_kind", sa.String(16), nullable=False, server_default="demo"),
+    sa.Column("workspace_namespace_id", sa.String(36), nullable=True),
+    sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),
     sa.CheckConstraint("consent_revision >= 0", name="consent_revision_non_negative"),
     sa.CheckConstraint("expires_at > created_at", name="expiry_after_creation"),
 )

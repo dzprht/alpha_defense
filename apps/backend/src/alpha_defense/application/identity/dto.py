@@ -6,7 +6,13 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from alpha_defense.application.shared import ActorRole
-from alpha_defense.domain.identity import ConsentScope, ConsentSnapshot, ConsentStatus, DemoSession
+from alpha_defense.domain.identity import (
+    ConsentScope,
+    ConsentSnapshot,
+    ConsentStatus,
+    DemoSession,
+    SessionAuthKind,
+)
 from alpha_defense.domain.shared import EntityId, ExecutionMode
 
 
@@ -44,6 +50,7 @@ class SessionView:
     consents: tuple[ConsentView, ...]
     execution_mode: ExecutionMode
     expires_at: datetime
+    auth_kind: SessionAuthKind = SessionAuthKind.DEMO
     capabilities: tuple[str, ...] = ("update_consents",)
 
     @classmethod
@@ -53,17 +60,21 @@ class SessionView:
         consents: tuple[ConsentSnapshot, ...],
         *,
         execution_mode: ExecutionMode,
+        consent_revision: int | None = None,
     ) -> SessionView:
         roles = tuple(sorted((ActorRole(role.value) for role in session.roles), key=str))
         return cls(
             user_id=session.user_id,
             session_id=session.session_id,
-            namespace_id=session.manual_namespace_id,
+            namespace_id=session.namespace_id,
             roles=roles,
-            consent_revision=session.consent_revision,
+            consent_revision=session.consent_revision
+            if consent_revision is None
+            else consent_revision,
             consents=tuple(ConsentView.from_snapshot(item) for item in consents),
             execution_mode=execution_mode,
             expires_at=session.expires_at,
+            auth_kind=session.auth_kind,
         )
 
 

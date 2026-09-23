@@ -88,7 +88,6 @@ class WarningService:
         with self._unit_of_work() as uow:
             return uow.warnings.list_dispatched(
                 owner_id=actor.user_id,
-                session_id=actor.session_id,
                 namespace_id=actor.namespace_id,
             )
 
@@ -181,7 +180,6 @@ class WarningService:
 def _owned(warning: Warning, actor: ActorContext) -> bool:
     return (
         warning.owner_id == actor.user_id
-        and warning.session_id == actor.session_id
         and warning.namespace_id == actor.namespace_id
         and warning.execution_mode is actor.execution_mode
     )

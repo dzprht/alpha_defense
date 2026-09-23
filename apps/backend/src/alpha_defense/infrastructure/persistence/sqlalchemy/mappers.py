@@ -19,11 +19,15 @@ from alpha_defense.application.ports import (
 )
 from alpha_defense.application.ports.events import JsonObject
 from alpha_defense.domain.identity import (
+    Account,
+    AccountStatus,
     ConsentScope,
     ConsentSnapshot,
     ConsentStatus,
     DemoSession,
+    LoginThrottle,
     PreSession,
+    SessionAuthKind,
     SessionRole,
     SyntheticUser,
 )
@@ -73,6 +77,50 @@ def user_from_row(row: RowMapping) -> SyntheticUser:
     )
 
 
+def account_values(account: Account) -> dict[str, Any]:
+    return {
+        "user_id": str(account.user_id),
+        "normalized_login": account.normalized_login,
+        "password_hash": account.password_hash,
+        "namespace_id": str(account.namespace_id),
+        "status": account.status.value,
+        "consent_revision": account.consent_revision,
+        "created_at": account.created_at,
+    }
+
+
+def account_from_row(row: RowMapping) -> Account:
+    return Account(
+        user_id=EntityId.from_string(row["user_id"]),
+        normalized_login=row["normalized_login"],
+        password_hash=row["password_hash"],
+        namespace_id=EntityId.from_string(row["namespace_id"]),
+        status=AccountStatus(row["status"]),
+        consent_revision=row["consent_revision"],
+        created_at=as_utc(row["created_at"]),
+    )
+
+
+def throttle_values(throttle: LoginThrottle) -> dict[str, Any]:
+    return {
+        "login_fingerprint": throttle.login_fingerprint,
+        "failures": throttle.failures,
+        "window_started_at": throttle.window_started_at,
+        "blocked_until": throttle.blocked_until,
+        "revision": throttle.revision,
+    }
+
+
+def throttle_from_row(row: RowMapping) -> LoginThrottle:
+    return LoginThrottle(
+        login_fingerprint=row["login_fingerprint"],
+        failures=row["failures"],
+        window_started_at=as_utc(row["window_started_at"]),
+        blocked_until=None if row["blocked_until"] is None else as_utc(row["blocked_until"]),
+        revision=row["revision"],
+    )
+
+
 def pre_session_values(pre_session: PreSession) -> dict[str, Any]:
     return {
         "pre_session_id": str(pre_session.pre_session_id),
@@ -107,6 +155,11 @@ def session_values(session: DemoSession) -> dict[str, Any]:
         "consent_revision": session.consent_revision,
         "created_at": session.created_at,
         "expires_at": session.expires_at,
+        "auth_kind": session.auth_kind.value,
+        "workspace_namespace_id": None
+        if session.workspace_namespace_id is None
+        else str(session.workspace_namespace_id),
+        "revoked_at": session.revoked_at,
     }
 
 
@@ -123,6 +176,9 @@ def session_from_row(row: RowMapping) -> DemoSession:
         consent_revision=row["consent_revision"],
         created_at=as_utc(row["created_at"]),
         expires_at=as_utc(row["expires_at"]),
+        auth_kind=SessionAuthKind(row["auth_kind"]),
+        workspace_namespace_id=optional_id(row["workspace_namespace_id"]),
+        revoked_at=None if row["revoked_at"] is None else as_utc(row["revoked_at"]),
     )
 
 

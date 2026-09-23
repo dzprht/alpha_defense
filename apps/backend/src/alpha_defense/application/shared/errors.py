@@ -66,6 +66,15 @@ class SessionRequiredError(ApplicationError):
     code = "session_required"
 
 
+class InvalidCredentialsError(ApplicationError):
+    code = "invalid_credentials"
+
+
+class RateLimitedError(ApplicationError):
+    code = "rate_limited"
+    retryable = True
+
+
 class ConsentRequiredError(ApplicationError):
     code = "consent_required"
 

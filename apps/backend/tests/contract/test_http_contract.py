@@ -65,13 +65,16 @@ def test_openapi_contains_only_implemented_endpoints_and_problem_media() -> None
     )
 
     assert set(contract["paths"]) == {
+        "/api/v1/accounts",
         "/api/v1/consents/{scope}",
         "/api/v1/education/cards",
         "/api/v1/education/cards/{code}",
         "/api/v1/health/live",
         "/api/v1/health/ready",
         "/api/v1/session",
+        "/api/v1/sessions",
         "/api/v1/sessions/demo",
+        "/api/v1/sessions/logout",
     }
     unavailable = contract["paths"]["/api/v1/health/ready"]["get"]["responses"]["503"]
     assert set(unavailable["content"]) == {"application/problem+json"}
@@ -80,6 +83,7 @@ def test_openapi_contains_only_implemented_endpoints_and_problem_media() -> None
     )
     for operation, status in (
         (contract["paths"]["/api/v1/sessions/demo"]["post"], "409"),
+        (contract["paths"]["/api/v1/sessions"]["post"], "429"),
         (contract["paths"]["/api/v1/consents/{scope}"]["patch"], "403"),
     ):
         assert set(operation["responses"][status]["content"]) == {"application/problem+json"}
@@ -107,6 +111,9 @@ def test_generated_web_types_cover_implemented_routes() -> None:
     assert '"/api/v1/health/ready"' in generated
     assert '"/api/v1/session"' in generated
     assert '"/api/v1/sessions/demo"' in generated
+    assert '"/api/v1/accounts"' in generated
+    assert '"/api/v1/sessions"' in generated
+    assert '"/api/v1/sessions/logout"' in generated
     assert '"/api/v1/consents/{scope}"' in generated
     assert '"/api/v1/education/cards"' in generated
     assert '"/api/v1/education/cards/{code}"' in generated

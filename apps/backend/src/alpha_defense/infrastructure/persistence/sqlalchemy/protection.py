@@ -47,14 +47,11 @@ class SqlAlchemyWarningRepository:
         )
         return None if row is None else _from_row(row)
 
-    def list_dispatched(
-        self, *, owner_id: EntityId, session_id: EntityId, namespace_id: EntityId
-    ) -> tuple[Warning, ...]:
+    def list_dispatched(self, *, owner_id: EntityId, namespace_id: EntityId) -> tuple[Warning, ...]:
         rows = self._session.execute(
             sa.select(warnings)
             .where(
                 warnings.c.owner_id == str(owner_id),
-                warnings.c.session_id == str(session_id),
                 warnings.c.namespace_id == str(namespace_id),
                 warnings.c.dispatched_at.is_not(None),
             )

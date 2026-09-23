@@ -12,7 +12,12 @@ from sqlalchemy.exc import SQLAlchemyError
 from alpha_defense.application.communications import GetObservation, IngestObservation
 from alpha_defense.application.detection import AssessObservation
 from alpha_defense.application.education import GetCard, GetGuidance, ListCards
-from alpha_defense.application.identity import IdentityService, IdentityServicePort
+from alpha_defense.application.identity import (
+    AccountService,
+    AccountServicePort,
+    IdentityService,
+    IdentityServicePort,
+)
 from alpha_defense.application.incidents import AttachObservation, GetIncident, ResolveIncident
 from alpha_defense.application.ports import (
     CatalogLoaderPort,
@@ -35,6 +40,7 @@ from alpha_defense.infrastructure.analysis.mock import (
     DeterministicUrlAnalyzer,
 )
 from alpha_defense.infrastructure.content import LocalCatalogLoader
+from alpha_defense.infrastructure.identity.credentials import Argon2Credentials
 from alpha_defense.infrastructure.identity.mock import HmacSecurityTokens, SyntheticIdentityProvider
 from alpha_defense.infrastructure.observability import (
     EXPECTED_SCHEMA_REVISION,
@@ -62,6 +68,7 @@ class Container:
     readiness: ReadinessPort
     catalog: CatalogLoaderPort
     identity_service: IdentityServicePort
+    account_service: AccountServicePort
     lookup_threats: LookupThreatIndicators
     refresh_threat_registry: RefreshThreatRegistry
     threat_registry_status: GetThreatRegistryStatus
@@ -111,12 +118,21 @@ def build_container(settings: Settings) -> Container:
         policy_version=settings.policy_version,
     )
     threat_feed = FixtureThreatFeed(catalog)
+    tokens = HmacSecurityTokens(settings.session_secret.get_secret_value())
     identity_service = IdentityService(
         unit_of_work=factory,
         clock=clock,
         id_generator=id_generator,
         provider=SyntheticIdentityProvider(),
-        tokens=HmacSecurityTokens(settings.session_secret.get_secret_value()),
+        tokens=tokens,
+        execution_mode=settings.execution_mode,
+    )
+    account_service = AccountService(
+        unit_of_work=factory,
+        clock=clock,
+        id_generator=id_generator,
+        credentials=Argon2Credentials(),
+        tokens=tokens,
         execution_mode=settings.execution_mode,
     )
     ingest_observation = IngestObservation(
@@ -140,6 +156,7 @@ def build_container(settings: Settings) -> Container:
         readiness=LocalReadinessChecker(engine, catalog),
         catalog=catalog,
         identity_service=identity_service,
+        account_service=account_service,
         lookup_threats=LookupThreatIndicators(unit_of_work=factory, clock=clock),
         refresh_threat_registry=RefreshThreatRegistry(
             source=settings.threat_feed_source,

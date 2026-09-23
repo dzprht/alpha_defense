@@ -13,9 +13,9 @@ from alpha_defense.application.identity.dto import (
 )
 from alpha_defense.application.identity.ports import (
     DemoIdentityProviderPort,
-    IdentityRepositoryPort,
     IdentityServicePort,
     IdentityUnitOfWorkFactory,
+    IdentityUnitOfWorkPort,
     SecurityTokenPort,
 )
 from alpha_defense.application.ports import (
@@ -38,11 +38,13 @@ from alpha_defense.application.shared import (
     ValidationError,
 )
 from alpha_defense.domain.identity import (
+    AccountStatus,
     ConsentScope,
     ConsentSnapshot,
     ConsentStatus,
     DemoSession,
     PreSession,
+    SessionAuthKind,
     SyntheticUser,
 )
 from alpha_defense.domain.shared import EntityId, ExecutionMode
@@ -81,7 +83,7 @@ class IdentityService(IdentityServicePort):
                     self._tokens.fingerprint(session_token)
                 )
                 if session is not None and session.is_active_at(now):
-                    view = self._session_view(uow.identity, session)
+                    view = self._session_view(uow, session)
                     return SessionBootstrapResult(
                         view=view,
                         session_token=session_token,
@@ -153,7 +155,7 @@ class IdentityService(IdentityServicePort):
             pre_session = uow.identity.get_pre_session_by_fingerprint(pre_fingerprint)
             if not reservation.is_new:
                 return self._replay_start(
-                    uow.identity,
+                    uow,
                     reservation.record,
                     pre_session=pre_session,
                     pre_session_token=pre_session_token,
@@ -247,16 +249,26 @@ class IdentityService(IdentityServicePort):
             session = uow.identity.get_session_by_fingerprint(
                 self._tokens.fingerprint(session_token)
             )
-        if session is None or not session.is_active_at(now):
-            raise SessionRequiredError("Требуется действующая демонстрационная сессия.")
-        return ActorContext(
-            user_id=session.user_id,
-            session_id=session.session_id,
-            namespace_id=session.manual_namespace_id,
-            roles=frozenset(ActorRole(role.value) for role in session.roles),
-            consent_revision=session.consent_revision,
-            execution_mode=self._execution_mode,
-        )
+            if session is None or not session.is_active_at(now):
+                raise SessionRequiredError("Требуется действующая сессия.")
+            revision = session.consent_revision
+            if session.auth_kind is SessionAuthKind.ACCOUNT:
+                account = uow.accounts.get_by_id(session.user_id)
+                if (
+                    account is None
+                    or account.namespace_id != session.namespace_id
+                    or account.status is not AccountStatus.ACTIVE
+                ):
+                    raise SessionRequiredError("Требуется действующая сессия аккаунта.")
+                revision = account.consent_revision
+            return ActorContext(
+                user_id=session.user_id,
+                session_id=session.session_id,
+                namespace_id=session.namespace_id,
+                roles=frozenset(ActorRole(role.value) for role in session.roles),
+                consent_revision=revision,
+                execution_mode=self._execution_mode,
+            )
 
     def update_consent(
         self,
@@ -300,11 +312,25 @@ class IdentityService(IdentityServicePort):
             if (
                 session is None
                 or session.user_id != actor.user_id
-                or session.manual_namespace_id != actor.namespace_id
+                or session.namespace_id != actor.namespace_id
                 or not session.is_active_at(now)
             ):
-                raise SessionRequiredError("Требуется действующая демонстрационная сессия.")
-            if expected_revision != session.consent_revision:
+                raise SessionRequiredError("Требуется действующая сессия.")
+            account = (
+                uow.accounts.get_by_id(actor.user_id)
+                if session.auth_kind is SessionAuthKind.ACCOUNT
+                else None
+            )
+            if session.auth_kind is SessionAuthKind.ACCOUNT and (
+                account is None
+                or account.namespace_id != actor.namespace_id
+                or account.status is not AccountStatus.ACTIVE
+            ):
+                raise SessionRequiredError("Требуется действующая сессия аккаунта.")
+            current_revision = (
+                session.consent_revision if account is None else account.consent_revision
+            )
+            if expected_revision != current_revision:
                 raise StaleRevisionError("Версия согласий устарела.")
             consent = uow.identity.get_consent(actor.user_id, scope)
             if consent is None:
@@ -312,18 +338,24 @@ class IdentityService(IdentityServicePort):
 
             updated = consent
             if consent.status is not status:
-                advanced_session = session.advance_consent_revision(
-                    expected_revision=expected_revision
-                )
+                next_revision = current_revision + 1
                 updated = consent.change(
                     status,
-                    revision=advanced_session.consent_revision,
+                    revision=next_revision,
                     changed_at=now,
                 )
-                uow.identity.save_session(
-                    advanced_session,
-                    expected_consent_revision=session.consent_revision,
-                )
+                if account is None:
+                    advanced_session = session.advance_consent_revision(
+                        expected_revision=expected_revision
+                    )
+                    uow.identity.save_session(
+                        advanced_session, expected_consent_revision=session.consent_revision
+                    )
+                else:
+                    uow.accounts.save_consent_revision(
+                        account.advance_consent_revision(expected_revision=expected_revision),
+                        expected_revision=expected_revision,
+                    )
                 uow.identity.save_consent(updated, expected_revision=consent.revision)
                 uow.audit.append(
                     self._audit_record(
@@ -356,21 +388,32 @@ class IdentityService(IdentityServicePort):
 
     def _session_view(
         self,
-        repository: IdentityRepositoryPort,
+        uow: IdentityUnitOfWorkPort,
         session: DemoSession,
     ) -> SessionView:
-        consents = repository.list_consents(session.user_id)
+        consents = uow.identity.list_consents(session.user_id)
         if {item.scope for item in consents} != set(ConsentScope):
             raise ServiceUnavailableError("Consent storage is incomplete")
+        revision = session.consent_revision
+        if session.auth_kind is SessionAuthKind.ACCOUNT:
+            account = uow.accounts.get_by_id(session.user_id)
+            if (
+                account is None
+                or account.namespace_id != session.namespace_id
+                or account.status is not AccountStatus.ACTIVE
+            ):
+                raise SessionRequiredError("Требуется действующая сессия аккаунта.")
+            revision = account.consent_revision
         return SessionView.from_session(
             session,
             consents,
             execution_mode=self._execution_mode,
+            consent_revision=revision,
         )
 
     def _replay_start(
         self,
-        repository: IdentityRepositoryPort,
+        uow: IdentityUnitOfWorkPort,
         record: IdempotencyRecord,
         *,
         pre_session: PreSession | None,
@@ -387,12 +430,12 @@ class IdentityService(IdentityServicePort):
             or now >= pre_session.expires_at
         ):
             raise SessionRequiredError("Pre-session token is no longer valid")
-        session = repository.get_session(record.resource_id)
+        session = uow.identity.get_session(record.resource_id)
         if session is None or not session.is_active_at(now):
             raise ServiceUnavailableError("Stored session is unavailable")
         session_token = self._tokens.derive_session_token(pre_session_token, session.session_id)
         return StartSessionResult(
-            view=self._session_view(repository, session),
+            view=self._session_view(uow, session),
             session_token=session_token,
             csrf_token=self._tokens.derive_csrf_token(session_token),
             replayed=True,

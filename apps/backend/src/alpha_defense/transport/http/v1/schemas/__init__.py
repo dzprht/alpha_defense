@@ -12,6 +12,7 @@ from alpha_defense.transport.http.v1.schemas.health import (
     ReadinessResponse,
 )
 from alpha_defense.transport.http.v1.schemas.identity import (
+    AccountCredentialsRequest,
     AnonymousSessionResponse,
     ConsentResponse,
     SessionResponse,
@@ -21,6 +22,7 @@ from alpha_defense.transport.http.v1.schemas.identity import (
 from alpha_defense.transport.http.v1.schemas.observations import ObservationInputSchema
 
 __all__ = [
+    "AccountCredentialsRequest",
     "AnonymousSessionResponse",
     "ConsentResponse",
     "DependencyStatus",

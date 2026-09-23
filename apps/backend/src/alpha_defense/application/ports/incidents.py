@@ -18,7 +18,6 @@ class IncidentRepositoryPort(Protocol):
         self,
         *,
         owner_id: EntityId,
-        session_id: EntityId,
         namespace_id: EntityId,
     ) -> tuple[Incident, ...]: ...
 

@@ -14,9 +14,11 @@ from alpha_defense.application.ports import (
 )
 from alpha_defense.domain.communications import Observation, ObservationContent
 from alpha_defense.domain.identity import (
+    Account,
     ConsentScope,
     ConsentSnapshot,
     DemoSession,
+    LoginThrottle,
     PreSession,
     SyntheticUser,
 )
@@ -29,6 +31,9 @@ from alpha_defense.domain.threats import RegistrySnapshot
 @dataclass(slots=True)
 class InMemoryState:
     users: dict[EntityId, SyntheticUser] = field(default_factory=dict)
+    accounts: dict[EntityId, Account] = field(default_factory=dict)
+    account_logins: dict[str, EntityId] = field(default_factory=dict)
+    login_throttles: dict[str, LoginThrottle] = field(default_factory=dict)
     pre_sessions: dict[EntityId, PreSession] = field(default_factory=dict)
     pre_session_tokens: dict[str, EntityId] = field(default_factory=dict)
     sessions: dict[EntityId, DemoSession] = field(default_factory=dict)

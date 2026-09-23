@@ -24,6 +24,7 @@ const activeSession: Session = {
   roles: ["demo_user"],
   session_id: "00000000-0000-0000-0000-000000000002",
   status: "active",
+  auth_kind: "demo",
   user_id: "00000000-0000-0000-0000-000000000001",
 };
 

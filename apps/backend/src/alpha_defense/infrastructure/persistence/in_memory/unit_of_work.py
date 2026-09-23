@@ -13,6 +13,7 @@ from alpha_defense.infrastructure.persistence.in_memory.incidents import (
 )
 from alpha_defense.infrastructure.persistence.in_memory.protection import InMemoryWarningRepository
 from alpha_defense.infrastructure.persistence.in_memory.repositories import (
+    InMemoryAccountRepository,
     InMemoryAuditRepository,
     InMemoryIdempotencyRepository,
     InMemoryIdentityRepository,
@@ -32,6 +33,7 @@ class InMemoryUnitOfWork:
         self._finished = False
         self._idempotency: InMemoryIdempotencyRepository | None = None
         self._identity: InMemoryIdentityRepository | None = None
+        self._accounts: InMemoryAccountRepository | None = None
         self._audit: InMemoryAuditRepository | None = None
         self._outbox: InMemoryOutboxRepository | None = None
         self._threat_registry: InMemoryThreatRegistryRepository | None = None
@@ -57,6 +59,12 @@ class InMemoryUnitOfWork:
         if self._identity is None:
             raise RuntimeError("UnitOfWork is not active")
         return self._identity
+
+    @property
+    def accounts(self) -> InMemoryAccountRepository:
+        if self._accounts is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._accounts
 
     @property
     def outbox(self) -> InMemoryOutboxRepository:
@@ -101,6 +109,7 @@ class InMemoryUnitOfWork:
         self._state = self._database.state.clone()
         self._idempotency = InMemoryIdempotencyRepository(self._state)
         self._identity = InMemoryIdentityRepository(self._state)
+        self._accounts = InMemoryAccountRepository(self._state)
         self._audit = InMemoryAuditRepository(self._state)
         self._outbox = InMemoryOutboxRepository(self._state)
         self._threat_registry = InMemoryThreatRegistryRepository(self._state)

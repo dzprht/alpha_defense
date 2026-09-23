@@ -26,14 +26,18 @@ from alpha_defense.application.shared import (
     StaleRevisionError,
 )
 from alpha_defense.domain.identity import (
+    Account,
     ConsentScope,
     ConsentSnapshot,
     DemoSession,
+    LoginThrottle,
     PreSession,
     SyntheticUser,
 )
 from alpha_defense.domain.shared import EntityId
 from alpha_defense.infrastructure.persistence.sqlalchemy.mappers import (
+    account_from_row,
+    account_values,
     audit_from_row,
     audit_values,
     consent_from_row,
@@ -46,13 +50,17 @@ from alpha_defense.infrastructure.persistence.sqlalchemy.mappers import (
     pre_session_values,
     session_from_row,
     session_values,
+    throttle_from_row,
+    throttle_values,
     user_from_row,
     user_values,
 )
 from alpha_defense.infrastructure.persistence.sqlalchemy.schema import (
+    accounts,
     audit_events,
     consents,
     idempotency_records,
+    login_throttles,
     outbox,
     pre_sessions,
     sessions,
@@ -275,14 +283,7 @@ class SqlAlchemyIdentityRepository:
         current = self.get_session(session.session_id)
         if current is None or current.consent_revision != expected_consent_revision:
             raise StaleRevisionError("Session consent revision is stale")
-        if (
-            current.user_id != session.user_id
-            or current.manual_namespace_id != session.manual_namespace_id
-            or current.roles != session.roles
-            or current.token_fingerprint != session.token_fingerprint
-            or current.created_at != session.created_at
-            or current.expires_at != session.expires_at
-        ):
+        if replace(current, consent_revision=session.consent_revision) != session:
             raise ValueError("immutable session fields cannot be changed")
         if session.consent_revision != expected_consent_revision + 1:
             raise StaleRevisionError("Session consent revision must advance by one")
@@ -297,6 +298,23 @@ class SqlAlchemyIdentityRepository:
         )
         if _rowcount(result) != 1:
             raise StaleRevisionError("Session consent revision is stale")
+
+    def revoke_session(self, session: DemoSession) -> None:
+        current = self.get_session(session.session_id)
+        if current is None or current.revoked_at is not None:
+            raise StaleRevisionError("Session has already been revoked")
+        if session.revoked_at is None or replace(current, revoked_at=session.revoked_at) != session:
+            raise ValueError("only session revocation is permitted")
+        result = _execute(
+            self._session,
+            sa.update(sessions)
+            .where(
+                sessions.c.session_id == str(session.session_id), sessions.c.revoked_at.is_(None)
+            )
+            .values(revoked_at=session.revoked_at),
+        )
+        if _rowcount(result) != 1:
+            raise StaleRevisionError("Session has already been revoked")
 
     def add_consent(self, consent: ConsentSnapshot) -> None:
         result = _execute(
@@ -352,6 +370,82 @@ class SqlAlchemyIdentityRepository:
         )
         if _rowcount(result) != 1:
             raise StaleRevisionError("Consent revision is stale")
+
+
+class SqlAlchemyAccountRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, account: Account) -> None:
+        _execute(self._session, sa.insert(accounts).values(account_values(account)))
+
+    def get_by_id(self, user_id: EntityId) -> Account | None:
+        row = (
+            _execute(self._session, sa.select(accounts).where(accounts.c.user_id == str(user_id)))
+            .mappings()
+            .one_or_none()
+        )
+        return None if row is None else account_from_row(row)
+
+    def get_by_login(self, normalized_login: str) -> Account | None:
+        row = (
+            _execute(
+                self._session,
+                sa.select(accounts).where(accounts.c.normalized_login == normalized_login),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        return None if row is None else account_from_row(row)
+
+    def save_consent_revision(self, account: Account, *, expected_revision: int) -> None:
+        current = self.get_by_id(account.user_id)
+        if current is None or replace(current, consent_revision=expected_revision + 1) != account:
+            raise StaleRevisionError("Account consent revision is stale")
+        result = _execute(
+            self._session,
+            sa.update(accounts)
+            .where(
+                accounts.c.user_id == str(account.user_id),
+                accounts.c.consent_revision == expected_revision,
+            )
+            .values(consent_revision=account.consent_revision),
+        )
+        if _rowcount(result) != 1:
+            raise StaleRevisionError("Account consent revision is stale")
+
+    def get_throttle(self, login_fingerprint: str) -> LoginThrottle | None:
+        row = (
+            _execute(
+                self._session,
+                sa.select(login_throttles).where(
+                    login_throttles.c.login_fingerprint == login_fingerprint
+                ),
+            )
+            .mappings()
+            .one_or_none()
+        )
+        return None if row is None else throttle_from_row(row)
+
+    def add_throttle(self, throttle: LoginThrottle) -> None:
+        _execute(self._session, sa.insert(login_throttles).values(throttle_values(throttle)))
+
+    def save_throttle(self, throttle: LoginThrottle, *, expected_revision: int) -> None:
+        if throttle.revision != expected_revision + 1:
+            raise StaleRevisionError("Login throttle revision is stale")
+        values = throttle_values(throttle)
+        values.pop("login_fingerprint")
+        result = _execute(
+            self._session,
+            sa.update(login_throttles)
+            .where(
+                login_throttles.c.login_fingerprint == throttle.login_fingerprint,
+                login_throttles.c.revision == expected_revision,
+            )
+            .values(**values),
+        )
+        if _rowcount(result) != 1:
+            raise StaleRevisionError("Login throttle revision is stale")
 
 
 class SqlAlchemyAuditRepository:

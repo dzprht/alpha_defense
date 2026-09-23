@@ -72,7 +72,6 @@ class AttachObservation:
         stored = uow.observations.get(observation_id)
         if stored is None or (
             stored.observation.owner_id != actor.user_id
-            or stored.observation.session_id != actor.session_id
             or stored.observation.namespace_id != actor.namespace_id
         ):
             raise ResourceNotFoundError("Наблюдение не найдено.")
@@ -87,7 +86,6 @@ class AttachObservation:
 
         candidates = uow.incidents.list_for_scope(
             owner_id=actor.user_id,
-            session_id=actor.session_id,
             namespace_id=actor.namespace_id,
         )
         match = self._correlation_policy.choose(
@@ -175,7 +173,6 @@ class AttachObservation:
 def _require_actor_scope(state: NamespaceRiskState, actor: ActorContext) -> None:
     if (
         state.owner_id != actor.user_id
-        or state.session_id != actor.session_id
         or state.namespace_id != actor.namespace_id
         or state.execution_mode is not actor.execution_mode
     ):

@@ -10,7 +10,7 @@ from typing import cast
 from fastapi import Request
 
 from alpha_defense.application.education import GetCard, ListCards
-from alpha_defense.application.identity import IdentityServicePort
+from alpha_defense.application.identity import AccountServicePort, IdentityServicePort
 from alpha_defense.application.shared import (
     ActionForbiddenError,
     ActorContext,
@@ -36,6 +36,13 @@ def identity_service(request: Request) -> IdentityServicePort:
     if service is None:
         raise RuntimeError("identity service was not configured")
     return cast(IdentityServicePort, service)
+
+
+def account_service(request: Request) -> AccountServicePort:
+    service = getattr(request.app.state, "account_service", None)
+    if service is None:
+        raise RuntimeError("account service was not configured")
+    return cast(AccountServicePort, service)
 
 
 def list_cards_service(request: Request) -> ListCards:

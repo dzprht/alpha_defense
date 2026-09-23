@@ -22,6 +22,13 @@ class StartDemoSessionRequest(BaseModel):
     profile_code: str = Field(min_length=3, max_length=64, pattern=r"^[a-z][a-z0-9-]*$")
 
 
+class AccountCredentialsRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    login: str = Field(min_length=3, max_length=64)
+    password: str = Field(min_length=12, max_length=128)
+
+
 class UpdateConsentRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -70,6 +77,7 @@ class SessionResponse(BaseModel):
     user_id: str
     session_id: str
     namespace_id: str
+    auth_kind: Literal["demo", "account"]
     roles: tuple[Literal["demo_user", "researcher"], ...]
     consent_revision: int = Field(ge=0)
     consents: tuple[ConsentResponse, ...]
@@ -83,6 +91,7 @@ class SessionResponse(BaseModel):
             user_id=str(view.user_id),
             session_id=str(view.session_id),
             namespace_id=str(view.namespace_id),
+            auth_kind=view.auth_kind.value,
             roles=tuple(role.value for role in view.roles),
             consent_revision=view.consent_revision,
             consents=tuple(ConsentResponse.from_view(item) for item in view.consents),

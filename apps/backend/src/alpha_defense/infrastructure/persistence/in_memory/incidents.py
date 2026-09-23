@@ -23,7 +23,6 @@ class InMemoryIncidentRepository:
         self,
         *,
         owner_id: EntityId,
-        session_id: EntityId,
         namespace_id: EntityId,
     ) -> tuple[Incident, ...]:
         return tuple(
@@ -31,9 +30,7 @@ class InMemoryIncidentRepository:
                 (
                     incident
                     for incident in self._state.incidents.values()
-                    if incident.owner_id == owner_id
-                    and incident.session_id == session_id
-                    and incident.namespace_id == namespace_id
+                    if incident.owner_id == owner_id and incident.namespace_id == namespace_id
                 ),
                 key=lambda incident: (incident.updated_at, str(incident.incident_id)),
             )
@@ -111,7 +108,6 @@ class InMemoryNamespaceRiskStateRepository:
                 or incident is None
                 or pending.observation_id not in incident.observation_ids
                 or incident.owner_id != state.owner_id
-                or incident.session_id != state.session_id
                 or incident.namespace_id != state.namespace_id
             ):
                 raise ValueError("pending analysis references an inconsistent incident")

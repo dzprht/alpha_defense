@@ -16,9 +16,7 @@ class GetIncident:
         with self._unit_of_work() as uow:
             incident = uow.incidents.get(incident_id)
         if incident is None or (
-            incident.owner_id != actor.user_id
-            or incident.session_id != actor.session_id
-            or incident.namespace_id != actor.namespace_id
+            incident.owner_id != actor.user_id or incident.namespace_id != actor.namespace_id
         ):
             raise ResourceNotFoundError("Инцидент не найден.")
         return incident_to_view(incident)

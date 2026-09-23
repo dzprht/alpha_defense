@@ -64,7 +64,6 @@ class SqlAlchemyIncidentRepository:
         self,
         *,
         owner_id: EntityId,
-        session_id: EntityId,
         namespace_id: EntityId,
     ) -> tuple[Incident, ...]:
         rows = _execute(
@@ -72,7 +71,6 @@ class SqlAlchemyIncidentRepository:
             sa.select(incidents)
             .where(
                 incidents.c.owner_id == str(owner_id),
-                incidents.c.session_id == str(session_id),
                 incidents.c.namespace_id == str(namespace_id),
             )
             .order_by(incidents.c.updated_at, incidents.c.incident_id),

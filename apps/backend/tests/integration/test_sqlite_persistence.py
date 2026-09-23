@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import sqlalchemy as sa
@@ -24,6 +24,84 @@ from tests.contract.test_uow_contract import (
     make_idempotency_record,
     migrate,
 )
+
+
+def test_account_migration_preserves_populated_demo_session(tmp_path: Path) -> None:
+    database_path = tmp_path / "old-demo.db"
+    migrate(database_path, "20260924_0006")
+    engine = create_sqlite_engine(database_path)
+    created = datetime(2026, 9, 20, tzinfo=UTC)
+    with engine.begin() as connection:
+        connection.execute(
+            sa.text(
+                "INSERT INTO users (user_id, profile_code, created_at) "
+                "VALUES (:user_id, 'demo-user', :created)"
+            ),
+            {"user_id": "00000000-0000-0000-0000-000000000001", "created": created},
+        )
+        connection.execute(
+            sa.text(
+                "INSERT INTO sessions (session_id, user_id, manual_namespace_id, roles_json, "
+                "token_fingerprint, consent_revision, created_at, expires_at) "
+                "VALUES (:session_id, :user_id, :namespace_id, '[\"demo_user\"]', :fingerprint, "
+                "0, :created, :expires)"
+            ),
+            {
+                "session_id": "00000000-0000-0000-0000-000000000002",
+                "user_id": "00000000-0000-0000-0000-000000000001",
+                "namespace_id": "00000000-0000-0000-0000-000000000003",
+                "fingerprint": "a" * 64,
+                "created": created,
+                "expires": created + timedelta(days=2),
+            },
+        )
+        connection.execute(
+            sa.text(
+                "INSERT INTO pre_sessions (pre_session_id, token_fingerprint, created_at, "
+                "expires_at, consumed_session_id) VALUES (:id, :fingerprint, :created, :expires, "
+                ":session_id)"
+            ),
+            {
+                "id": "00000000-0000-0000-0000-000000000004",
+                "fingerprint": "b" * 64,
+                "created": created,
+                "expires": created + timedelta(minutes=5),
+                "session_id": "00000000-0000-0000-0000-000000000002",
+            },
+        )
+    engine.dispose()
+
+    migrate(database_path)
+    migrated = create_sqlite_engine(database_path)
+    with migrated.connect() as connection:
+        row = connection.execute(
+            sa.text(
+                "SELECT auth_kind, workspace_namespace_id, revoked_at FROM sessions "
+                "WHERE session_id = '00000000-0000-0000-0000-000000000002'"
+            )
+        ).one()
+        linked = connection.execute(
+            sa.text(
+                "SELECT consumed_session_id FROM pre_sessions "
+                "WHERE pre_session_id = '00000000-0000-0000-0000-000000000004'"
+            )
+        ).scalar_one()
+    migrated.dispose()
+    assert row == ("demo", None, None)
+    assert linked == "00000000-0000-0000-0000-000000000002"
+    command.downgrade(alembic_config(database_path), "20260924_0006")
+    restored = create_sqlite_engine(database_path)
+    with restored.connect() as connection:
+        assert (
+            connection.execute(
+                sa.text(
+                    "SELECT consumed_session_id FROM pre_sessions WHERE "
+                    "pre_session_id = '00000000-0000-0000-0000-000000000004'"
+                )
+            ).scalar_one()
+            == linked
+        )
+    restored.dispose()
 
 
 def test_migration_creates_only_technical_tables(tmp_path: Path) -> None:
@@ -52,6 +130,7 @@ def test_migration_creates_only_technical_tables(tmp_path: Path) -> None:
     command.check(config)
     current_engine = create_sqlite_engine(database_path)
     assert set(sa.inspect(current_engine).get_table_names()) == {
+        "accounts",
         "alembic_version",
         "audit_events",
         "consents",
@@ -61,6 +140,7 @@ def test_migration_creates_only_technical_tables(tmp_path: Path) -> None:
         "incident_observations",
         "incident_resolutions",
         "incidents",
+        "login_throttles",
         "namespace_pending_analyses",
         "namespace_risk_states",
         "observation_content",

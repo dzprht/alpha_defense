@@ -14,10 +14,12 @@ from alpha_defense.application.identity.dto import (
 from alpha_defense.application.ports import JsonValue, UnitOfWorkPort
 from alpha_defense.application.shared import ActorContext
 from alpha_defense.domain.identity import (
+    Account,
     ConsentScope,
     ConsentSnapshot,
     ConsentStatus,
     DemoSession,
+    LoginThrottle,
     PreSession,
     SessionRole,
     SyntheticUser,
@@ -48,6 +50,32 @@ class SecurityTokenPort(Protocol):
 
     def derive_csrf_token(self, bearer_token: str) -> str: ...
 
+    def fingerprint_credentials(self, login: str, password: str) -> str: ...
+
+    def fingerprint_login(self, login: str) -> str: ...
+
+
+class CredentialPort(Protocol):
+    def hash_password(self, password: str) -> str: ...
+
+    def verify_password(self, password_hash: str | None, password: str) -> bool: ...
+
+
+class AccountRepositoryPort(Protocol):
+    def add(self, account: Account) -> None: ...
+
+    def get_by_id(self, user_id: EntityId) -> Account | None: ...
+
+    def get_by_login(self, normalized_login: str) -> Account | None: ...
+
+    def save_consent_revision(self, account: Account, *, expected_revision: int) -> None: ...
+
+    def get_throttle(self, login_fingerprint: str) -> LoginThrottle | None: ...
+
+    def add_throttle(self, throttle: LoginThrottle) -> None: ...
+
+    def save_throttle(self, throttle: LoginThrottle, *, expected_revision: int) -> None: ...
+
 
 class IdentityRepositoryPort(Protocol):
     def add_user(self, user: SyntheticUser) -> None: ...
@@ -73,6 +101,8 @@ class IdentityRepositoryPort(Protocol):
 
     def save_session(self, session: DemoSession, *, expected_consent_revision: int) -> None: ...
 
+    def revoke_session(self, session: DemoSession) -> None: ...
+
     def add_consent(self, consent: ConsentSnapshot) -> None: ...
 
     def get_consent(self, user_id: EntityId, scope: ConsentScope) -> ConsentSnapshot | None: ...
@@ -85,6 +115,9 @@ class IdentityRepositoryPort(Protocol):
 class IdentityUnitOfWorkPort(UnitOfWorkPort, Protocol):
     @property
     def identity(self) -> IdentityRepositoryPort: ...
+
+    @property
+    def accounts(self) -> AccountRepositoryPort: ...
 
 
 class IdentityUnitOfWorkFactory(Protocol):
@@ -118,3 +151,25 @@ class IdentityServicePort(Protocol):
         status: ConsentStatus,
         expected_revision: int,
     ) -> ConsentView: ...
+
+
+class AccountServicePort(Protocol):
+    def register(
+        self,
+        *,
+        pre_session_token: str,
+        idempotency_key: str,
+        login: str,
+        password: str,
+    ) -> StartSessionResult: ...
+
+    def login(
+        self,
+        *,
+        pre_session_token: str,
+        idempotency_key: str,
+        login: str,
+        password: str,
+    ) -> StartSessionResult: ...
+
+    def logout(self, *, session_token: str, idempotency_key: str) -> None: ...

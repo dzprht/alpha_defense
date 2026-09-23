@@ -260,7 +260,6 @@ def _require_actor_scope(
 ) -> None:
     if (
         observation.owner_id != actor.user_id
-        or observation.session_id != actor.session_id
         or observation.namespace_id != actor.namespace_id
         or observation.execution_mode is not actor.execution_mode
     ):

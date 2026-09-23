@@ -15,9 +15,11 @@ from alpha_defense.application.ports import (
 )
 from alpha_defense.application.shared import IdempotencyConflictError, StaleRevisionError
 from alpha_defense.domain.identity import (
+    Account,
     ConsentScope,
     ConsentSnapshot,
     DemoSession,
+    LoginThrottle,
     PreSession,
     SyntheticUser,
 )
@@ -153,6 +155,14 @@ class InMemoryIdentityRepository:
             raise ValueError("immutable session fields cannot be changed")
         self._state.sessions[session.session_id] = session
 
+    def revoke_session(self, session: DemoSession) -> None:
+        current = self._state.sessions.get(session.session_id)
+        if current is None or current.revoked_at is not None:
+            raise StaleRevisionError("Session has already been revoked")
+        if replace(current, revoked_at=session.revoked_at) != session or session.revoked_at is None:
+            raise ValueError("only session revocation is permitted")
+        self._state.sessions[session.session_id] = session
+
     def add_consent(self, consent: ConsentSnapshot) -> None:
         key = (consent.user_id, consent.scope)
         existing = self._state.consents.get(key)
@@ -189,6 +199,57 @@ class InMemoryIdentityRepository:
         if consent.revision <= expected_revision:
             raise StaleRevisionError("Consent revision must advance")
         self._state.consents[key] = consent
+
+
+class InMemoryAccountRepository:
+    def __init__(self, state: InMemoryState) -> None:
+        self._state = state
+
+    def add(self, account: Account) -> None:
+        if account.user_id not in self._state.users:
+            raise ValueError("account user does not exist")
+        if (
+            account.user_id in self._state.accounts
+            or account.normalized_login in self._state.account_logins
+        ):
+            raise ValueError("account already exists")
+        if any(item.namespace_id == account.namespace_id for item in self._state.accounts.values()):
+            raise ValueError("account namespace already exists")
+        self._state.accounts[account.user_id] = account
+        self._state.account_logins[account.normalized_login] = account.user_id
+
+    def get_by_id(self, user_id: EntityId) -> Account | None:
+        return self._state.accounts.get(user_id)
+
+    def get_by_login(self, normalized_login: str) -> Account | None:
+        user_id = self._state.account_logins.get(normalized_login)
+        return None if user_id is None else self._state.accounts[user_id]
+
+    def save_consent_revision(self, account: Account, *, expected_revision: int) -> None:
+        current = self.get_by_id(account.user_id)
+        if current is None or current.consent_revision != expected_revision:
+            raise StaleRevisionError("Account consent revision is stale")
+        if replace(current, consent_revision=expected_revision + 1) != account:
+            raise ValueError("only account consent revision can advance")
+        self._state.accounts[account.user_id] = account
+
+    def get_throttle(self, login_fingerprint: str) -> LoginThrottle | None:
+        return self._state.login_throttles.get(login_fingerprint)
+
+    def add_throttle(self, throttle: LoginThrottle) -> None:
+        if throttle.login_fingerprint in self._state.login_throttles:
+            raise ValueError("login throttle already exists")
+        self._state.login_throttles[throttle.login_fingerprint] = throttle
+
+    def save_throttle(self, throttle: LoginThrottle, *, expected_revision: int) -> None:
+        current = self.get_throttle(throttle.login_fingerprint)
+        if (
+            current is None
+            or current.revision != expected_revision
+            or throttle.revision != expected_revision + 1
+        ):
+            raise StaleRevisionError("Login throttle revision is stale")
+        self._state.login_throttles[throttle.login_fingerprint] = throttle
 
 
 class InMemoryAuditRepository:

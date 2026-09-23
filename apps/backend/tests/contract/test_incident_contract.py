@@ -309,7 +309,6 @@ def test_workflow_rollback_leaves_no_observation_incident_or_pending_state(
         assert (
             uow.incidents.list_for_scope(
                 owner_id=_id(1),
-                session_id=_id(2),
                 namespace_id=_id(3),
             )
             == ()
