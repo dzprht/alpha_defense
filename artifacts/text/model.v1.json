@@ -1,0 +1,34 @@
+{
+  "artifact_bytes": 134304,
+  "artifact_sha256": "70f3b8443eee340672b8be11e63841e5b1ccac80d7bbdeccb3bb46fad0b2f9a2",
+  "classifier": {
+    "C": 1.0,
+    "kind": "logistic_regression",
+    "solver": "liblinear"
+  },
+  "dataset_sha256": "5b14d127700767cf3fc05302afcfe6fd786c1e05364abec74c3dfbc85d0a7d4e",
+  "features": {
+    "kind": "word_tfidf",
+    "ngram_range": [
+      1,
+      2
+    ],
+    "sublinear_tf": true
+  },
+  "model_file": "model.v1.joblib",
+  "model_version": "text-tfidf-logreg-v1",
+  "positive_label": "suspicious",
+  "seed": 20260924,
+  "split_manifest_sha256": "d67dd516e3febc13480b1a4b102fb1031ecc6cbb9a2bf4dfc434aaa1dd19bac0",
+  "threshold": 0.5,
+  "train_content_sha256": "c83616e924d612af4306e34f81372d3511c8b8f71669f39bbc27bfdee5c0deac",
+  "validation_content_sha256": "4e469e5f47b927154d59d7241cb46e0ce7a5844f96767fd7e51fafd7b128d352",
+  "validation_report_sha256": "6a6f8e2feb2dde083c1bfeb33903da9366c51833c8763baa60b0d182811dfde9",
+  "versions": {
+    "joblib": "1.5.3",
+    "numpy": "2.4.6",
+    "python": "3.11",
+    "scikit_learn": "1.9.0",
+    "scipy": "1.17.1"
+  }
+}

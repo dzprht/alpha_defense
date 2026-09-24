@@ -306,7 +306,29 @@ venv из `AGENTS.md`. Тест проходит регистрацию, оши�
 `datasets/text/`. Сборка без `--write` ничего не переписывает; после осознанной правки
 источника `--write` пересоздаёт `messages.v1.jsonl` и `splits.v1.json`, но требует
 повторной проверки и обновления документации/hash. Этот набор не импортирует сообщения
-из runtime и не обучает модель: обучение и оценка относятся к M02–M03.
+из runtime; его train/validation использует M02, test остаётся для M03.
+
+## Офлайн-модель M02
+
+ML-зависимости закреплены отдельно от backend в `scripts/ml/pyproject.toml` и
+`scripts/ml/uv.lock`. Только для обучения создаётся изолированное `scripts/ml/.venv` на
+Python 3.11 из принятой среды. Это не обновляет общий venv:
+
+```bash
+uv lock --project scripts/ml --check
+uv sync --project scripts/ml --python /Users/Shared/github/MachineLearning/ml_venv/bin/python --frozen --no-install-project
+scripts/ml/.venv/bin/python scripts/ml/train_text_classifier.py
+/Users/Shared/github/MachineLearning/ml_venv/bin/python -m pytest -q scripts/ml/tests
+/Users/Shared/github/MachineLearning/ml_venv/bin/python -m mypy --config-file scripts/ml/pyproject.toml --explicit-package-bases scripts/ml
+```
+
+Обычный запуск обучения сверяет повторно построенные модель, manifest и отчёт побайтово
+с `artifacts/text/` и ничего не меняет. `--write` перевыпускает их только намеренно:
+после изменения набора, кода или зависимостей потребуется новая версия артефакта и
+повторная приемка. Текущий отчёт относится только к validation; test закрыт до M03.
+Сериализованный joblib-файл загружается только из доверенного локального checkout;
+путь к модели никогда не берётся из HTTP-запроса. Установка ML-пакетов в общий venv
+и обучение в пользовательском запросе не требуются.
 
 ## Известное состояние общего Python venv
 

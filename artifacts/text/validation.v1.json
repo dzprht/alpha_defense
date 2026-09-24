@@ -1,0 +1,47 @@
+{
+  "candidate_thresholds": [
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.25,
+    0.3,
+    0.35,
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8,
+    0.85,
+    0.9,
+    0.95
+  ],
+  "dataset_sha256": "5b14d127700767cf3fc05302afcfe6fd786c1e05364abec74c3dfbc85d0a7d4e",
+  "evaluated_split": "validation",
+  "metrics": {
+    "confusion_matrix": {
+      "fn": 4,
+      "fp": 7,
+      "tn": 33,
+      "tp": 36
+    },
+    "f1": 0.8674698795180723,
+    "n": 80,
+    "precision": 0.8372093023255814,
+    "recall": 0.9
+  },
+  "model_version": "text-tfidf-logreg-v1",
+  "n_train": 240,
+  "n_validation": 80,
+  "positive_label": "suspicious",
+  "selected_threshold": 0.5,
+  "split_manifest_sha256": "d67dd516e3febc13480b1a4b102fb1031ecc6cbb9a2bf4dfc434aaa1dd19bac0",
+  "test_evaluated": false,
+  "threshold_selection": "max_f1_then_recall_then_nearest_0.5_then_lower",
+  "train_content_sha256": "c83616e924d612af4306e34f81372d3511c8b8f71669f39bbc27bfdee5c0deac",
+  "validation_content_sha256": "4e469e5f47b927154d59d7241cb46e0ce7a5844f96767fd7e51fafd7b128d352"
+}
