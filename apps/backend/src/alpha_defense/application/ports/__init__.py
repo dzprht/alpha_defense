@@ -7,6 +7,11 @@ from alpha_defense.application.ports.analysis import (
     TextAnalysisRequest,
     TextModelAnalysisPort,
 )
+from alpha_defense.application.ports.assessments import (
+    AssessmentRepositoryPort,
+    ContactUnitOfWorkFactory,
+    ContactUnitOfWorkPort,
+)
 from alpha_defense.application.ports.communications import (
     CommunicationsUnitOfWorkFactory,
     CommunicationsUnitOfWorkPort,
@@ -76,6 +81,7 @@ from alpha_defense.application.ports.threat_intel import (
 from alpha_defense.application.ports.unit_of_work import UnitOfWorkFactory, UnitOfWorkPort
 
 __all__ = [
+    "AssessmentRepositoryPort",
     "AuditPort",
     "AuditReceipt",
     "AuditRecord",
@@ -85,6 +91,8 @@ __all__ = [
     "Clock",
     "CommunicationsUnitOfWorkFactory",
     "CommunicationsUnitOfWorkPort",
+    "ContactUnitOfWorkFactory",
+    "ContactUnitOfWorkPort",
     "ContentCatalogPort",
     "EducationCatalogSnapshot",
     "EventEnvelope",

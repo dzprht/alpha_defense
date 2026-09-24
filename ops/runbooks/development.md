@@ -1,6 +1,6 @@
 # Локальная разработка
 
-Статус: проверено для P01–P13 и A01–A02 2026-09-24. Здесь зафиксированы инструменты и команды;
+Статус: проверено для P01–P13, P15 и A01–A02 2026-09-24. Здесь зафиксированы инструменты и команды;
 backend HTTP-контур, synthetic demo-сессии, onboarding web-shell и валидатор обязательного
 каталога исполнимы. Синтетический threat registry можно идемпотентно заполнить и обновить
 отдельной операторской командой.
@@ -40,7 +40,7 @@ UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv sync --fr
 uv lock --check
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen ruff check src tests migrations ../../scripts/*.py
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen ruff format --check src tests migrations ../../scripts/*.py
-UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen mypy
+UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen mypy src
 UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --frozen lint-imports --config pyproject.toml
 ```
 
@@ -63,7 +63,7 @@ UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --fro
 ```
 
 Проверка upgrade/downgrade, отсутствия drift, сохранения audit/outbox, threat snapshot,
-observations, incidents, pending-контекста и warning после restart, а также восстановления истекшего
+observations, incidents, assessments, pending-контекста и warning после restart, а также восстановления истекшего
 lease входит в интеграционный набор:
 
 ```bash
@@ -134,8 +134,8 @@ UV_PROJECT_ENVIRONMENT=/Users/Shared/github/MachineLearning/ml_venv uv run --fro
 
 P09 добавляет внутреннюю application-операцию приема и отдельную схему хранения
 raw-content, метаданных и нормализованных индикаторов. После `alembic upgrade head` новые таблицы
-готовы, но отдельного операторского или публичного HTTP-входа для них нет: `POST /observations` будет открыт
-только в полном workflow. Текущая приемка выполняется через unit/contract/integration-тесты, которые
+готовы; P15 открыла `POST /api/v1/observations` для ручного текста и URL.
+Текущая приемка выполняется через unit/contract/integration-тесты, которые
 запускаются общей backend-командой `pytest`.
 
 ### Предварительные инциденты и свежесть контекста
@@ -146,8 +146,8 @@ P10 добавляет внутреннюю приемную часть analyze-
 epoch повторно. Корреляция использует явный conversation/call либо одинаковый нормализованный
 индикатор внутри namespace; одна близость времени контакты не объединяет.
 
-Публичного HTTP-route пока нет: финализация анализа и разрешение pending-состояния относятся к
-P15. Поведение, rollback и восстановление SQLite после restart проверяются общей backend-
+P15 добавила HTTP-route и финализацию анализа с разрешением pending только обработанного
+наблюдения. Поведение, rollback и восстановление SQLite после restart проверяются общей backend-
 командой `pytest`; отдельный интеграционный сценарий находится в
 `tests/integration/test_incidents.py`.
 
@@ -162,8 +162,8 @@ partial либо unavailable, а не ложный низкий риск.
 В mock-режиме текст проверяется только фиксированными русскоязычными маркерами, а URL —
 сравнением нормализованного домена с доверенным каталогом. Сетевых запросов, ML/LLM и скрытого
 использования expected label нет. S01 вместе с активным threat evidence дает `critical` и 95
-баллов. Публичного route пока нет: запись результата в incident и атомарное снятие pending
-относятся к P15. Приемка выполняется общей backend-командой `pytest`; сквозная внутренняя
+баллов. P15 сохраняет оценку в инциденте и атомарно снимает pending при совпадении версии.
+Приемка выполняется общей backend-командой `pytest`; сквозная внутренняя
 проверка находится в `tests/integration/test_detection.py`.
 
 ### Рекомендации и учебные карточки
@@ -187,7 +187,29 @@ curl -sS -c "$cookie_jar" -b "$cookie_jar" \
 возвращает общую карточку безопасности с `fallback_reason`, а не 404 с потерей безопасного
 совета. Внутренняя guidance-операция связывает результат P11 с проверенным текстом и передает
 `allowed_actions` без изменения; номер поддержки берется только из trusted catalog. Публичный
-incident guidance route и UI карточек появятся после сборки соответствующих workflow.
+отдельный incident guidance route и UI карточек появятся после сборки соответствующих workflow.
+
+### Полный контактный backend-поток P15
+
+После `alembic upgrade head` схема содержит неизменяемые оценки риска. Для policy v2
+нужен доверенный `MODEL_ROOT`; threat snapshot заполняется локальной операторской
+командой выше. Активная account/demo-сессия выдаёт согласие `analyze_communications`
+для SMS/chat/transcript или `analyze_resources` для URL. Ручной `POST
+/api/v1/observations` принимает `kind`, `source_event_id`, `occurred_at` и tagged
+`payload`; media-only запрос не поддерживается. Команды также требуют CSRF-cookie,
+заголовок `X-CSRF-Token` и `Idempotency-Key`.
+
+Ответ содержит ID наблюдения, инцидента и сохранённой оценки, полноту и уровень риска,
+pending и статус dispatch предупреждения. Своё состояние можно прочитать через
+`GET /api/v1/observations/{id}`, `/incidents/{id}`, `/assessments/{id}` и
+`/assessments/{id}/guidance`; `POST /api/v1/observations/{id}/reassess` добавляет
+новую immutable-оценку, не перезаписывая старую. Чужие ID возвращают 404.
+
+При конфликте версии после нового свидетельства результат старого анализа не
+публикуется, а pending остаётся. При отказе применимых анализаторов ответ имеет
+`unknown` и `partial`/`unavailable`, не `low`. Dispatch в outbox пока не равен
+фактическому показу в браузере — это P16. Сквозные проверки находятся в
+`tests/integration/test_complete_contact.py` и `test_contact_http.py`.
 
 ### Проверка demo-сессии и согласий
 
@@ -338,16 +360,20 @@ scripts/ml/.venv/bin/python scripts/ml/train_text_classifier.py
 Backend проверяет manifest, версии библиотек, размер и SHA-256 бинарного файла
 до загрузки модели. Неверный или отсутствующий артефакт останавливает старт;
 файл joblib нельзя получать от пользователя. Policy v1 без модели остаётся
-совместимой с прежними тестами. Публичный маршрут приема наблюдения появится
-только в P15, так что сейчас это внутренняя application-граница.
+совместимой с прежними тестами. Публичный маршрут приема наблюдения реализован в P15.
 
 Офлайн-отчёты `policy_validation.v2.json`, `policy_freeze.v2.json` и
-`policy_test.v2.json` зафиксированы. Команды проверки без перезаписи:
+`policy_test.v2.json` зафиксированы. Validation-отчёт можно воспроизвести без перезаписи:
 
 ```bash
 PYTHONPATH=apps/backend/src scripts/ml/.venv/bin/python scripts/ml/evaluate_text_policy.py validation
-PYTHONPATH=apps/backend/src scripts/ml/.venv/bin/python scripts/ml/evaluate_text_policy.py test
 ```
+
+Команда `test` после P15 намеренно отклоняется freeze-проверкой: составной SHA M03
+включал изменившийся bootstrap. Это не новая оценка модели и не повод повторно открывать
+отложенный набор. Исходный отчёт и отпечаток остаются архивными результатами M03;
+текущие offline-тесты проверяют неизменность собственно model/policy/данных и
+воспроизводимость validation-отчёта.
 
 `validation --write` после появления test-отчёта запрещён, `test --write` не
 переписывает существующий результат; при изменении модели, policy или оценочного

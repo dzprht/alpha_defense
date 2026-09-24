@@ -13,6 +13,7 @@ from alpha_defense.application.ports import (
     OutboxMessage,
 )
 from alpha_defense.domain.communications import Observation, ObservationContent
+from alpha_defense.domain.detection import RiskAssessment
 from alpha_defense.domain.identity import (
     Account,
     ConsentScope,
@@ -56,6 +57,7 @@ class InMemoryState:
     incidents: dict[EntityId, Incident] = field(default_factory=dict)
     incidents_by_observation: dict[EntityId, EntityId] = field(default_factory=dict)
     namespace_risk_states: dict[EntityId, NamespaceRiskState] = field(default_factory=dict)
+    assessments: dict[EntityId, RiskAssessment] = field(default_factory=dict)
     warnings: dict[EntityId, Warning] = field(default_factory=dict)
     warning_by_assessment: dict[EntityId, EntityId] = field(default_factory=dict)
 

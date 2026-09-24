@@ -77,7 +77,7 @@ class AttachObservation:
             raise ResourceNotFoundError("Наблюдение не найдено.")
         existing_incident = uow.incidents.get_by_observation(observation_id)
         if existing_incident is not None:
-            state = _require_risk_state(uow, actor=actor, observation_id=observation_id)
+            state = _require_risk_state(uow, actor=actor)
             return AttachObservationResult(
                 incident=incident_to_view(existing_incident),
                 risk_state=risk_state_to_view(state),
@@ -183,10 +183,9 @@ def _require_risk_state(
     uow: IncidentUnitOfWorkPort,
     *,
     actor: ActorContext,
-    observation_id: EntityId,
 ) -> NamespaceRiskState:
     state = uow.namespace_risk_states.get(actor.namespace_id)
-    if state is None or not state.is_pending(observation_id):
-        raise ValueError("attached observation has no pending namespace risk state")
+    if state is None:
+        raise ValueError("attached observation has no namespace risk state")
     _require_actor_scope(state, actor)
     return state

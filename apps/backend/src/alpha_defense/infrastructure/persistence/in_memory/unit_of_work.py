@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from types import TracebackType
 
+from alpha_defense.infrastructure.persistence.in_memory.assessments import (
+    InMemoryAssessmentRepository,
+)
 from alpha_defense.infrastructure.persistence.in_memory.communications import (
     InMemoryObservationRepository,
 )
@@ -41,6 +44,7 @@ class InMemoryUnitOfWork:
         self._incidents: InMemoryIncidentRepository | None = None
         self._namespace_risk_states: InMemoryNamespaceRiskStateRepository | None = None
         self._warnings: InMemoryWarningRepository | None = None
+        self._assessments: InMemoryAssessmentRepository | None = None
 
     @property
     def idempotency(self) -> InMemoryIdempotencyRepository:
@@ -102,6 +106,12 @@ class InMemoryUnitOfWork:
             raise RuntimeError("UnitOfWork is not active")
         return self._warnings
 
+    @property
+    def assessments(self) -> InMemoryAssessmentRepository:
+        if self._assessments is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._assessments
+
     def begin(self) -> None:
         if self._active:
             raise RuntimeError("UnitOfWork is already active")
@@ -117,6 +127,7 @@ class InMemoryUnitOfWork:
         self._incidents = InMemoryIncidentRepository(self._state)
         self._namespace_risk_states = InMemoryNamespaceRiskStateRepository(self._state)
         self._warnings = InMemoryWarningRepository(self._state)
+        self._assessments = InMemoryAssessmentRepository(self._state)
         self._active = True
         self._finished = False
 

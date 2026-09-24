@@ -9,8 +9,10 @@ from typing import cast
 
 from fastapi import Request
 
+from alpha_defense.application.communications import GetObservation
 from alpha_defense.application.education import GetCard, ListCards
 from alpha_defense.application.identity import AccountServicePort, IdentityServicePort
+from alpha_defense.application.incidents import GetIncident
 from alpha_defense.application.shared import (
     ActionForbiddenError,
     ActorContext,
@@ -18,6 +20,7 @@ from alpha_defense.application.shared import (
     ResourceNotFoundError,
     SessionRequiredError,
 )
+from alpha_defense.application.workflows import CompleteContactAnalysis
 
 SESSION_COOKIE_NAME = "alpha_defense_session"
 PRE_SESSION_COOKIE_NAME = "alpha_defense_pre_session"
@@ -56,6 +59,27 @@ def get_card_service(request: Request) -> GetCard:
     service = getattr(request.app.state, "get_card", None)
     if not isinstance(service, GetCard):
         raise RuntimeError("get card service was not configured")
+    return service
+
+
+def complete_contact_service(request: Request) -> CompleteContactAnalysis:
+    service = getattr(request.app.state, "complete_contact", None)
+    if not isinstance(service, CompleteContactAnalysis):
+        raise RuntimeError("contact analysis service was not configured")
+    return service
+
+
+def get_observation_service(request: Request) -> GetObservation:
+    service = getattr(request.app.state, "get_observation", None)
+    if not isinstance(service, GetObservation):
+        raise RuntimeError("observation service was not configured")
+    return service
+
+
+def get_incident_service(request: Request) -> GetIncident:
+    service = getattr(request.app.state, "get_incident", None)
+    if not isinstance(service, GetIncident):
+        raise RuntimeError("incident service was not configured")
     return service
 
 

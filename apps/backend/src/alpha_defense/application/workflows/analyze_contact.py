@@ -7,13 +7,20 @@ from alpha_defense.application.communications import (
     ObservationInput,
     ObservationView,
 )
+from alpha_defense.application.communications.mapping import canonical_sha256, payload_to_data
 from alpha_defense.application.incidents import (
     AttachObservation,
     CorrelationKey,
     CorrelationKeyKind,
 )
-from alpha_defense.application.ports import IncidentUnitOfWorkFactory
-from alpha_defense.application.shared import ActorContext
+from alpha_defense.application.ports import (
+    IdempotencyRecord,
+    IdempotencyScope,
+    IdempotencyState,
+    IdGenerator,
+    IncidentUnitOfWorkFactory,
+)
+from alpha_defense.application.shared import ActorContext, ServiceUnavailableError
 from alpha_defense.application.workflows.dto import AnalyzeContactReceipt
 from alpha_defense.domain.communications import (
     CallTranscriptPayload,
@@ -32,10 +39,12 @@ class AnalyzeContact:
         unit_of_work: IncidentUnitOfWorkFactory,
         ingest_observation: IngestObservation,
         attach_observation: AttachObservation,
+        id_generator: IdGenerator | None = None,
     ) -> None:
         self._unit_of_work = unit_of_work
         self._ingest_observation = ingest_observation
         self._attach_observation = attach_observation
+        self._id_generator = id_generator
 
     def execute(
         self,
@@ -43,6 +52,7 @@ class AnalyzeContact:
         actor: ActorContext,
         source: str,
         observation_input: ObservationInput,
+        idempotency_key: str | None = None,
     ) -> AnalyzeContactReceipt:
         with self._unit_of_work() as uow:
             intake = self._ingest_observation.execute_in_unit_of_work(
@@ -51,6 +61,45 @@ class AnalyzeContact:
                 source=source,
                 observation_input=observation_input,
             )
+            reservation = None
+            if idempotency_key is not None:
+                if self._id_generator is None:
+                    raise RuntimeError("idempotency requires an id generator")
+                command_hash = canonical_sha256(
+                    {
+                        "source": source,
+                        "source_event_id": observation_input.source_event_id,
+                        "occurred_at": observation_input.occurred_at.isoformat(),
+                        "payload": payload_to_data(observation_input.payload),
+                    }
+                )
+                reservation = uow.idempotency.reserve(
+                    IdempotencyRecord(
+                        record_id=self._id_generator.new_id(),
+                        scope=IdempotencyScope(
+                            principal_fingerprint=canonical_sha256(
+                                {"actor_id": str(actor.user_id)}
+                            ),
+                            session_id=actor.session_id,
+                            namespace_id=actor.namespace_id,
+                            method="POST",
+                            canonical_route="/api/v1/observations",
+                            key=idempotency_key,
+                        ),
+                        command_hash=command_hash,
+                        resource_id=intake.observation.observation_id,
+                        state=IdempotencyState.IN_PROGRESS,
+                        result=None,
+                        revision=0,
+                        created_at=intake.observation.received_at,
+                        updated_at=intake.observation.received_at,
+                    )
+                )
+                if (
+                    not reservation.is_new
+                    and reservation.record.state is not IdempotencyState.COMPLETED
+                ):
+                    raise ServiceUnavailableError("Contact intake replay is incomplete")
             attachment = self._attach_observation.execute_in_unit_of_work(
                 uow=uow,
                 actor=actor,
@@ -58,6 +107,18 @@ class AnalyzeContact:
                 available_keys=_correlation_keys(intake.observation),
                 accepted_at=intake.observation.received_at,
             )
+            if reservation is not None and reservation.is_new:
+                uow.idempotency.save(
+                    reservation.record.finish(
+                        state=IdempotencyState.COMPLETED,
+                        result={
+                            "observation_id": str(intake.observation.observation_id),
+                            "incident_id": str(attachment.incident.incident_id),
+                        },
+                        updated_at=intake.observation.received_at,
+                    ),
+                    expected_revision=0,
+                )
             uow.commit()
         return AnalyzeContactReceipt(
             observation=intake.observation,

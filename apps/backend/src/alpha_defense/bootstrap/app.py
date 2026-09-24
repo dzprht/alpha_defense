@@ -9,9 +9,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.types import Lifespan
 
+from alpha_defense.application.communications import GetObservation
 from alpha_defense.application.education import GetCard, ListCards
 from alpha_defense.application.identity import AccountServicePort, IdentityServicePort
+from alpha_defense.application.incidents import GetIncident
 from alpha_defense.application.ports import ReadinessPort
+from alpha_defense.application.workflows import CompleteContactAnalysis
 from alpha_defense.bootstrap.container import build_container
 from alpha_defense.bootstrap.settings import AppEnvironment, Settings
 from alpha_defense.transport.http.v1 import api_v1_router
@@ -30,6 +33,9 @@ def create_http_app(
     account_service: AccountServicePort | None = None,
     list_cards: ListCards | None = None,
     get_card: GetCard | None = None,
+    get_observation: GetObservation | None = None,
+    get_incident: GetIncident | None = None,
+    complete_contact: CompleteContactAnalysis | None = None,
     secure_cookies: bool = False,
     lifespan: Lifespan[FastAPI] | None = None,
 ) -> FastAPI:
@@ -49,6 +55,9 @@ def create_http_app(
     app.state.account_service = account_service
     app.state.list_cards = list_cards
     app.state.get_card = get_card
+    app.state.get_observation = get_observation
+    app.state.get_incident = get_incident
+    app.state.complete_contact = complete_contact
     app.state.cookie_policy = CookiePolicy(secure=secure_cookies)
     app.include_router(api_v1_router)
     install_exception_handlers(app)
@@ -89,6 +98,9 @@ def create_app() -> FastAPI:
         account_service=container.account_service,
         list_cards=container.list_cards,
         get_card=container.get_card,
+        get_observation=container.get_observation,
+        get_incident=container.get_incident,
+        complete_contact=container.complete_contact,
         secure_cookies=settings.app_env is AppEnvironment.PRODUCTION,
         lifespan=lifespan,
     )

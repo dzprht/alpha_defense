@@ -1,6 +1,13 @@
 """Public versioned HTTP schemas."""
 
 from alpha_defense.transport.http.v1.schemas.common import FieldError, ProblemDetails
+from alpha_defense.transport.http.v1.schemas.contact import (
+    AssessmentResponse,
+    ContactAnalysisResponse,
+    GuidanceResponse,
+    IncidentResponse,
+    ObservationResponse,
+)
 from alpha_defense.transport.http.v1.schemas.education import (
     EducationCardPageResponse,
     EducationCardResponse,
@@ -19,19 +26,28 @@ from alpha_defense.transport.http.v1.schemas.identity import (
     StartDemoSessionRequest,
     UpdateConsentRequest,
 )
-from alpha_defense.transport.http.v1.schemas.observations import ObservationInputSchema
+from alpha_defense.transport.http.v1.schemas.observations import (
+    ManualObservationInputSchema,
+    ObservationInputSchema,
+)
 
 __all__ = [
     "AccountCredentialsRequest",
     "AnonymousSessionResponse",
+    "AssessmentResponse",
     "ConsentResponse",
+    "ContactAnalysisResponse",
     "DependencyStatus",
     "EducationCardPageResponse",
     "EducationCardResponse",
     "EducationCardSummaryResponse",
     "FieldError",
+    "GuidanceResponse",
+    "IncidentResponse",
     "LivenessResponse",
+    "ManualObservationInputSchema",
     "ObservationInputSchema",
+    "ObservationResponse",
     "ProblemDetails",
     "ReadinessResponse",
     "SessionResponse",

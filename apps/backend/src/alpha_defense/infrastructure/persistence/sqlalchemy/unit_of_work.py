@@ -9,6 +9,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from alpha_defense.application.shared import ServiceUnavailableError
+from alpha_defense.infrastructure.persistence.sqlalchemy.assessments import (
+    SqlAlchemyAssessmentRepository,
+)
 from alpha_defense.infrastructure.persistence.sqlalchemy.communications import (
     SqlAlchemyObservationRepository,
 )
@@ -49,6 +52,7 @@ class SqlAlchemyUnitOfWork:
         self._incidents: SqlAlchemyIncidentRepository | None = None
         self._namespace_risk_states: SqlAlchemyNamespaceRiskStateRepository | None = None
         self._warnings: SqlAlchemyWarningRepository | None = None
+        self._assessments: SqlAlchemyAssessmentRepository | None = None
 
     @property
     def idempotency(self) -> SqlAlchemyIdempotencyRepository:
@@ -110,6 +114,12 @@ class SqlAlchemyUnitOfWork:
             raise RuntimeError("UnitOfWork is not active")
         return self._warnings
 
+    @property
+    def assessments(self) -> SqlAlchemyAssessmentRepository:
+        if self._assessments is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._assessments
+
     def begin(self) -> None:
         if self._active:
             raise RuntimeError("UnitOfWork is already active")
@@ -125,6 +135,7 @@ class SqlAlchemyUnitOfWork:
         self._incidents = SqlAlchemyIncidentRepository(self._session)
         self._namespace_risk_states = SqlAlchemyNamespaceRiskStateRepository(self._session)
         self._warnings = SqlAlchemyWarningRepository(self._session)
+        self._assessments = SqlAlchemyAssessmentRepository(self._session)
         self._active = True
         self._finished = False
 

@@ -5,18 +5,24 @@ from __future__ import annotations
 import json
 import re
 import sys
+from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
 import pytest
-
 from scripts.ml import evaluate_text_policy as evaluation
 
 
-def test_validation_report_and_freeze_are_reproducible() -> None:
+def test_validation_report_and_frozen_policy_inputs_are_reproducible() -> None:
     report = evaluation.evaluate("validation")
     assert report == evaluation.VALIDATION_REPORT.read_bytes()
-    assert evaluation._freeze_bytes(report) == evaluation.FREEZE_FILE.read_bytes()
+    freeze = json.loads(evaluation.FREEZE_FILE.read_bytes())
+    assert freeze["validation_report_sha256"] == sha256(report).hexdigest()
+    # The application bootstrap evolves after M03; the frozen evaluation remains
+    # an archive of the M03 run, not a claim that later application code was tested.
+    for name, path in evaluation.INPUTS.items():
+        if name != "bootstrap":
+            assert freeze["input_sha256"][name] == sha256(path.read_bytes()).hexdigest()
     parsed = json.loads(report)
     assert parsed["split"] == "validation"
     assert parsed["n"] == 80

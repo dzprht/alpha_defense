@@ -24,6 +24,104 @@
         "title": "AccountCredentialsRequest",
         "type": "object"
       },
+      "AllowedActionResponse": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "disabled_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disabled Reason"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "requires_confirmation": {
+            "title": "Requires Confirmation",
+            "type": "boolean"
+          },
+          "target_id": {
+            "title": "Target Id",
+            "type": "string"
+          },
+          "target_revision": {
+            "title": "Target Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "enabled",
+          "disabled_reason",
+          "requires_confirmation",
+          "target_id",
+          "target_revision"
+        ],
+        "title": "AllowedActionResponse",
+        "type": "object"
+      },
+      "AnalyzerResultResponse": {
+        "properties": {
+          "analyzer": {
+            "title": "Analyzer",
+            "type": "string"
+          },
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "model_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Score"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "provider_version": {
+            "title": "Provider Version",
+            "type": "string"
+          },
+          "reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reason Codes",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "analyzer",
+          "status",
+          "reason_codes",
+          "model_score",
+          "provider",
+          "provider_version",
+          "data_version"
+        ],
+        "title": "AnalyzerResultResponse",
+        "type": "object"
+      },
       "AnonymousSessionResponse": {
         "additionalProperties": false,
         "properties": {
@@ -58,6 +156,177 @@
           "capabilities"
         ],
         "title": "AnonymousSessionResponse",
+        "type": "object"
+      },
+      "AssessmentResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "analysis_plan_version": {
+            "title": "Analysis Plan Version",
+            "type": "string"
+          },
+          "analyzer_results": {
+            "items": {
+              "$ref": "#/components/schemas/AnalyzerResultResponse"
+            },
+            "title": "Analyzer Results",
+            "type": "array"
+          },
+          "assessed_at": {
+            "format": "date-time",
+            "title": "Assessed At",
+            "type": "string"
+          },
+          "assessment_id": {
+            "title": "Assessment Id",
+            "type": "string"
+          },
+          "completeness": {
+            "title": "Completeness",
+            "type": "string"
+          },
+          "context_version": {
+            "title": "Context Version",
+            "type": "integer"
+          },
+          "has_mock_evidence": {
+            "title": "Has Mock Evidence",
+            "type": "boolean"
+          },
+          "policy_version": {
+            "title": "Policy Version",
+            "type": "string"
+          },
+          "reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reason Codes",
+            "type": "array"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "score_kind": {
+            "title": "Score Kind",
+            "type": "string"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/SignalResponse"
+            },
+            "title": "Signals",
+            "type": "array"
+          },
+          "target_id": {
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assessment_id",
+          "target_id",
+          "severity",
+          "score",
+          "score_kind",
+          "completeness",
+          "reason_codes",
+          "signals",
+          "analyzer_results",
+          "policy_version",
+          "analysis_plan_version",
+          "assessed_at",
+          "context_version",
+          "has_mock_evidence"
+        ],
+        "title": "AssessmentResponse",
+        "type": "object"
+      },
+      "CallTranscriptObservationInputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "call_transcript",
+            "title": "Kind",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/CallTranscriptPayloadSchema"
+          },
+          "source_event_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Source Event Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_event_id",
+          "occurred_at",
+          "kind",
+          "payload"
+        ],
+        "title": "CallTranscriptObservationInputSchema",
+        "type": "object"
+      },
+      "CallTranscriptPayloadSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "call_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Call Id",
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Phone",
+            "type": "string"
+          },
+          "segments": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/TranscriptSegmentSchema"
+            },
+            "maxItems": 200,
+            "title": "Segments",
+            "type": "array"
+          },
+          "sequence": {
+            "minimum": 0.0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "transcript": {
+            "maxLength": 30000,
+            "minLength": 1,
+            "title": "Transcript",
+            "type": "string"
+          }
+        },
+        "required": [
+          "transcript",
+          "phone",
+          "call_id",
+          "sequence"
+        ],
+        "title": "CallTranscriptPayloadSchema",
         "type": "object"
       },
       "ConsentResponse": {
@@ -107,6 +376,61 @@
         ],
         "title": "ConsentStatus",
         "type": "string"
+      },
+      "ContactAnalysisResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "analysis_pending": {
+            "title": "Analysis Pending",
+            "type": "boolean"
+          },
+          "assessment": {
+            "$ref": "#/components/schemas/AssessmentResponse"
+          },
+          "duplicate_source_event": {
+            "title": "Duplicate Source Event",
+            "type": "boolean"
+          },
+          "incident_context_version": {
+            "title": "Incident Context Version",
+            "type": "integer"
+          },
+          "incident_id": {
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "observation_id": {
+            "title": "Observation Id",
+            "type": "string"
+          },
+          "warning_dispatched": {
+            "title": "Warning Dispatched",
+            "type": "boolean"
+          },
+          "warning_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning Id"
+          }
+        },
+        "required": [
+          "observation_id",
+          "incident_id",
+          "incident_context_version",
+          "analysis_pending",
+          "assessment",
+          "warning_id",
+          "warning_dispatched",
+          "duplicate_source_event"
+        ],
+        "title": "ContactAnalysisResponse",
+        "type": "object"
       },
       "DependencyStatus": {
         "additionalProperties": false,
@@ -180,6 +504,24 @@
           "content_version"
         ],
         "title": "EducationCardPageResponse",
+        "type": "object"
+      },
+      "EducationCardReferenceResponse": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "version"
+        ],
+        "title": "EducationCardReferenceResponse",
         "type": "object"
       },
       "EducationCardResponse": {
@@ -366,6 +708,199 @@
         "title": "FieldError",
         "type": "object"
       },
+      "GuidanceResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_actions": {
+            "items": {
+              "$ref": "#/components/schemas/AllowedActionResponse"
+            },
+            "title": "Allowed Actions",
+            "type": "array"
+          },
+          "classification": {
+            "title": "Classification",
+            "type": "string"
+          },
+          "completeness": {
+            "title": "Completeness",
+            "type": "string"
+          },
+          "content_version": {
+            "title": "Content Version",
+            "type": "string"
+          },
+          "education_cards": {
+            "items": {
+              "$ref": "#/components/schemas/EducationCardReferenceResponse"
+            },
+            "title": "Education Cards",
+            "type": "array"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "recommendations": {
+            "items": {
+              "$ref": "#/components/schemas/RecommendationResponse"
+            },
+            "title": "Recommendations",
+            "type": "array"
+          },
+          "requested_locale": {
+            "title": "Requested Locale",
+            "type": "string"
+          },
+          "risk_label": {
+            "title": "Risk Label",
+            "type": "string"
+          },
+          "support_contact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrustedSupportContactResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "support_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Support Message"
+          },
+          "unmapped_reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unmapped Reason Codes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "risk_label",
+          "explanation",
+          "classification",
+          "completeness",
+          "recommendations",
+          "education_cards",
+          "allowed_actions",
+          "support_message",
+          "support_contact",
+          "unmapped_reason_codes",
+          "locale",
+          "requested_locale",
+          "content_version"
+        ],
+        "title": "GuidanceResponse",
+        "type": "object"
+      },
+      "IncidentResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "assessment_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assessment Ids",
+            "type": "array"
+          },
+          "context_version": {
+            "title": "Context Version",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "execution_mode": {
+            "title": "Execution Mode",
+            "type": "string"
+          },
+          "incident_id": {
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "latest_assessment_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Assessment Id"
+          },
+          "observation_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Observation Ids",
+            "type": "array"
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineItemResponse"
+            },
+            "title": "Timeline",
+            "type": "array"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "incident_id",
+          "status",
+          "observation_ids",
+          "assessment_ids",
+          "latest_assessment_id",
+          "resolution",
+          "context_version",
+          "revision",
+          "created_at",
+          "updated_at",
+          "execution_mode",
+          "timeline"
+        ],
+        "title": "IncidentResponse",
+        "type": "object"
+      },
       "LivenessResponse": {
         "additionalProperties": false,
         "properties": {
@@ -386,6 +921,249 @@
           "request_id"
         ],
         "title": "LivenessResponse",
+        "type": "object"
+      },
+      "ManualObservationInputSchema": {
+        "discriminator": {
+          "mapping": {
+            "call_transcript": "#/components/schemas/CallTranscriptObservationInputSchema",
+            "messenger": "#/components/schemas/MessengerObservationInputSchema",
+            "sms": "#/components/schemas/SmsObservationInputSchema",
+            "web_resource": "#/components/schemas/ManualWebResourceObservationInputSchema"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SmsObservationInputSchema"
+          },
+          {
+            "$ref": "#/components/schemas/MessengerObservationInputSchema"
+          },
+          {
+            "$ref": "#/components/schemas/CallTranscriptObservationInputSchema"
+          },
+          {
+            "$ref": "#/components/schemas/ManualWebResourceObservationInputSchema"
+          }
+        ],
+        "title": "ManualObservationInputSchema"
+      },
+      "ManualWebResourceObservationInputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "web_resource",
+            "title": "Kind",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/ManualWebResourcePayloadSchema"
+          },
+          "source_event_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Source Event Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_event_id",
+          "occurred_at",
+          "kind",
+          "payload"
+        ],
+        "title": "ManualWebResourceObservationInputSchema",
+        "type": "object"
+      },
+      "ManualWebResourcePayloadSchema": {
+        "additionalProperties": false,
+        "description": "The public v1 route accepts URL evidence, not media references.",
+        "properties": {
+          "url": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "ManualWebResourcePayloadSchema",
+        "type": "object"
+      },
+      "MessengerObservationInputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "messenger",
+            "title": "Kind",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/MessengerPayloadSchema"
+          },
+          "source_event_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Source Event Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_event_id",
+          "occurred_at",
+          "kind",
+          "payload"
+        ],
+        "title": "MessengerObservationInputSchema",
+        "type": "object"
+      },
+      "MessengerPayloadSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "conversation_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Conversation Id",
+            "type": "string"
+          },
+          "sender": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Sender",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "sender",
+          "conversation_id"
+        ],
+        "title": "MessengerPayloadSchema",
+        "type": "object"
+      },
+      "NormalizedIndicatorResponse": {
+        "properties": {
+          "indicator_type": {
+            "title": "Indicator Type",
+            "type": "string"
+          },
+          "normalization_version": {
+            "title": "Normalization Version",
+            "type": "string"
+          },
+          "normalized_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Normalized Value"
+          },
+          "origin": {
+            "title": "Origin",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "indicator_type",
+          "origin",
+          "normalized_value",
+          "status",
+          "normalization_version"
+        ],
+        "title": "NormalizedIndicatorResponse",
+        "type": "object"
+      },
+      "ObservationResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_mode": {
+            "title": "Execution Mode",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "normalization_version": {
+            "title": "Normalization Version",
+            "type": "string"
+          },
+          "normalized_indicators": {
+            "items": {
+              "$ref": "#/components/schemas/NormalizedIndicatorResponse"
+            },
+            "title": "Normalized Indicators",
+            "type": "array"
+          },
+          "observation_id": {
+            "title": "Observation Id",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "payload": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SmsPayloadSchema"
+              },
+              {
+                "$ref": "#/components/schemas/CallTranscriptPayloadSchema"
+              },
+              {
+                "$ref": "#/components/schemas/WebResourcePayloadSchema"
+              }
+            ],
+            "title": "Payload"
+          },
+          "received_at": {
+            "format": "date-time",
+            "title": "Received At",
+            "type": "string"
+          },
+          "source_event_id": {
+            "title": "Source Event Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "observation_id",
+          "kind",
+          "source_event_id",
+          "occurred_at",
+          "received_at",
+          "payload",
+          "normalized_indicators",
+          "normalization_version",
+          "execution_mode"
+        ],
+        "title": "ObservationResponse",
         "type": "object"
       },
       "ProblemDetails": {
@@ -497,6 +1275,29 @@
         "title": "ReadinessResponse",
         "type": "object"
       },
+      "RecommendationResponse": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "title",
+          "body"
+        ],
+        "title": "RecommendationResponse",
+        "type": "object"
+      },
       "SessionResponse": {
         "additionalProperties": false,
         "properties": {
@@ -583,6 +1384,94 @@
         "title": "SessionResponse",
         "type": "object"
       },
+      "SignalResponse": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "evidence_ref": {
+            "title": "Evidence Ref",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "strength": {
+            "title": "Strength",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "evidence_ref",
+          "strength",
+          "source"
+        ],
+        "title": "SignalResponse",
+        "type": "object"
+      },
+      "SmsObservationInputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "sms",
+            "title": "Kind",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/SmsPayloadSchema"
+          },
+          "source_event_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Source Event Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_event_id",
+          "occurred_at",
+          "kind",
+          "payload"
+        ],
+        "title": "SmsObservationInputSchema",
+        "type": "object"
+      },
+      "SmsPayloadSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "conversation_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+            "title": "Conversation Id",
+            "type": "string"
+          },
+          "sender": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Sender",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "sender",
+          "conversation_id"
+        ],
+        "title": "SmsPayloadSchema",
+        "type": "object"
+      },
       "StartDemoSessionRequest": {
         "additionalProperties": false,
         "properties": {
@@ -598,6 +1487,130 @@
           "profile_code"
         ],
         "title": "StartDemoSessionRequest",
+        "type": "object"
+      },
+      "TimelineItemResponse": {
+        "properties": {
+          "context_version": {
+            "title": "Context Version",
+            "type": "integer"
+          },
+          "correlation_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlation Reason"
+          },
+          "entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Id"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "resolution_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution Code"
+          }
+        },
+        "required": [
+          "kind",
+          "occurred_at",
+          "context_version",
+          "entity_id",
+          "resolution_code",
+          "correlation_reason"
+        ],
+        "title": "TimelineItemResponse",
+        "type": "object"
+      },
+      "TranscriptSegmentSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "end_ms": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Ms"
+          },
+          "sequence": {
+            "minimum": 0.0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "start_ms": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Ms"
+          },
+          "text": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sequence",
+          "text"
+        ],
+        "title": "TranscriptSegmentSchema",
+        "type": "object"
+      },
+      "TrustedSupportContactResponse": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "value"
+        ],
+        "title": "TrustedSupportContactResponse",
         "type": "object"
       },
       "UpdateConsentRequest": {
@@ -617,6 +1630,38 @@
           "expected_revision"
         ],
         "title": "UpdateConsentRequest",
+        "type": "object"
+      },
+      "WebResourcePayloadSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "media_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Id"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "title": "WebResourcePayloadSchema",
         "type": "object"
       }
     }
@@ -726,6 +1771,223 @@
         "summary": "Register Account",
         "tags": [
           "identity"
+        ]
+      }
+    },
+    "/api/v1/assessments/{assessment_id}": {
+      "get": {
+        "operationId": "get_assessment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assessment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assessment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          }
+        },
+        "summary": "Get Assessment",
+        "tags": [
+          "contact"
+        ]
+      }
+    },
+    "/api/v1/assessments/{assessment_id}/guidance": {
+      "get": {
+        "operationId": "get_assessment_guidance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assessment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assessment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "locale",
+            "required": false,
+            "schema": {
+              "default": "ru-RU",
+              "pattern": "^[a-z]{2}-[A-Z]{2}$",
+              "title": "Locale",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuidanceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          }
+        },
+        "summary": "Get Assessment Guidance",
+        "tags": [
+          "contact"
         ]
       }
     },
@@ -1074,6 +2336,416 @@
         "summary": "Readiness",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/incidents/{incident_id}": {
+      "get": {
+        "operationId": "get_incident",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Incident Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          }
+        },
+        "summary": "Get Incident",
+        "tags": [
+          "contact"
+        ]
+      }
+    },
+    "/api/v1/observations": {
+      "post": {
+        "operationId": "submit_observation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualObservationInputSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactAnalysisResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          }
+        },
+        "summary": "Submit Observation",
+        "tags": [
+          "contact"
+        ]
+      }
+    },
+    "/api/v1/observations/{observation_id}": {
+      "get": {
+        "operationId": "get_observation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "observation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Observation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObservationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          }
+        },
+        "summary": "Get Observation",
+        "tags": [
+          "contact"
+        ]
+      }
+    },
+    "/api/v1/observations/{observation_id}/reassess": {
+      "post": {
+        "operationId": "reassess_observation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "observation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Observation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactAnalysisResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem Details"
+          }
+        },
+        "summary": "Reassess Observation",
+        "tags": [
+          "contact"
         ]
       }
     },

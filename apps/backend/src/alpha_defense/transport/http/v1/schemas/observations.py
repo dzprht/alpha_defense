@@ -189,3 +189,37 @@ class ObservationInputSchema(RootModel[TaggedObservationInput]):
             occurred_at=value.occurred_at,
             payload=payload,
         )
+
+
+class ManualWebResourcePayloadSchema(BaseModel):
+    """The public v1 route accepts URL evidence, not media references."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    url: str = Field(min_length=1, max_length=2048)
+
+    @field_validator("url")
+    @classmethod
+    def require_trimmed_url(cls, value: str) -> str:
+        if value != value.strip():
+            raise ValueError("url must be trimmed")
+        return value
+
+
+class ManualWebResourceObservationInputSchema(_ObservationInputBase):
+    kind: Literal["web_resource"]
+    payload: ManualWebResourcePayloadSchema
+
+
+TaggedManualObservationInput: TypeAlias = Annotated[
+    SmsObservationInputSchema
+    | MessengerObservationInputSchema
+    | CallTranscriptObservationInputSchema
+    | ManualWebResourceObservationInputSchema,
+    Field(discriminator="kind"),
+]
+
+
+class ManualObservationInputSchema(RootModel[TaggedManualObservationInput]):
+    def to_input(self) -> ObservationInput:
+        return ObservationInputSchema.model_validate(self.model_dump()).to_input()

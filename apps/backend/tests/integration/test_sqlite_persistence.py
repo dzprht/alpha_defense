@@ -132,6 +132,7 @@ def test_migration_creates_only_technical_tables(tmp_path: Path) -> None:
     assert set(sa.inspect(current_engine).get_table_names()) == {
         "accounts",
         "alembic_version",
+        "assessments",
         "audit_events",
         "consents",
         "idempotency_records",

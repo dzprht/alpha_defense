@@ -66,11 +66,17 @@ def test_openapi_contains_only_implemented_endpoints_and_problem_media() -> None
 
     assert set(contract["paths"]) == {
         "/api/v1/accounts",
+        "/api/v1/assessments/{assessment_id}",
+        "/api/v1/assessments/{assessment_id}/guidance",
         "/api/v1/consents/{scope}",
         "/api/v1/education/cards",
         "/api/v1/education/cards/{code}",
         "/api/v1/health/live",
         "/api/v1/health/ready",
+        "/api/v1/incidents/{incident_id}",
+        "/api/v1/observations",
+        "/api/v1/observations/{observation_id}",
+        "/api/v1/observations/{observation_id}/reassess",
         "/api/v1/session",
         "/api/v1/sessions",
         "/api/v1/sessions/demo",
@@ -117,3 +123,7 @@ def test_generated_web_types_cover_implemented_routes() -> None:
     assert '"/api/v1/consents/{scope}"' in generated
     assert '"/api/v1/education/cards"' in generated
     assert '"/api/v1/education/cards/{code}"' in generated
+    assert '"/api/v1/observations"' in generated
+    assert '"/api/v1/observations/{observation_id}/reassess"' in generated
+    assert '"/api/v1/incidents/{incident_id}"' in generated
+    assert '"/api/v1/assessments/{assessment_id}/guidance"' in generated

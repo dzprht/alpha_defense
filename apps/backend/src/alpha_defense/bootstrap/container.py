@@ -32,7 +32,11 @@ from alpha_defense.application.threats import (
     LookupThreatIndicators,
     RefreshThreatRegistry,
 )
-from alpha_defense.application.workflows import AnalyzeContact, PublishWarning
+from alpha_defense.application.workflows import (
+    AnalyzeContact,
+    CompleteContactAnalysis,
+    PublishWarning,
+)
 from alpha_defense.bootstrap.settings import Settings
 from alpha_defense.domain.shared import ExecutionMode
 from alpha_defense.infrastructure.analysis.ml import LocalTextModelAnalyzer
@@ -79,6 +83,7 @@ class Container:
     get_incident: GetIncident
     resolve_incident: ResolveIncident
     analyze_contact: AnalyzeContact
+    complete_contact: CompleteContactAnalysis
     assess_observation: AssessObservation
     get_guidance: GetGuidance
     warnings: WarningService
@@ -157,6 +162,21 @@ def build_container(settings: Settings) -> Container:
     )
     guidance = GetGuidance(catalog)
     warnings = WarningService(unit_of_work=factory, clock=clock, id_generator=id_generator)
+    lookup_threats = LookupThreatIndicators(unit_of_work=factory, clock=clock)
+    analyze_contact = AnalyzeContact(
+        unit_of_work=factory,
+        ingest_observation=ingest_observation,
+        attach_observation=attach_observation,
+        id_generator=id_generator,
+    )
+    assess_observation = AssessObservation(
+        catalog=catalog,
+        text_analyzer=DeterministicTextAnalyzer(),
+        text_model_analyzer=text_model,
+        resource_analyzer=DeterministicUrlAnalyzer(),
+        clock=clock,
+        id_generator=id_generator,
+    )
     return Container(
         settings=settings,
         engine=engine,
@@ -167,7 +187,7 @@ def build_container(settings: Settings) -> Container:
         catalog=catalog,
         identity_service=identity_service,
         account_service=account_service,
-        lookup_threats=LookupThreatIndicators(unit_of_work=factory, clock=clock),
+        lookup_threats=lookup_threats,
         refresh_threat_registry=RefreshThreatRegistry(
             source=settings.threat_feed_source,
             feed=threat_feed,
@@ -189,19 +209,18 @@ def build_container(settings: Settings) -> Container:
             clock=clock,
             id_generator=id_generator,
         ),
-        analyze_contact=AnalyzeContact(
+        analyze_contact=analyze_contact,
+        complete_contact=CompleteContactAnalysis(
             unit_of_work=factory,
-            ingest_observation=ingest_observation,
-            attach_observation=attach_observation,
-        ),
-        assess_observation=AssessObservation(
-            catalog=catalog,
-            text_analyzer=DeterministicTextAnalyzer(),
-            text_model_analyzer=text_model,
-            resource_analyzer=DeterministicUrlAnalyzer(),
+            intake=analyze_contact,
+            assess=assess_observation,
+            lookup_threats=lookup_threats,
+            guidance=guidance,
+            warnings=warnings,
             clock=clock,
             id_generator=id_generator,
         ),
+        assess_observation=assess_observation,
         get_guidance=guidance,
         warnings=warnings,
         publish_warning=PublishWarning(guidance=guidance, warnings=warnings),

@@ -21,6 +21,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/assessments/{assessment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Assessment */
+        get: operations["get_assessment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/assessments/{assessment_id}/guidance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Assessment Guidance */
+        get: operations["get_assessment_guidance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/consents/{scope}": {
         parameters: {
             query?: never;
@@ -106,6 +140,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/incidents/{incident_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Incident */
+        get: operations["get_incident"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/observations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Observation */
+        post: operations["submit_observation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/observations/{observation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Observation */
+        get: operations["get_observation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/observations/{observation_id}/reassess": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reassess Observation */
+        post: operations["reassess_observation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/session": {
         parameters: {
             query?: never;
@@ -185,6 +287,38 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** AllowedActionResponse */
+        AllowedActionResponse: {
+            /** Code */
+            code: string;
+            /** Disabled Reason */
+            disabled_reason: string | null;
+            /** Enabled */
+            enabled: boolean;
+            /** Requires Confirmation */
+            requires_confirmation: boolean;
+            /** Target Id */
+            target_id: string;
+            /** Target Revision */
+            target_revision: number;
+        };
+        /** AnalyzerResultResponse */
+        AnalyzerResultResponse: {
+            /** Analyzer */
+            analyzer: string;
+            /** Data Version */
+            data_version: string;
+            /** Model Score */
+            model_score: number | null;
+            /** Provider */
+            provider: string;
+            /** Provider Version */
+            provider_version: string;
+            /** Reason Codes */
+            reason_codes: string[];
+            /** Status */
+            status: string;
+        };
         /** AnonymousSessionResponse */
         AnonymousSessionResponse: {
             /** Capabilities */
@@ -206,6 +340,72 @@ export interface components {
              * @constant
              */
             status: "anonymous";
+        };
+        /** AssessmentResponse */
+        AssessmentResponse: {
+            /** Analysis Plan Version */
+            analysis_plan_version: string;
+            /** Analyzer Results */
+            analyzer_results: components["schemas"]["AnalyzerResultResponse"][];
+            /**
+             * Assessed At
+             * Format: date-time
+             */
+            assessed_at: string;
+            /** Assessment Id */
+            assessment_id: string;
+            /** Completeness */
+            completeness: string;
+            /** Context Version */
+            context_version: number;
+            /** Has Mock Evidence */
+            has_mock_evidence: boolean;
+            /** Policy Version */
+            policy_version: string;
+            /** Reason Codes */
+            reason_codes: string[];
+            /** Score */
+            score: number | null;
+            /** Score Kind */
+            score_kind: string;
+            /** Severity */
+            severity: string;
+            /** Signals */
+            signals: components["schemas"]["SignalResponse"][];
+            /** Target Id */
+            target_id: string;
+        };
+        /** CallTranscriptObservationInputSchema */
+        CallTranscriptObservationInputSchema: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "call_transcript";
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            payload: components["schemas"]["CallTranscriptPayloadSchema"];
+            /** Source Event Id */
+            source_event_id: string;
+        };
+        /** CallTranscriptPayloadSchema */
+        CallTranscriptPayloadSchema: {
+            /** Call Id */
+            call_id: string;
+            /** Phone */
+            phone: string;
+            /**
+             * Segments
+             * @default []
+             */
+            segments: components["schemas"]["TranscriptSegmentSchema"][];
+            /** Sequence */
+            sequence: number;
+            /** Transcript */
+            transcript: string;
         };
         /** ConsentResponse */
         ConsentResponse: {
@@ -229,6 +429,24 @@ export interface components {
          * @enum {string}
          */
         ConsentStatus: "granted" | "revoked";
+        /** ContactAnalysisResponse */
+        ContactAnalysisResponse: {
+            /** Analysis Pending */
+            analysis_pending: boolean;
+            assessment: components["schemas"]["AssessmentResponse"];
+            /** Duplicate Source Event */
+            duplicate_source_event: boolean;
+            /** Incident Context Version */
+            incident_context_version: number;
+            /** Incident Id */
+            incident_id: string;
+            /** Observation Id */
+            observation_id: string;
+            /** Warning Dispatched */
+            warning_dispatched: boolean;
+            /** Warning Id */
+            warning_id: string | null;
+        };
         /** DependencyStatus */
         DependencyStatus: {
             /** Name */
@@ -254,6 +472,13 @@ export interface components {
             next_cursor: string | null;
             /** Requested Locale */
             requested_locale: string;
+        };
+        /** EducationCardReferenceResponse */
+        EducationCardReferenceResponse: {
+            /** Code */
+            code: string;
+            /** Version */
+            version: string;
         };
         /** EducationCardResponse */
         EducationCardResponse: {
@@ -314,6 +539,67 @@ export interface components {
             /** Message */
             message: string;
         };
+        /** GuidanceResponse */
+        GuidanceResponse: {
+            /** Allowed Actions */
+            allowed_actions: components["schemas"]["AllowedActionResponse"][];
+            /** Classification */
+            classification: string;
+            /** Completeness */
+            completeness: string;
+            /** Content Version */
+            content_version: string;
+            /** Education Cards */
+            education_cards: components["schemas"]["EducationCardReferenceResponse"][];
+            /** Explanation */
+            explanation: string;
+            /** Locale */
+            locale: string;
+            /** Recommendations */
+            recommendations: components["schemas"]["RecommendationResponse"][];
+            /** Requested Locale */
+            requested_locale: string;
+            /** Risk Label */
+            risk_label: string;
+            support_contact: components["schemas"]["TrustedSupportContactResponse"] | null;
+            /** Support Message */
+            support_message: string | null;
+            /** Unmapped Reason Codes */
+            unmapped_reason_codes: string[];
+        };
+        /** IncidentResponse */
+        IncidentResponse: {
+            /** Assessment Ids */
+            assessment_ids: string[];
+            /** Context Version */
+            context_version: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Execution Mode */
+            execution_mode: string;
+            /** Incident Id */
+            incident_id: string;
+            /** Latest Assessment Id */
+            latest_assessment_id: string | null;
+            /** Observation Ids */
+            observation_ids: string[];
+            /** Resolution */
+            resolution: string | null;
+            /** Revision */
+            revision: number;
+            /** Status */
+            status: string;
+            /** Timeline */
+            timeline: components["schemas"]["TimelineItemResponse"][];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
         /** LivenessResponse */
         LivenessResponse: {
             /** Request Id */
@@ -324,6 +610,97 @@ export interface components {
              * @constant
              */
             status: "alive";
+        };
+        /** ManualObservationInputSchema */
+        ManualObservationInputSchema: components["schemas"]["SmsObservationInputSchema"] | components["schemas"]["MessengerObservationInputSchema"] | components["schemas"]["CallTranscriptObservationInputSchema"] | components["schemas"]["ManualWebResourceObservationInputSchema"];
+        /** ManualWebResourceObservationInputSchema */
+        ManualWebResourceObservationInputSchema: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "web_resource";
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            payload: components["schemas"]["ManualWebResourcePayloadSchema"];
+            /** Source Event Id */
+            source_event_id: string;
+        };
+        /**
+         * ManualWebResourcePayloadSchema
+         * @description The public v1 route accepts URL evidence, not media references.
+         */
+        ManualWebResourcePayloadSchema: {
+            /** Url */
+            url: string;
+        };
+        /** MessengerObservationInputSchema */
+        MessengerObservationInputSchema: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "messenger";
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            payload: components["schemas"]["MessengerPayloadSchema"];
+            /** Source Event Id */
+            source_event_id: string;
+        };
+        /** MessengerPayloadSchema */
+        MessengerPayloadSchema: {
+            /** Conversation Id */
+            conversation_id: string;
+            /** Sender */
+            sender: string;
+            /** Text */
+            text: string;
+        };
+        /** NormalizedIndicatorResponse */
+        NormalizedIndicatorResponse: {
+            /** Indicator Type */
+            indicator_type: string;
+            /** Normalization Version */
+            normalization_version: string;
+            /** Normalized Value */
+            normalized_value: string | null;
+            /** Origin */
+            origin: string;
+            /** Status */
+            status: string;
+        };
+        /** ObservationResponse */
+        ObservationResponse: {
+            /** Execution Mode */
+            execution_mode: string;
+            /** Kind */
+            kind: string;
+            /** Normalization Version */
+            normalization_version: string;
+            /** Normalized Indicators */
+            normalized_indicators: components["schemas"]["NormalizedIndicatorResponse"][];
+            /** Observation Id */
+            observation_id: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Payload */
+            payload: components["schemas"]["SmsPayloadSchema"] | components["schemas"]["CallTranscriptPayloadSchema"] | components["schemas"]["WebResourcePayloadSchema"];
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            /** Source Event Id */
+            source_event_id: string;
         };
         /**
          * ProblemDetails
@@ -365,6 +742,15 @@ export interface components {
              */
             status: "ready";
         };
+        /** RecommendationResponse */
+        RecommendationResponse: {
+            /** Body */
+            body: string;
+            /** Code */
+            code: string;
+            /** Title */
+            title: string;
+        };
         /** SessionResponse */
         SessionResponse: {
             /**
@@ -404,16 +790,95 @@ export interface components {
             /** User Id */
             user_id: string;
         };
+        /** SignalResponse */
+        SignalResponse: {
+            /** Code */
+            code: string;
+            /** Evidence Ref */
+            evidence_ref: string;
+            /** Source */
+            source: string;
+            /** Strength */
+            strength: number;
+        };
+        /** SmsObservationInputSchema */
+        SmsObservationInputSchema: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "sms";
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            payload: components["schemas"]["SmsPayloadSchema"];
+            /** Source Event Id */
+            source_event_id: string;
+        };
+        /** SmsPayloadSchema */
+        SmsPayloadSchema: {
+            /** Conversation Id */
+            conversation_id: string;
+            /** Sender */
+            sender: string;
+            /** Text */
+            text: string;
+        };
         /** StartDemoSessionRequest */
         StartDemoSessionRequest: {
             /** Profile Code */
             profile_code: string;
+        };
+        /** TimelineItemResponse */
+        TimelineItemResponse: {
+            /** Context Version */
+            context_version: number;
+            /** Correlation Reason */
+            correlation_reason: string | null;
+            /** Entity Id */
+            entity_id: string | null;
+            /** Kind */
+            kind: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Resolution Code */
+            resolution_code: string | null;
+        };
+        /** TranscriptSegmentSchema */
+        TranscriptSegmentSchema: {
+            /** End Ms */
+            end_ms?: number | null;
+            /** Sequence */
+            sequence: number;
+            /** Start Ms */
+            start_ms?: number | null;
+            /** Text */
+            text: string;
+        };
+        /** TrustedSupportContactResponse */
+        TrustedSupportContactResponse: {
+            /** Code */
+            code: string;
+            /** Value */
+            value: string;
         };
         /** UpdateConsentRequest */
         UpdateConsentRequest: {
             /** Expected Revision */
             expected_revision: number;
             status: components["schemas"]["ConsentStatus"];
+        };
+        /** WebResourcePayloadSchema */
+        WebResourcePayloadSchema: {
+            /** Media Id */
+            media_id?: string | null;
+            /** Url */
+            url?: string | null;
         };
     };
     responses: never;
@@ -493,6 +958,178 @@ export interface operations {
             };
             /** @description Problem Details */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    get_assessment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessmentResponse"];
+                };
+            };
+            /** @description Problem Details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    get_assessment_guidance: {
+        parameters: {
+            query?: {
+                locale?: string;
+            };
+            header?: never;
+            path: {
+                assessment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuidanceResponse"];
+                };
+            };
+            /** @description Problem Details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -742,6 +1379,348 @@ export interface operations {
                 };
             };
             /** @description Mandatory dependency is unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    get_incident: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IncidentResponse"];
+                };
+            };
+            /** @description Problem Details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    submit_observation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManualObservationInputSchema"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactAnalysisResponse"];
+                };
+            };
+            /** @description Problem Details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    get_observation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                observation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObservationResponse"];
+                };
+            };
+            /** @description Problem Details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    reassess_observation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                observation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactAnalysisResponse"];
+                };
+            };
+            /** @description Problem Details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
             503: {
                 headers: {
                     [name: string]: unknown;

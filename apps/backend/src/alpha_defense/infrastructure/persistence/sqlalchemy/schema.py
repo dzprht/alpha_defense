@@ -560,6 +560,30 @@ namespace_pending_analyses = sa.Table(
     sa.Column("accepted_at", sa.DateTime(timezone=True), nullable=False),
 )
 
+assessments = sa.Table(
+    "assessments",
+    metadata,
+    sa.Column("assessment_id", sa.String(36), primary_key=True),
+    sa.Column("owner_id", sa.String(36), sa.ForeignKey("users.user_id"), nullable=False),
+    sa.Column("session_id", sa.String(36), sa.ForeignKey("sessions.session_id"), nullable=False),
+    sa.Column("namespace_id", sa.String(36), nullable=False),
+    sa.Column("target_kind", sa.String(16), nullable=False),
+    sa.Column("target_id", sa.String(36), nullable=False),
+    sa.Column("context_version", sa.Integer(), nullable=False),
+    sa.Column("assessed_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("payload_json", sa.Text(), nullable=False),
+    sa.CheckConstraint("target_kind IN ('observation', 'transfer')", name="target_kind_valid"),
+    sa.CheckConstraint("context_version >= 1", name="context_version_positive"),
+)
+
+sa.Index(
+    "ix_assessments_observation_history",
+    assessments.c.owner_id,
+    assessments.c.namespace_id,
+    assessments.c.target_id,
+    assessments.c.assessed_at,
+)
+
 warnings = sa.Table(
     "warnings",
     metadata,

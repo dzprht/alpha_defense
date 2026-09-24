@@ -10,11 +10,13 @@ from alpha_defense.application.detection.plan import (
     ANALYSIS_PLAN_VERSION,
     build_observation_analysis_plan,
 )
+from alpha_defense.domain.detection import RiskAssessment
 
 __all__ = [
     "ANALYSIS_PLAN_VERSION",
     "AssessObservation",
     "ObservationAnalysisInput",
+    "RiskAssessment",
     "ThreatEvidenceOutcome",
     "ThreatLookupEvidence",
     "build_observation_analysis_plan",

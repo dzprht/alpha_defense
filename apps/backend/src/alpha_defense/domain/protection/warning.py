@@ -104,11 +104,8 @@ class Warning:
             and self.severity is not Severity.UNKNOWN
         ):
             raise ValueError("unavailable warning must have unknown severity")
-        if (
-            self.completeness is not WarningCompleteness.UNAVAILABLE
-            and self.severity is Severity.UNKNOWN
-        ):
-            raise ValueError("known analysis requires known severity")
+        if self.completeness is WarningCompleteness.COMPLETE and self.severity is Severity.UNKNOWN:
+            raise ValueError("complete analysis requires known severity")
         if type(self.context_version) is not int or self.context_version < 1:
             raise ValueError("context_version must be positive")
         if type(self.revision) is not int or self.revision < 0:
