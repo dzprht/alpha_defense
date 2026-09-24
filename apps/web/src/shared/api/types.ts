@@ -10,5 +10,7 @@ export type SessionState =
   operations["get_session"]["responses"][200]["content"]["application/json"];
 export type StartDemoSessionBody =
   operations["start_demo_session"]["requestBody"]["content"]["application/json"];
+export type AccountCredentialsBody =
+  operations["register_account"]["requestBody"]["content"]["application/json"];
 export type UpdateConsentBody =
   operations["update_consent"]["requestBody"]["content"]["application/json"];

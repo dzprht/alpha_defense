@@ -1,7 +1,8 @@
 import { useId, useState } from "react";
 
+import { errorMessage } from "@/features/onboarding/model/errorMessage";
 import { useOnboarding } from "@/features/onboarding/model/useOnboarding";
-import { ApiError } from "@/shared/api";
+import { AccountForm } from "@/features/onboarding/ui/AccountForm";
 import type { ConsentScope, Session } from "@/shared/api/types";
 import { formatMoscowDateTime } from "@/shared/formatting";
 import strings from "@/shared/i18n/ru.json";
@@ -19,7 +20,8 @@ const consentScopes: ConsentScope[] = [
 type ProfileCode = (typeof profileCodes)[number];
 
 export function Onboarding() {
-  const { consentMutation, sessionQuery, startSessionMutation } = useOnboarding();
+  const { acceptSession, consentMutation, logoutMutation, sessionQuery, startSessionMutation } =
+    useOnboarding();
 
   return (
     <section className="onboarding-layout" aria-labelledby="onboarding-title">
@@ -40,17 +42,22 @@ export function Onboarding() {
           onRetry={() => void sessionQuery.refetch()}
         />
       ) : sessionQuery.data.status === "anonymous" ? (
-        <ProfileForm
-          error={startSessionMutation.error}
-          isPending={startSessionMutation.isPending}
-          onSubmit={(profileCode) => {
-            startSessionMutation.mutate(profileCode);
-          }}
-        />
+        <div className="onboarding-stack">
+          <AccountForm onAuthenticated={acceptSession} />
+          <ProfileForm
+            error={startSessionMutation.error}
+            isPending={startSessionMutation.isPending}
+            onSubmit={(profileCode) => {
+              startSessionMutation.mutate(profileCode);
+            }}
+          />
+        </div>
       ) : (
         <ConsentForm
           error={consentMutation.error}
           isPending={consentMutation.isPending}
+          isLoggingOut={logoutMutation.isPending}
+          logoutError={logoutMutation.error}
           onChange={(scope, granted) => {
             const currentSession = sessionQuery.data;
             if (currentSession.status !== "active") {
@@ -61,6 +68,9 @@ export function Onboarding() {
               scope,
               status: granted ? "granted" : "revoked",
             });
+          }}
+          onLogout={() => {
+            logoutMutation.mutate();
           }}
           session={sessionQuery.data}
           wasSaved={consentMutation.isSuccess}
@@ -147,21 +157,38 @@ function ProfileForm({ error, isPending, onSubmit }: ProfileFormProps) {
 interface ConsentFormProps {
   error: Error | null;
   isPending: boolean;
+  isLoggingOut: boolean;
+  logoutError: Error | null;
   onChange: (scope: ConsentScope, granted: boolean) => void;
+  onLogout: () => void;
   session: Session;
   wasSaved: boolean;
 }
 
-function ConsentForm({ error, isPending, onChange, session, wasSaved }: ConsentFormProps) {
+function ConsentForm({
+  error,
+  isPending,
+  isLoggingOut,
+  logoutError,
+  onChange,
+  onLogout,
+  session,
+  wasSaved,
+}: ConsentFormProps) {
+  const isAccount = session.auth_kind === "account";
   return (
     <div className="onboarding-card">
-      <h2>{strings.onboarding.activeTitle}</h2>
-      <p className="card-description">{strings.onboarding.activeDescription}</p>
+      <h2>{isAccount ? strings.account.activeTitle : strings.onboarding.activeTitle}</h2>
+      <p className="card-description">
+        {isAccount ? strings.account.activeDescription : strings.onboarding.activeDescription}
+      </p>
       <p className="session-meta">
         {strings.onboarding.expires}:{" "}
         <strong>{formatMoscowDateTime(session.expires_at)} МСК</strong>
       </p>
-      <h3 className="consent-heading">{strings.onboarding.consentsTitle}</h3>
+      <h3 className="consent-heading">
+        {isAccount ? strings.account.consentsTitle : strings.onboarding.consentsTitle}
+      </h3>
       <div className="consent-list">
         {consentScopes.map((scope) => {
           const consent = session.consents.find((item) => item.scope === scope);
@@ -170,7 +197,7 @@ function ConsentForm({ error, isPending, onChange, session, wasSaved }: ConsentF
             <label className="consent-option" key={scope}>
               <input
                 checked={isGranted}
-                disabled={isPending}
+                disabled={isPending || isLoggingOut}
                 onChange={(event) => {
                   onChange(scope, event.target.checked);
                 }}
@@ -195,13 +222,23 @@ function ConsentForm({ error, isPending, onChange, session, wasSaved }: ConsentF
       {!isPending && error === null && wasSaved ? (
         <InlineNotice tone="success">{strings.onboarding.saved}</InlineNotice>
       ) : null}
+      {logoutError === null ? null : (
+        <InlineNotice tone="error">{errorMessage(logoutError)}</InlineNotice>
+      )}
+      <div className="form-actions">
+        <Button
+          disabled={isPending || isLoggingOut}
+          onClick={onLogout}
+          type="button"
+          variant="secondary"
+        >
+          {isLoggingOut
+            ? strings.account.loggingOut
+            : isAccount
+              ? strings.account.logoutAccount
+              : strings.account.logoutDemo}
+        </Button>
+      </div>
     </div>
   );
-}
-
-function errorMessage(error: Error): string {
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-  return "Не удалось связаться с сервисом. Проверьте подключение и повторите попытку.";
 }

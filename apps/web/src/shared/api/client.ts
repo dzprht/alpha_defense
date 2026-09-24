@@ -6,6 +6,7 @@ const CSRF_COOKIE_NAME = "alpha_defense_csrf";
 interface ApiRequestOptions {
   body?: unknown;
   command?: boolean;
+  idempotencyKey?: string;
   method?: "GET" | "PATCH" | "POST";
 }
 
@@ -40,7 +41,7 @@ export async function apiRequest<ResponseBody>(
       throw new Error("CSRF cookie is missing");
     }
     headers.set("X-CSRF-Token", csrfToken);
-    headers.set("Idempotency-Key", globalThis.crypto.randomUUID());
+    headers.set("Idempotency-Key", options.idempotencyKey ?? globalThis.crypto.randomUUID());
   }
 
   const request: RequestInit = {
@@ -55,6 +56,9 @@ export async function apiRequest<ResponseBody>(
   const response = await fetch(`${API_PREFIX}${path}`, request);
   if (!response.ok) {
     throw await toApiError(response);
+  }
+  if (response.status === 204) {
+    return undefined as ResponseBody;
   }
   return (await response.json()) as ResponseBody;
 }

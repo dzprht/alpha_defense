@@ -139,6 +139,71 @@ describe("onboarding", () => {
     const [, revokeRequest] = fetchMock.mock.calls[2] ?? [];
     expect(revokeRequest?.body).toBe(JSON.stringify({ expected_revision: 1, status: "revoked" }));
   });
+
+  it("checks registration confirmation without sending a request", async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(jsonResponse(anonymousSession));
+    renderOnboarding();
+
+    await user.click(await screen.findByRole("button", { name: "Регистрация" }));
+    await user.type(screen.getByRole("textbox", { name: "Логин" }), "student_one");
+    await user.type(screen.getByLabelText("Пароль"), "safe-test-pass-123");
+    await user.type(screen.getByLabelText("Повторите пароль"), "different-pass-123");
+    await user.click(screen.getByRole("button", { name: "Создать аккаунт" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Пароли не совпадают");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps registration fields after a server error and sends only credentials", async () => {
+    const user = userEvent.setup();
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(anonymousSession))
+      .mockResolvedValueOnce(problemResponse("login_taken", "Такой логин уже занят.", 409));
+    renderOnboarding();
+
+    await user.click(await screen.findByRole("button", { name: "Регистрация" }));
+    const login = screen.getByRole("textbox", { name: "Логин" });
+    await user.type(login, "student_one");
+    await user.type(screen.getByLabelText("Пароль"), "safe-test-pass-123");
+    await user.type(screen.getByLabelText("Повторите пароль"), "safe-test-pass-123");
+    await user.click(screen.getByRole("button", { name: "Создать аккаунт" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Такой логин уже занят.");
+    expect(login).toHaveValue("student_one");
+    const [, request] = fetchMock.mock.calls[1] ?? [];
+    expect(fetchMock.mock.calls[1]?.[0]).toBe("/api/v1/accounts");
+    expect(request?.body).toBe(
+      JSON.stringify({ login: "student_one", password: "safe-test-pass-123" }),
+    );
+    expect(new Headers(request?.headers).get("X-CSRF-Token")).toBe("csrf-token");
+    expect(new Headers(request?.headers).get("Idempotency-Key")).not.toBeNull();
+  });
+
+  it("logs in, logs out on a 204 response, and restores anonymous state", async () => {
+    const user = userEvent.setup();
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(anonymousSession))
+      .mockResolvedValueOnce(jsonResponse({ ...activeSession, auth_kind: "account" }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse(anonymousSession));
+    renderOnboarding();
+
+    await user.type(await screen.findByRole("textbox", { name: "Логин" }), "student_one");
+    await user.type(screen.getByLabelText("Пароль"), "safe-test-pass-123");
+    await user.click(screen.getByRole("button", { name: "Войти в аккаунт" }));
+    expect(await screen.findByRole("heading", { name: "Учебный аккаунт активен" })).toBeVisible();
+    const [, loginRequest] = fetchMock.mock.calls[1] ?? [];
+    expect(fetchMock.mock.calls[1]?.[0]).toBe("/api/v1/sessions");
+    expect(loginRequest?.body).toBe(
+      JSON.stringify({ login: "student_one", password: "safe-test-pass-123" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Выйти из аккаунта" }));
+    expect(await screen.findByRole("heading", { name: "Войти в учебный аккаунт" })).toBeVisible();
+    expect(fetchMock.mock.calls[2]?.[0]).toBe("/api/v1/sessions/logout");
+    expect(fetchMock.mock.calls[3]?.[0]).toBe("/api/v1/session");
+  });
 });
 
 function renderOnboarding() {
@@ -154,4 +219,20 @@ function jsonResponse(body: unknown, status = 200): Response {
     headers: { "Content-Type": "application/json" },
     status,
   });
+}
+
+function problemResponse(code: string, detail: string, status: number): Response {
+  return jsonResponse(
+    {
+      code,
+      detail,
+      instance: "/api/v1/accounts",
+      request_id: "test-request",
+      retryable: false,
+      status,
+      title: "Ошибка",
+      type: `urn:alpha-defense:problem:${code}`,
+    },
+    status,
+  );
 }
