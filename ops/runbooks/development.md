@@ -291,6 +291,23 @@ venv из `AGENTS.md`. Тест проходит регистрацию, оши�
 одного аккаунта, изоляцию другого, refresh и выход одной сессии. Это не проверка второго
 физического устройства или истории, которой пока нет.
 
+## Синтетический текстовый набор M01
+
+Из корня репозитория проверить неизменность 400 JSONL-записей, manifest и группового
+разделения, затем выполнить отдельные offline-тесты:
+
+```bash
+/Users/Shared/github/MachineLearning/ml_venv/bin/python scripts/ml/build_text_dataset.py
+/Users/Shared/github/MachineLearning/ml_venv/bin/python -m pytest -q scripts/ml/tests
+/Users/Shared/github/MachineLearning/ml_venv/bin/python -m mypy --strict --explicit-package-bases scripts/ml
+```
+
+Источник, критерии разметки, классы, ограничения и SHA-256 находятся в
+`datasets/text/`. Сборка без `--write` ничего не переписывает; после осознанной правки
+источника `--write` пересоздаёт `messages.v1.jsonl` и `splits.v1.json`, но требует
+повторной проверки и обновления документации/hash. Этот набор не импортирует сообщения
+из runtime и не обучает модель: обучение и оценка относятся к M02–M03.
+
 ## Известное состояние общего Python venv
 
 Проверка `/Users/Shared/github/MachineLearning/ml_venv/bin/python -m pip check` 2026-09-15
