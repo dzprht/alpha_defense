@@ -1,0 +1,129 @@
+{
+  "combined_policy_version": "demo-risk-v2",
+  "comparisons": {
+    "combined": {
+      "abstained_ids": [],
+      "confusion_matrix": {
+        "fn": 4,
+        "fp": 7,
+        "tn": 33,
+        "tp": 36
+      },
+      "error_ids": [
+        "text-0036",
+        "text-0038",
+        "text-0040",
+        "text-0101",
+        "text-0102",
+        "text-0104",
+        "text-0164",
+        "text-0288",
+        "text-0313",
+        "text-0352",
+        "text-0372"
+      ],
+      "evaluated": 80,
+      "f1": 0.8674698795180723,
+      "n": 80,
+      "precision": 0.8372093023255814,
+      "recall": 0.9
+    },
+    "model": {
+      "abstained_ids": [],
+      "confusion_matrix": {
+        "fn": 4,
+        "fp": 7,
+        "tn": 33,
+        "tp": 36
+      },
+      "error_ids": [
+        "text-0036",
+        "text-0038",
+        "text-0040",
+        "text-0101",
+        "text-0102",
+        "text-0104",
+        "text-0164",
+        "text-0288",
+        "text-0313",
+        "text-0352",
+        "text-0372"
+      ],
+      "evaluated": 80,
+      "f1": 0.8674698795180723,
+      "n": 80,
+      "precision": 0.8372093023255814,
+      "recall": 0.9
+    },
+    "rules": {
+      "abstained_ids": [],
+      "confusion_matrix": {
+        "fn": 37,
+        "fp": 2,
+        "tn": 38,
+        "tp": 3
+      },
+      "error_ids": [
+        "text-0036",
+        "text-0038",
+        "text-0201",
+        "text-0202",
+        "text-0203",
+        "text-0204",
+        "text-0205",
+        "text-0237",
+        "text-0239",
+        "text-0240",
+        "text-0261",
+        "text-0262",
+        "text-0263",
+        "text-0264",
+        "text-0265",
+        "text-0286",
+        "text-0287",
+        "text-0288",
+        "text-0289",
+        "text-0290",
+        "text-0311",
+        "text-0312",
+        "text-0313",
+        "text-0314",
+        "text-0315",
+        "text-0341",
+        "text-0342",
+        "text-0343",
+        "text-0344",
+        "text-0345",
+        "text-0352",
+        "text-0353",
+        "text-0354",
+        "text-0355",
+        "text-0371",
+        "text-0372",
+        "text-0373",
+        "text-0374",
+        "text-0375"
+      ],
+      "evaluated": 80,
+      "f1": 0.13333333333333333,
+      "n": 80,
+      "precision": 0.6,
+      "recall": 0.075
+    }
+  },
+  "dataset_sha256": "5b14d127700767cf3fc05302afcfe6fd786c1e05364abec74c3dfbc85d0a7d4e",
+  "evaluation_version": "text-policy-evaluation-v2",
+  "label_counts": {
+    "benign": 40,
+    "suspicious": 40
+  },
+  "model_failures": {},
+  "model_version": "text-tfidf-logreg-v1",
+  "n": 80,
+  "positive_cutoff": "high_or_critical",
+  "positive_label": "suspicious",
+  "rule_policy_version": "demo-risk-v1",
+  "split": "validation",
+  "split_content_sha256": "4e469e5f47b927154d59d7241cb46e0ce7a5844f96767fd7e51fafd7b128d352",
+  "split_manifest_sha256": "d67dd516e3febc13480b1a4b102fb1031ecc6cbb9a2bf4dfc434aaa1dd19bac0"
+}

@@ -29,4 +29,5 @@ def risk_policy_from_snapshot(snapshot: PolicySnapshot) -> RiskPolicy:
         urgency_with_other_signal=snapshot.urgency_with_other_signal,
         linked_contact=snapshot.linked_contact,
         max_score=snapshot.max_score,
+        incomplete_low_is_unknown=snapshot.incomplete_low_is_unknown,
     )

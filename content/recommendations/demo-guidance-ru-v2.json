@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "catalog_version": "demo-guidance-ru-v2",
+  "locale": "ru-RU",
+  "reviewed_at": "2026-09-24T00:00:00Z",
+  "classifications": [
+    {"severity": "low", "risk_label": "Низкий риск", "explanation": "Явные признаки мошеннического сценария не обнаружены, но результат не гарантирует безопасность."},
+    {"severity": "medium", "risk_label": "Средний риск", "explanation": "Обнаружены признаки, которые требуют дополнительной проверки до любого действия."},
+    {"severity": "high", "risk_label": "Высокий риск", "explanation": "Есть существенные признаки риска; остановитесь и проверьте обращение независимо."},
+    {"severity": "critical", "risk_label": "Критический риск", "explanation": "Обнаружено сочетание наиболее опасных признаков мошеннического сценария."},
+    {"severity": "unknown", "risk_label": "Риск не определён", "explanation": "Результатов недостаточно для надёжной классификации риска."}
+  ],
+  "completeness": [
+    {"completeness": "complete", "explanation": "Все обязательные проверки для этого типа наблюдения завершены."},
+    {"completeness": "partial", "explanation": "Часть проверок недоступна, поэтому вывод ограничен."},
+    {"completeness": "unavailable", "explanation": "Обязательные проверки не дали результата; не считайте это подтверждением безопасности."}
+  ],
+  "recommendations": [
+    {"code": "general_safety", "title": "Сохраняйте паузу перед действием", "body": "Не сообщайте коды и не переводите деньги по просьбе из входящего сообщения или звонка. Проверяйте ситуацию через известный официальный канал.", "reason_codes": [], "education_card_codes": ["general_safety"], "uses_trusted_support_contact": false},
+    {"code": "unsupported_reason", "title": "Нужна ручная проверка", "body": "Система получила неподдерживаемый код причины и не делает по нему специальный вывод. Используйте общие меры безопасности.", "reason_codes": [], "education_card_codes": ["general_safety"], "uses_trusted_support_contact": false},
+    {"code": "repeat_partial_check", "title": "Учитывайте неполную проверку", "body": "Некоторые части проверки недоступны. Повторите её позже или подтвердите информацию через официальный канал.", "reason_codes": [], "education_card_codes": ["incomplete_analysis"], "uses_trusted_support_contact": false},
+    {"code": "retry_unavailable_check", "title": "Не трактуйте отсутствие результата как безопасность", "body": "Проверка недоступна. Не выполняйте необратимое действие до независимого подтверждения.", "reason_codes": [], "education_card_codes": ["incomplete_analysis"], "uses_trusted_support_contact": false},
+    {"code": "stop_and_verify", "title": "Остановитесь и проверьте обращение", "body": "Прервите разговор и самостоятельно откройте официальный канал организации. Не перезванивайте по номеру из подозрительного сообщения.", "reason_codes": ["urgency_or_secrecy", "prize_fee_request", "delivery_fee_request", "relative_emergency_payment", "safe_account_transfer"], "education_card_codes": ["social_engineering", "safe_account"], "uses_trusted_support_contact": true},
+    {"code": "protect_credentials", "title": "Не раскрывайте секретные данные", "body": "Не сообщайте пароли, коды подтверждения и реквизиты карты. Настоящий сотрудник не просит передавать такие данные в разговоре.", "reason_codes": ["credential_request"], "education_card_codes": ["credential_requests"], "uses_trusted_support_contact": true},
+    {"code": "avoid_suspicious_resource", "title": "Не открывайте подозрительный ресурс", "body": "Не переходите по ссылке и не вводите данные. Наберите адрес официального сайта самостоятельно или используйте приложение.", "reason_codes": ["lookalike_domain", "visual_brand_imitation", "active_threat_match"], "education_card_codes": ["phishing_links"], "uses_trusted_support_contact": true},
+    {"code": "verify_recipient", "title": "Перепроверьте получателя и сумму", "body": "Сверьте получателя, назначение и сумму по независимому каналу. Не подтверждайте перевод под давлением.", "reason_codes": ["new_recipient", "known_recipient_amount_outlier", "new_recipient_amount_outlier", "active_fraud_network_link"], "education_card_codes": ["recipient_checks"], "uses_trusted_support_contact": false},
+    {"code": "model_text_warning", "title": "Проверьте сообщение независимо", "body": "Обученная модель нашла сходство с подозрительными учебными сообщениями. Это не доказательство мошенничества и не указание на конкретный приём; проверьте просьбу через известный официальный канал.", "reason_codes": ["ml_suspicious_text"], "education_card_codes": ["general_safety"], "uses_trusted_support_contact": false}
+  ],
+  "selection": {"default": "general_safety", "unsupported_reason": "unsupported_reason", "partial": "repeat_partial_check", "unavailable": "retry_unavailable_check"},
+  "support": {"with_contact": "Свяжитесь с банком только по доверенному контакту из каталога приложения.", "without_contact": "Доверенный контакт недоступен. Откройте официальный сайт или приложение банка самостоятельно; не используйте контакт из подозрительного сообщения."},
+  "content_sha256": "70987da8aac0e4df080e2635403bd1b7c3a1ab1debff9c2cc1c3e845a5924911"
+}

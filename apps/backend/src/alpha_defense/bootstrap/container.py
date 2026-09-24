@@ -35,6 +35,7 @@ from alpha_defense.application.threats import (
 from alpha_defense.application.workflows import AnalyzeContact, PublishWarning
 from alpha_defense.bootstrap.settings import Settings
 from alpha_defense.domain.shared import ExecutionMode
+from alpha_defense.infrastructure.analysis.ml import LocalTextModelAnalyzer
 from alpha_defense.infrastructure.analysis.mock import (
     DeterministicTextAnalyzer,
     DeterministicUrlAnalyzer,
@@ -98,6 +99,15 @@ def build_container(settings: Settings) -> Container:
     _require_directory(settings.content_root, "CONTENT_ROOT")
     _require_directory(settings.fixture_root, "FIXTURE_ROOT")
     _require_directory(settings.media_root, "MEDIA_ROOT")
+    text_model = None
+    if settings.policy_version == "demo-risk-v2":
+        if settings.model_root is None:
+            raise ConfigurationError("MODEL_ROOT is required for the model-enabled policy")
+        _require_directory(settings.model_root, "MODEL_ROOT")
+        try:
+            text_model = LocalTextModelAnalyzer.from_trusted_directory(settings.model_root)
+        except Exception as exc:
+            raise ConfigurationError("MODEL_ROOT contains no valid trusted text model") from exc
     database_path = _sqlite_path(settings.database_url)
     if not database_path.is_file():
         raise ConfigurationError("DATABASE_URL must point to an existing migrated database")
@@ -187,6 +197,7 @@ def build_container(settings: Settings) -> Container:
         assess_observation=AssessObservation(
             catalog=catalog,
             text_analyzer=DeterministicTextAnalyzer(),
+            text_model_analyzer=text_model,
             resource_analyzer=DeterministicUrlAnalyzer(),
             clock=clock,
             id_generator=id_generator,

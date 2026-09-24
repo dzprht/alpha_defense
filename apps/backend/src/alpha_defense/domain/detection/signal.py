@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 from enum import StrEnum
@@ -13,6 +14,7 @@ _STABLE_CODE = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 
 class AnalyzerKind(StrEnum):
     TEXT = "text"
+    TEXT_MODEL = "text_model"
     RESOURCE_URL = "resource_url"
     THREAT_LOOKUP = "threat_lookup"
     RESOURCE_VISUAL = "resource_visual"
@@ -100,6 +102,7 @@ class AnalysisResult:
     reason_codes: tuple[str, ...]
     latency_ms: int
     provenance: Provenance
+    model_score: float | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.analyzer, AnalyzerKind):
@@ -124,6 +127,18 @@ class AnalysisResult:
             raise ValueError("latency_ms must be non-negative")
         if not isinstance(self.provenance, Provenance):
             raise TypeError("provenance must be Provenance")
+        if self.model_score is not None:
+            if (
+                self.analyzer is not AnalyzerKind.TEXT_MODEL
+                or self.status is not AnalysisStatus.OK
+                or isinstance(self.model_score, bool)
+                or not isinstance(self.model_score, (int, float))
+                or not math.isfinite(self.model_score)
+                or not 0 <= self.model_score <= 1
+            ):
+                raise ValueError("model_score requires a successful text model result in [0, 1]")
+        elif self.analyzer is AnalyzerKind.TEXT_MODEL and self.status is AnalysisStatus.OK:
+            raise ValueError("successful text model results require model_score")
 
 
 def _require_code(value: object, field_name: str) -> None:

@@ -38,6 +38,7 @@ class PolicySnapshot:
     deduplication_key: str
     max_score: int
     content_sha256: str
+    incomplete_low_is_unknown: bool = False
 
 
 @dataclass(frozen=True, slots=True)

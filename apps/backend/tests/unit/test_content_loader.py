@@ -72,6 +72,23 @@ def test_valid_s01_catalog_loads_plain_snapshots(catalog_root: Path) -> None:
     assert len(snapshot.catalog_sha256) == 64
 
 
+def test_v2_policy_requires_unknown_partial_risk(catalog_root: Path) -> None:
+    loader = LocalCatalogLoader(
+        schema_root=catalog_root / "schemas",
+        content_root=catalog_root / "content",
+        fixture_root=catalog_root / "fixtures",
+        policy_version="demo-risk-v2",
+    )
+    assert loader.load().policy.incomplete_low_is_unknown
+    policy = catalog_root / "content" / "policies" / "demo-risk-v2.json"
+    document = _read_object(policy)
+    document["incomplete_low_is_unknown"] = False
+    _rehash(document)
+    _write_object(policy, document)
+    with pytest.raises(CatalogValidationError, match="unknown partial risk"):
+        loader.load()
+
+
 def test_corrupted_json_is_rejected(catalog_root: Path) -> None:
     policy = catalog_root / "content" / "policies" / "demo-risk-v1.json"
     policy.write_text('{"schema_version": ', encoding="utf-8")

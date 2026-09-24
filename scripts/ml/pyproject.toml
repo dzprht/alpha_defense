@@ -5,6 +5,7 @@ description = "Isolated offline text-model training for Alpha Defense"
 requires-python = ">=3.11,<3.12"
 dependencies = [
     "joblib==1.5.3",
+    "jsonschema==4.26.0",
     "numpy==2.4.6",
     "scikit-learn==1.9.0",
     "scipy==1.17.1",

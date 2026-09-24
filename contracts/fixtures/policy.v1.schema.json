@@ -11,6 +11,9 @@
       "const": "code+evidence_ref",
       "type": "string"
     },
+    "incomplete_low_is_unknown": {
+      "type": "boolean"
+    },
     "max_score": {
       "const": 100,
       "type": "integer"
@@ -70,7 +73,8 @@
               "new_recipient",
               "known_recipient_amount_outlier",
               "new_recipient_amount_outlier",
-              "active_fraud_network_link"
+              "active_fraud_network_link",
+              "ml_suspicious_text"
             ],
             "type": "string"
           },
@@ -79,6 +83,7 @@
               "behavior",
               "credentials",
               "network",
+              "model",
               "payment_request",
               "resource",
               "social_engineering",

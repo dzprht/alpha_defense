@@ -3,7 +3,7 @@
 Версия 2.0 от 21.09.2026. Источник обязательств: [TASK.md](../TASK.md),
 [окончательная заявка](../final_application.md) и [сценарии](../final_scripts.md).
 [Решение об объёме](SUBMISSION_SCOPE.md) заменяет прежний расширенный MVP.
-Выполнены P01–P13, A01–A02 и M01–M02; остальное ниже является спецификацией будущей реализации.
+Выполнены P01–P13, A01–A02 и M01–M03; остальное ниже является спецификацией будущей реализации.
 [Архитектура v1](../OLD/architecture_v1.md) сохранена как исторический снимок,
 но её исключённые подсистемы и API больше не являются планом работ.
 
@@ -27,7 +27,7 @@
 ## 2. Стек и зависимости
 
 Python 3.11/FastAPI/Pydantic, SQLAlchemy/Alembic/SQLite; TypeScript/React/Vite.
-Для ML добавляется scikit-learn при отдельной реализации, с фиксацией версии.
+Для обученной модели используется scikit-learn с закреплённой версией.
 Backend запускается в существующем `/Users/Shared/github/MachineLearning/ml_venv`.
 Зависимости и обучение относятся к этапу ML, а не к подготовке документации.
 
@@ -53,8 +53,8 @@ Backend определяет риск и разрешённые действия
 и `apps/web/src/{app,pages,features,shared}`. Фичи — identity, communications, detection,
 incidents, protection, transfers, threats, education; scenarios — application workflow.
 Исследование живёт в `research/` и `docs/research/`, без обязательной runtime research-фичи.
-Будущие offline-команды данных и обучения — `scripts/ml/`, наборы — `datasets/text/`,
-артефакты — `artifacts/text/`; до выполнения соответствующих карточек их наличие не заявляется.
+Офлайн-команды данных, обучения и оценки — `scripts/ml/`, наборы — `datasets/text/`,
+артефакты и отчёты — `artifacts/text/`.
 
 JSON Schema и HTTP-контракты — `contracts/`; synthetic fixtures — `fixtures/`;
 policy/guidance/education/trusted catalog — `content/`; runbooks — `ops/runbooks/`.
@@ -132,10 +132,22 @@ M01 подготовила `datasets/text/`: 80 проектных synthetic-г�
 M02 добавила отдельный `scripts/ml/` lock и изолированное офлайн-окружение,
 обучила word TF-IDF + логистическую регрессию только на 240 train-записях и
 выбрала порог 0,5 по 80 validation-записям. Проверяемые binary/manifest/report и
-model card находятся в `artifacts/text/`; test из 80 записей не оценивался.
+model card находятся в `artifacts/text/`; на этапе M02 test из 80 записей не оценивался.
 Офлайн-загрузка допускает только фиксированный локальный артефакт с совпадающими
-размером, hash и версиями. Это ещё не инфраструктурный адаптер application-порта:
-HTTP и совместная policy остаются задачей M03/P15.
+размером, hash и версиями. На этапе M02 это ещё не было инфраструктурным
+адаптером application-порта.
+
+M03 добавила отдельный infrastructure-адаптер модели за application-портом и
+версионированную policy v2. При старте v2 требует доверенный локальный артефакт;
+анализ в mock-режиме возвращает score модели отдельно от эвристического score,
+основание `ml_suspicious_text` и provenance. Ошибка модели не создаёт отрицательный
+сигнал: при слабых оставшихся свидетельствах результат `unknown/partial`, при
+сильном правиле — высокий риск с отметкой `partial`. На validation зафиксированы
+входные SHA и правила до открытия test. На тех же 80 закрытых синтетических текстах
+F1 rules/model/combined составил 0,217/0,815/0,805: объединение не показало
+прироста. Отчёты включают матрицы, число записей и ID ошибок; эти результаты
+не распространяются на реальные сообщения. Публичный HTTP intake и атомарное
+сохранение результата остаются задачей P15.
 
 Артефакт содержит vectorizer/model, версии библиотек, dataset/split hash, threshold,
 model_version и model card. Загружаются только доверенные локальные артефакты;

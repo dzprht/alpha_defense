@@ -30,5 +30,9 @@ class TextAnalysisPort(Protocol):
     def analyze(self, request: TextAnalysisRequest) -> AnalysisResult: ...
 
 
+class TextModelAnalysisPort(Protocol):
+    def analyze(self, request: TextAnalysisRequest) -> AnalysisResult: ...
+
+
 class ResourceAnalysisPort(Protocol):
     def analyze(self, request: ResourceAnalysisRequest) -> AnalysisResult: ...

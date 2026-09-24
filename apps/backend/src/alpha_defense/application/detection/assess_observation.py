@@ -17,6 +17,7 @@ from alpha_defense.application.ports import (
     ResourceAnalysisRequest,
     TextAnalysisPort,
     TextAnalysisRequest,
+    TextModelAnalysisPort,
 )
 from alpha_defense.application.shared import ActorContext, ResourceNotFoundError
 from alpha_defense.domain.detection import (
@@ -38,12 +39,14 @@ class AssessObservation:
         *,
         catalog: CatalogLoaderPort,
         text_analyzer: TextAnalysisPort,
+        text_model_analyzer: TextModelAnalysisPort | None = None,
         resource_analyzer: ResourceAnalysisPort,
         clock: Clock,
         id_generator: IdGenerator,
     ) -> None:
         self._catalog = catalog
         self._text_analyzer = text_analyzer
+        self._text_model_analyzer = text_model_analyzer
         self._resource_analyzer = resource_analyzer
         self._clock = clock
         self._id_generator = id_generator
@@ -57,7 +60,11 @@ class AssessObservation:
     ) -> RiskAssessment:
         _require_actor_scope(actor, observation)
         catalog = self._catalog.load()
-        plan = build_observation_analysis_plan(observation)
+        if catalog.policy.policy_version == "demo-risk-v2" and self._text_model_analyzer is None:
+            raise ValueError("model-enabled policy requires a text model analyzer")
+        plan = build_observation_analysis_plan(
+            observation, include_text_model=self._text_model_analyzer is not None
+        )
         trusted_domains = tuple(
             item.value
             for item in catalog.trusted_entities.entities
@@ -138,6 +145,16 @@ class AssessObservation:
         if analyzer is AnalyzerKind.TEXT:
             assert observation.text is not None
             return self._text_analyzer.analyze(
+                TextAnalysisRequest(
+                    text=observation.text,
+                    evidence_ref=evidence_ref,
+                    execution_mode=observation.execution_mode,
+                )
+            )
+        if analyzer is AnalyzerKind.TEXT_MODEL:
+            assert observation.text is not None
+            assert self._text_model_analyzer is not None
+            return self._text_model_analyzer.analyze(
                 TextAnalysisRequest(
                     text=observation.text,
                     evidence_ref=evidence_ref,

@@ -1,0 +1,28 @@
+{
+  "evaluation_version": "text-policy-evaluation-v2",
+  "input_sha256": {
+    "analysis_plan": "e6d5785e1a4fa8503aff62815086316437496ab88209e9b32b481ea44eae29a6",
+    "assessment_workflow": "3d92543925a0d43a7f930ec8e2beb3026baaeb71885d28da81192a66da694bd9",
+    "bootstrap": "9e7c05cf03cf500f9e1808a12ac42a54eec02e0e63c4bb4e64eaaaf029bdedef",
+    "catalog_loader": "3b0380b20a0cef0b707ccbe800ee78d448cf7ee6e0ce191ceca89eb802ba2f83",
+    "dataset": "5b14d127700767cf3fc05302afcfe6fd786c1e05364abec74c3dfbc85d0a7d4e",
+    "evaluator": "4fbf0a63c1c0eb7136a858b5ac20091eaa7e1a2ee689611158af925555873509",
+    "guidance_v2": "11fd7a171cc41d62a11471f0df2430ee8595ceabdbc37c1699eb7dbd1178b8ed",
+    "model": "70f3b8443eee340672b8be11e63841e5b1ccac80d7bbdeccb3bb46fad0b2f9a2",
+    "model_adapter": "07f9528d60b1b4f966abe062d3bcec66eeb37780ff0974160994e19957302700",
+    "model_manifest": "66bde459673ae0b0a770ddc3966f52327b32df37d5bab41123edf748fae11ca3",
+    "policy_mapping": "6bca258b959b6bcd7a93048ba9c162554d8186db9c7c6abf48e14194d2b7eaa3",
+    "policy_schema": "47d46a4b7b04f276be081d8316f873ccd93acc0800f25c6e397cdbed1866da49",
+    "policy_v1": "bd1bc32932f1f565c6c9f0dc917c59770ffea51cea93d47d27f5f2927dd7cfbc",
+    "policy_v2": "02e82a74bb5efcbd6312528e34fb67e26baf0d8542b11e8e833e8f4ed83f0501",
+    "risk_policy": "7e46e2d10588e120aeca3ac40f4d7138a7afa354e26e4ab3f4645e539c91188c",
+    "rule_adapter": "31de191640f5da38537c2995b79e3d9b04122b76ebd8b90168c9f6a9898e55c1",
+    "signal_contract": "aee71f875605fac8605a18c06735134643c38dd095aaa3e643efa3707fa2b0c1",
+    "split_manifest": "d67dd516e3febc13480b1a4b102fb1031ecc6cbb9a2bf4dfc434aaa1dd19bac0"
+  },
+  "model_threshold": 0.5,
+  "model_version": "text-tfidf-logreg-v1",
+  "policy_version": "demo-risk-v2",
+  "positive_cutoff": "high_or_critical",
+  "validation_report_sha256": "432a2855faa9860656e4892b9a0f1a5a58584857e509a3904d23edad0c846a23"
+}

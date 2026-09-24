@@ -82,6 +82,7 @@ class RiskPolicy:
     urgency_with_other_signal: int
     linked_contact: int
     max_score: int
+    incomplete_low_is_unknown: bool = False
 
     def __post_init__(self) -> None:
         if not isinstance(self.policy_version, str) or not self.policy_version:
@@ -105,6 +106,8 @@ class RiskPolicy:
                 raise ValueError(f"{field_name} must be between 0 and 100")
         if self.max_score != self.thresholds.critical_max:
             raise ValueError("max_score must equal critical_max")
+        if not isinstance(self.incomplete_low_is_unknown, bool):
+            raise TypeError("incomplete_low_is_unknown must be a boolean")
 
     def evaluate(
         self,
@@ -179,9 +182,14 @@ class RiskPolicy:
             if completeness is AssessmentCompleteness.PARTIAL
             else ()
         )
+        incomplete_without_strong_signal = (
+            self.incomplete_low_is_unknown
+            and completeness is AssessmentCompleteness.PARTIAL
+            and score <= self.thresholds.medium_max
+        )
         return RiskPolicyOutcome(
-            severity=self.classify(score),
-            score=score,
+            severity=Severity.UNKNOWN if incomplete_without_strong_signal else self.classify(score),
+            score=None if incomplete_without_strong_signal else score,
             completeness=completeness,
             signals=effective_signals,
             applied_modifiers=tuple(modifiers),

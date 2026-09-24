@@ -88,8 +88,10 @@ class RiskAssessment:
         if self.completeness is AssessmentCompleteness.UNAVAILABLE:
             if self.severity is not Severity.UNKNOWN or self.score is not None:
                 raise ValueError("unavailable assessments require unknown severity and no score")
-        elif self.severity is Severity.UNKNOWN or self.score is None:
-            raise ValueError("available assessments require a known severity and score")
+        elif (self.severity is Severity.UNKNOWN) != (self.score is None):
+            raise ValueError("severity and score must be known or unknown together")
+        elif self.completeness is AssessmentCompleteness.COMPLETE and self.score is None:
+            raise ValueError("complete assessments require a known severity and score")
         if self.score is not None:
             if isinstance(self.score, bool) or not isinstance(self.score, int):
                 raise TypeError("score must be an integer or None")

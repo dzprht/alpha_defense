@@ -10,9 +10,12 @@ from alpha_defense.domain.detection import (
 )
 
 ANALYSIS_PLAN_VERSION = "observation-analysis-v1"
+MODEL_ANALYSIS_PLAN_VERSION = "observation-analysis-v2"
 
 
-def build_observation_analysis_plan(value: ObservationAnalysisInput) -> AnalysisPlan:
+def build_observation_analysis_plan(
+    value: ObservationAnalysisInput, *, include_text_model: bool = False
+) -> AnalysisPlan:
     text_applicable = value.kind in {
         ObservationKind.SMS,
         ObservationKind.MESSENGER,
@@ -23,10 +26,15 @@ def build_observation_analysis_plan(value: ObservationAnalysisInput) -> Analysis
     )
     lookup_applicable = value.has_lookup_indicators
     visual_applicable = bool(value.media_refs)
-    return AnalysisPlan(
-        version=ANALYSIS_PLAN_VERSION,
-        requirements=(
-            _requirement(AnalyzerKind.TEXT, text_applicable, "content_has_no_text"),
+    requirements = [
+        _requirement(AnalyzerKind.TEXT, text_applicable, "content_has_no_text"),
+    ]
+    if include_text_model:
+        requirements.append(
+            _requirement(AnalyzerKind.TEXT_MODEL, text_applicable, "content_has_no_text")
+        )
+    requirements.extend(
+        (
             _requirement(AnalyzerKind.RESOURCE_URL, url_applicable, "content_has_no_url"),
             _requirement(
                 AnalyzerKind.THREAT_LOOKUP,
@@ -38,7 +46,11 @@ def build_observation_analysis_plan(value: ObservationAnalysisInput) -> Analysis
                 visual_applicable,
                 "content_has_no_visual_media",
             ),
-        ),
+        )
+    )
+    return AnalysisPlan(
+        version=MODEL_ANALYSIS_PLAN_VERSION if include_text_model else ANALYSIS_PLAN_VERSION,
+        requirements=tuple(requirements),
     )
 
 

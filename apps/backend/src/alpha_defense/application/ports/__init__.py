@@ -5,6 +5,7 @@ from alpha_defense.application.ports.analysis import (
     ResourceAnalysisRequest,
     TextAnalysisPort,
     TextAnalysisRequest,
+    TextModelAnalysisPort,
 )
 from alpha_defense.application.ports.communications import (
     CommunicationsUnitOfWorkFactory,
@@ -118,6 +119,7 @@ __all__ = [
     "SignalPolicy",
     "TextAnalysisPort",
     "TextAnalysisRequest",
+    "TextModelAnalysisPort",
     "ThreatBatch",
     "ThreatFeedPort",
     "ThreatFeedRecord",

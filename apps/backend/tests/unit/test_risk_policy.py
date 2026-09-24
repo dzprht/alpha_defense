@@ -69,7 +69,12 @@ def _plan(*applicable: AnalyzerKind) -> AnalysisPlan:
                     "analysis_required" if analyzer in applicable else "content_not_applicable"
                 ),
             )
-            for analyzer in AnalyzerKind
+            for analyzer in (
+                AnalyzerKind.TEXT,
+                AnalyzerKind.RESOURCE_URL,
+                AnalyzerKind.THREAT_LOOKUP,
+                AnalyzerKind.RESOURCE_VISUAL,
+            )
         ),
     )
 

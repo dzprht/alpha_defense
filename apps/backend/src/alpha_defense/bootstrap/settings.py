@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     media_root: Path
     session_secret: SecretStr
     policy_version: str = Field(min_length=1, max_length=64, pattern=r"^[a-z0-9][a-z0-9-]*$")
+    model_root: Path | None = None
     threat_feed_source: str = Field(
         default="alpha-defense-synthetic",
         min_length=3,

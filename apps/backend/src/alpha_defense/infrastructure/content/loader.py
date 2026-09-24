@@ -41,7 +41,10 @@ TRUSTED_ENTITIES_FILE = "demo-trusted-entities-v1.json"
 MAX_JSON_BYTES = 1_048_576
 MAX_MARKDOWN_BYTES = 65_536
 DEFAULT_LOCALE = "ru-RU"
-GUIDANCE_FILE = "demo-guidance-ru-v1.json"
+GUIDANCE_FILES = {
+    "demo-risk-v1": "demo-guidance-ru-v1.json",
+    "demo-risk-v2": "demo-guidance-ru-v2.json",
+}
 
 _POLICY_SCHEMA = "policy.v1.schema.json"
 _TRUSTED_SCHEMA = "trusted-entities.v1.schema.json"
@@ -49,7 +52,7 @@ _FIXTURE_SCHEMA = "fixture-envelope.v1.schema.json"
 _GUIDANCE_SCHEMA = "recommendations.v1.schema.json"
 _EDUCATION_CARD_SCHEMA = "education-card.v1.schema.json"
 _FIXTURE_KINDS = {"communications": "communication", "threats": "threat"}
-_SIGNAL_CODES = {
+_SIGNAL_CODES_V1 = {
     "active_fraud_network_link",
     "active_threat_match",
     "credential_request",
@@ -64,6 +67,7 @@ _SIGNAL_CODES = {
     "urgency_or_secrecy",
     "visual_brand_imitation",
 }
+_SIGNAL_CODES_V2 = _SIGNAL_CODES_V1 | {"ml_suspicious_text"}
 
 
 class CatalogValidationError(ValueError):
@@ -126,12 +130,12 @@ class LocalCatalogLoader:
         except (TypeError, ValueError) as exc:
             raise CatalogValidationError(
                 "invalid_catalog",
-                f"recommendations/{GUIDANCE_FILE}",
+                f"recommendations/{self._guidance_file()}",
                 "guidance domain invariants are not satisfied",
             ) from exc
 
     def _load_guidance(self) -> GuidanceCatalog:
-        resource = f"recommendations/{GUIDANCE_FILE}"
+        resource = f"recommendations/{self._guidance_file()}"
         document = self._load_document(
             self._content_root,
             resource,
@@ -358,11 +362,19 @@ class LocalCatalogLoader:
                     base_score=_integer(signal, "base_score", resource),
                 )
             )
-        if signal_codes != _SIGNAL_CODES:
+        expected_signal_codes = (
+            _SIGNAL_CODES_V2 if policy_version == "demo-risk-v2" else _SIGNAL_CODES_V1
+        )
+        if signal_codes != expected_signal_codes:
             raise CatalogValidationError(
                 "invalid_policy",
                 resource,
                 "signal catalog does not match policy schema version",
+            )
+        incomplete_low_is_unknown = document.get("incomplete_low_is_unknown", False)
+        if policy_version == "demo-risk-v2" and incomplete_low_is_unknown is not True:
+            raise CatalogValidationError(
+                "invalid_policy", resource, "model policy must preserve unknown partial risk"
             )
 
         modifiers = _object(document, "modifiers", resource)
@@ -382,7 +394,16 @@ class LocalCatalogLoader:
             deduplication_key=_string(document, "deduplication_key", resource),
             max_score=_integer(document, "max_score", resource),
             content_sha256=_string(document, "content_sha256", resource),
+            incomplete_low_is_unknown=bool(incomplete_low_is_unknown),
         )
+
+    def _guidance_file(self) -> str:
+        try:
+            return GUIDANCE_FILES[self._policy_version]
+        except KeyError as exc:
+            raise CatalogValidationError(
+                "unsupported_version", "recommendations", "unknown policy guidance version"
+            ) from exc
 
     def load_trusted_entities(self) -> TrustedEntitiesSnapshot:
         resource = f"trusted_entities/{TRUSTED_ENTITIES_FILE}"
