@@ -3,17 +3,26 @@
 from __future__ import annotations
 
 from datetime import datetime
+from hashlib import sha256
 
 from alpha_defense.application.ports import (
     AuditRecord,
     Clock,
     EventEnvelope,
+    IdempotencyRecord,
+    IdempotencyScope,
+    IdempotencyState,
     IdGenerator,
     WarningUnitOfWorkFactory,
     WarningUnitOfWorkPort,
 )
 from alpha_defense.application.protection.dto import WarningDraft
-from alpha_defense.application.shared import ActorContext, ResourceNotFoundError, ValidationError
+from alpha_defense.application.shared import (
+    ActorContext,
+    ResourceNotFoundError,
+    ServiceUnavailableError,
+    ValidationError,
+)
 from alpha_defense.domain.protection import Warning, WarningCompleteness, WarningResponse
 from alpha_defense.domain.shared import EntityId, Severity
 
@@ -84,6 +93,13 @@ class WarningService:
         with self._unit_of_work() as uow:
             return _get_owned(uow, actor, warning_id)
 
+    def get_by_assessment(self, *, actor: ActorContext, assessment_id: EntityId) -> Warning | None:
+        with self._unit_of_work() as uow:
+            warning = uow.warnings.get_by_assessment(assessment_id)
+        if warning is not None and not _owned(warning, actor):
+            raise ResourceNotFoundError("Предупреждение не найдено.")
+        return warning
+
     def list_dispatched(self, *, actor: ActorContext) -> tuple[Warning, ...]:
         with self._unit_of_work() as uow:
             return uow.warnings.list_dispatched(
@@ -94,8 +110,19 @@ class WarningService:
     def dispatch(self, *, actor: ActorContext, warning_id: EntityId) -> Warning:
         return self._change(actor=actor, warning_id=warning_id, kind="dispatch")
 
-    def present(self, *, actor: ActorContext, warning_id: EntityId) -> Warning:
-        return self._change(actor=actor, warning_id=warning_id, kind="present")
+    def present(
+        self,
+        *,
+        actor: ActorContext,
+        warning_id: EntityId,
+        idempotency_key: str | None = None,
+    ) -> Warning:
+        return self._change(
+            actor=actor,
+            warning_id=warning_id,
+            kind="present",
+            idempotency_key=idempotency_key,
+        )
 
     def respond(
         self,
@@ -121,10 +148,39 @@ class WarningService:
         kind: str,
         response: WarningResponse | None = None,
         selected_action_code: str | None = None,
+        idempotency_key: str | None = None,
     ) -> Warning:
         with self._unit_of_work() as uow:
             current = _get_owned(uow, actor, warning_id)
             now = self._clock.now_utc()
+            reservation = None
+            if idempotency_key is not None:
+                if kind != "present":
+                    raise ValueError("idempotency is only configured for presentation")
+                reservation = uow.idempotency.reserve(
+                    IdempotencyRecord(
+                        record_id=self._id_generator.new_id(),
+                        scope=IdempotencyScope(
+                            principal_fingerprint=sha256(str(actor.user_id).encode()).hexdigest(),
+                            session_id=actor.session_id,
+                            namespace_id=actor.namespace_id,
+                            method="POST",
+                            canonical_route="/api/v1/warnings/{warning_id}/present",
+                            key=idempotency_key,
+                        ),
+                        command_hash=sha256(str(warning_id).encode()).hexdigest(),
+                        resource_id=warning_id,
+                        state=IdempotencyState.IN_PROGRESS,
+                        result=None,
+                        revision=0,
+                        created_at=now,
+                        updated_at=now,
+                    )
+                )
+                if not reservation.is_new:
+                    if reservation.record.state is not IdempotencyState.COMPLETED:
+                        raise ServiceUnavailableError("Warning presentation replay is incomplete")
+                    return current
             try:
                 if kind == "dispatch":
                     updated = current.dispatch(now)
@@ -141,6 +197,15 @@ class WarningService:
             if updated != current:
                 uow.warnings.save(updated, expected_revision=current.revision)
                 self._audit(uow, actor, updated, f"warning.{kind}", now)
+            if reservation is not None:
+                uow.idempotency.save(
+                    reservation.record.finish(
+                        state=IdempotencyState.COMPLETED,
+                        result={"warning_id": str(warning_id)},
+                        updated_at=now,
+                    ),
+                    expected_revision=0,
+                )
             uow.commit()
         return updated
 

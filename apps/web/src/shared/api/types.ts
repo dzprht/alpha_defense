@@ -14,3 +14,15 @@ export type AccountCredentialsBody =
   operations["register_account"]["requestBody"]["content"]["application/json"];
 export type UpdateConsentBody =
   operations["update_consent"]["requestBody"]["content"]["application/json"];
+export type ContactSubmitBody =
+  operations["submit_observation"]["requestBody"]["content"]["application/json"];
+export type ContactReceipt =
+  operations["submit_observation"]["responses"][201]["content"]["application/json"];
+export type Observation = components["schemas"]["ObservationResponse"];
+export type Incident = components["schemas"]["IncidentResponse"];
+export type Assessment = components["schemas"]["AssessmentResponse"];
+export type Guidance = components["schemas"]["GuidanceResponse"];
+export type Warning = components["schemas"]["WarningResponse"];
+export type WarningLookup = components["schemas"]["WarningLookupResponse"];
+export type EducationCard = components["schemas"]["EducationCardResponse"];
+export type EducationCardPage = components["schemas"]["EducationCardPageResponse"];

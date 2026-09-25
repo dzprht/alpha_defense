@@ -13,6 +13,7 @@ from alpha_defense.application.communications import GetObservation
 from alpha_defense.application.education import GetCard, ListCards
 from alpha_defense.application.identity import AccountServicePort, IdentityServicePort
 from alpha_defense.application.incidents import GetIncident
+from alpha_defense.application.protection import WarningService
 from alpha_defense.application.shared import (
     ActionForbiddenError,
     ActorContext,
@@ -66,6 +67,13 @@ def complete_contact_service(request: Request) -> CompleteContactAnalysis:
     service = getattr(request.app.state, "complete_contact", None)
     if not isinstance(service, CompleteContactAnalysis):
         raise RuntimeError("contact analysis service was not configured")
+    return service
+
+
+def warning_service(request: Request) -> WarningService:
+    service = getattr(request.app.state, "warning_service", None)
+    if not isinstance(service, WarningService):
+        raise RuntimeError("warning service was not configured")
     return service
 
 

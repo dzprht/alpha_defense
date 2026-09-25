@@ -3,7 +3,7 @@
 Версия 2.0 от 21.09.2026. Источник обязательств: [TASK.md](../TASK.md),
 [окончательная заявка](../final_application.md) и [сценарии](../final_scripts.md).
 [Решение об объёме](SUBMISSION_SCOPE.md) заменяет прежний расширенный MVP.
-Выполнены P01–P13, P15, A01–A02 и M01–M03; остальное ниже является спецификацией будущей реализации.
+Выполнены P01–P13, P15–P16, A01–A02 и M01–M03; остальное ниже является спецификацией будущей реализации.
 [Архитектура v1](../OLD/architecture_v1.md) сохранена как исторический снимок,
 но её исключённые подсистемы и API больше не являются планом работ.
 
@@ -179,7 +179,9 @@ P15 выполняет анализ вне длительной транзакц
 ResourceGate, заявка на закрытие сайта и внешний уведомляющий провайдер не нужны.
 P13 реализовала внутреннюю сохраняемую warning-модель и inbox-границу с отдельными
 состояниями dispatch/presentation/response. P15 создаёт и dispatch-публикует warning
-вместе с сохранённой assessment; фактический экранный показ остаётся задачей P16.
+вместе с сохранённой assessment. P16 читает предупреждение только через owner-scoped
+API и отмечает `presented` после render в браузере; эта отметка не доказывает,
+что пользователь прочитал сообщение. Публичного ответа на warning пока нет.
 
 <a id="feature-transfers"></a>
 ### Transfers
@@ -298,9 +300,9 @@ epoch/context и отсутствие pending. Истёкший check требу
 <a id="ports"></a>
 ## 7. HTTP и порты
 
-Только реализованные маршруты публикуются в OpenAPI. Сейчас это health, session,
-demo-session, consents и education list/detail — семь маршрутов в committed contract.
-Новые account/auth, observations/incidents/assessments, profiles, transfers,
+Только реализованные маршруты публикуются в OpenAPI. Сейчас доступны health,
+session/consent/account/auth, education list/detail, owner-scoped contact
+intake/read/reassessment и warning lookup/present. Будущие profiles, transfers,
 scenario runs и export добавляются соответствующими карточками вместе с DTO,
 Problem Details, ownership/contract-тестами и генерируемыми web-типами.
 Не публиковать работающие stubs для ещё не реализованной функции.

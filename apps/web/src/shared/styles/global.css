@@ -33,7 +33,8 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -81,6 +82,27 @@ button {
   align-items: center;
   gap: 0.75rem;
   padding-block: 1.25rem;
+}
+
+.site-nav {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.site-nav a {
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-small);
+  color: var(--color-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.site-nav a:hover,
+.site-nav a[aria-current="page"] {
+  background: var(--color-brand-soft);
+  color: var(--color-brand-dark);
 }
 
 .site-header > div:nth-child(2) {
@@ -143,6 +165,193 @@ button {
 .onboarding-layout {
   display: grid;
   gap: 1.25rem;
+}
+
+.check-layout,
+.result-layout {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.check-card,
+.result-card {
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid rgb(0 0 0 / 6%);
+  border-radius: var(--radius-large);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.check-card h2,
+.result-card h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.check-kind-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  border: 0;
+}
+
+.check-kind-list legend {
+  margin-bottom: 0.7rem;
+  font-weight: 750;
+}
+
+.check-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+.check-kind:has(input:checked) {
+  border-color: var(--color-brand);
+  background: var(--color-brand-soft);
+}
+
+.check-kind input {
+  accent-color: var(--color-brand);
+}
+
+.check-field {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.check-field label {
+  font-weight: 750;
+}
+
+.check-field input,
+.check-field textarea {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.8rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-small);
+  background: white;
+  color: var(--color-ink);
+}
+
+.check-field textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.check-field .field-hint {
+  margin: 0;
+}
+
+.result-topline {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.result-topline a,
+.check-card a {
+  color: var(--color-brand-dark);
+  font-weight: 700;
+}
+
+.result-header {
+  padding: 0.5rem 0;
+}
+
+.result-header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  letter-spacing: -0.045em;
+}
+
+.result-header > p:not(.eyebrow) {
+  max-width: 46rem;
+  line-height: 1.55;
+}
+
+.result-meta {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.result-card p,
+.warning-panel p {
+  line-height: 1.55;
+}
+
+.warning-panel {
+  padding: 1.4rem;
+  border: 2px solid var(--color-brand);
+  border-radius: var(--radius-large);
+  background: var(--color-brand-soft);
+}
+
+.warning-panel h2 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.warning-limit {
+  font-size: 0.9rem;
+}
+
+.unsafe-url {
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.recommendation-list {
+  display: grid;
+  gap: 1rem;
+  padding-left: 1.3rem;
+}
+
+.recommendation-list h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.recommendation-list p {
+  margin: 0.35rem 0 0;
+}
+
+.education-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.education-detail {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-line);
+}
+
+.education-body {
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+.education-body h4,
+.education-body h5 {
+  margin: 1.2rem 0 0.35rem;
+  font-size: 1rem;
+}
+
+.education-body p {
+  margin: 0.35rem 0 0.9rem;
 }
 
 .onboarding-stack {
@@ -394,6 +603,15 @@ button {
 }
 
 @media (min-width: 48rem) {
+  .site-header {
+    grid-template-columns: auto 1fr auto auto;
+  }
+
+  .site-nav {
+    grid-column: auto;
+    padding-top: 0;
+  }
+
   .site-header,
   .site-footer,
   .page-content {
@@ -405,6 +623,12 @@ button {
   }
 
   .onboarding-card {
+    padding: 2rem;
+  }
+
+  .check-card,
+  .result-card,
+  .warning-panel {
     padding: 2rem;
   }
 
@@ -429,6 +653,23 @@ button {
     position: sticky;
     top: 2rem;
     padding-top: 2.5rem;
+  }
+
+  .check-layout {
+    grid-template-columns: minmax(0, 0.9fr) minmax(24rem, 1.1fr);
+    gap: clamp(2rem, 6vw, 5rem);
+    align-items: start;
+  }
+
+  .check-layout .hero-panel {
+    position: sticky;
+    top: 2rem;
+    padding-top: 2.5rem;
+  }
+
+  .result-layout {
+    width: min(100%, 52rem);
+    margin-inline: auto;
   }
 }
 

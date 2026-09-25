@@ -30,6 +30,10 @@ from alpha_defense.transport.http.v1.schemas.observations import (
     ManualObservationInputSchema,
     ObservationInputSchema,
 )
+from alpha_defense.transport.http.v1.schemas.protection import (
+    WarningLookupResponse,
+    WarningResponse,
+)
 
 __all__ = [
     "AccountCredentialsRequest",
@@ -53,4 +57,6 @@ __all__ = [
     "SessionResponse",
     "StartDemoSessionRequest",
     "UpdateConsentRequest",
+    "WarningLookupResponse",
+    "WarningResponse",
 ]

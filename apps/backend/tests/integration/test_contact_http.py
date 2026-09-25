@@ -55,6 +55,7 @@ def test_contact_http_contract_replay_owner_scope_and_reassessment(tmp_path: Pat
         complete_contact=container.complete_contact,
         get_observation=container.get_observation,
         get_incident=container.get_incident,
+        warning_service=container.warnings,
     )
     with (
         TestClient(app, raise_server_exceptions=False) as owner,
@@ -105,6 +106,30 @@ def test_contact_http_contract_replay_owner_scope_and_reassessment(tmp_path: Pat
         assert body["assessment"]["policy_version"] == "demo-risk-v2"
         assert body["assessment"]["completeness"] == "partial"
         assert body["warning_dispatched"]
+        warning_id = body["warning_id"]
+        assert warning_id is not None
+        warning_path = f"/api/v1/assessments/{assessment_id}/warning"
+        before_render = owner.get(warning_path)
+        assert before_render.status_code == 200
+        assert before_render.json()["warning"]["presented_at"] is None
+        assert owner.post(f"/api/v1/warnings/{warning_id}/present").status_code == 403
+        assert (
+            owner.post(
+                f"/api/v1/warnings/{warning_id}/present",
+                headers={"X-CSRF-Token": owner.cookies[CSRF_COOKIE_NAME]},
+            ).status_code
+            == 400
+        )
+        assert (
+            _post(owner, f"/api/v1/warnings/{warning_id}/present", "present-1").json()[
+                "presented_at"
+            ]
+            is not None
+        )
+        assert (
+            _post(owner, f"/api/v1/warnings/{warning_id}/present", "present-1").status_code == 200
+        )
+        assert owner.get(warning_path).json()["warning"]["presented_at"] is not None
         assert not body["analysis_pending"]
         assert (
             _post(owner, "/api/v1/observations", "create-contact", payload).json()["assessment"][
@@ -177,6 +202,12 @@ def test_contact_http_contract_replay_owner_scope_and_reassessment(tmp_path: Pat
         assert checked_url.status_code == 201
         assert checked_url.json()["assessment"]["severity"] == "critical"
         assert "active_threat_match" in checked_url.json()["assessment"]["reason_codes"]
+        url_warning_id = checked_url.json()["warning_id"]
+        assert url_warning_id is not None
+        assert (
+            _post(owner, f"/api/v1/warnings/{url_warning_id}/present", "present-1").status_code
+            == 409
+        )
 
         _register(foreign, "bobby")
         for path in (
@@ -184,8 +215,13 @@ def test_contact_http_contract_replay_owner_scope_and_reassessment(tmp_path: Pat
             f"/api/v1/incidents/{incident_id}",
             f"/api/v1/assessments/{assessment_id}",
             f"/api/v1/assessments/{assessment_id}/guidance",
+            f"/api/v1/assessments/{assessment_id}/warning",
         ):
             assert foreign.get(path).status_code == 404
+        assert (
+            _post(foreign, f"/api/v1/warnings/{warning_id}/present", "foreign-present").status_code
+            == 404
+        )
         assert (
             _post(foreign, f"/api/v1/observations/{observation_id}/reassess", "foreign").status_code
             == 404
@@ -202,4 +238,10 @@ def test_contact_http_contract_replay_owner_scope_and_reassessment(tmp_path: Pat
         )
         assert "Назовите пароль" not in technical
         assert connection.execute(sa.text("SELECT COUNT(*) FROM assessments")).scalar_one() == 3
+        assert (
+            connection.execute(
+                sa.text("SELECT COUNT(*) FROM audit_events WHERE event_type = 'warning.present'")
+            ).scalar_one()
+            == 1
+        )
     container.close()

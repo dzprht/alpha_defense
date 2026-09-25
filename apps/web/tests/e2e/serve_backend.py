@@ -37,12 +37,15 @@ def main() -> None:
             FIXTURE_ROOT=str(REPOSITORY_ROOT / "fixtures"),
             MEDIA_ROOT=str(media_root),
             SESSION_SECRET=secrets.token_urlsafe(48),
-            POLICY_VERSION="demo-risk-v1",
+            POLICY_VERSION="demo-risk-v2",
+            MODEL_ROOT=str(REPOSITORY_ROOT / "artifacts" / "text"),
             TRUSTED_SUPPORT_CONTACT="900",
             CORS_ALLOW_ORIGINS="http://127.0.0.1:5173,http://localhost:5173",
             TRUSTED_HOSTS="127.0.0.1,localhost,testserver",
         )
-        uvicorn.run(create_app(), host="127.0.0.1", port=8000, log_level="warning")
+        app = create_app()
+        app.state.container.refresh_threat_registry.execute()
+        uvicorn.run(app, host="127.0.0.1", port=8000, log_level="warning")
 
 
 if __name__ == "__main__":
