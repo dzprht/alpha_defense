@@ -645,3 +645,45 @@ sa.Index(
     warnings.c.namespace_id,
     warnings.c.dispatched_at,
 )
+
+financial_profiles = sa.Table(
+    "financial_profiles",
+    metadata,
+    sa.Column("profile_id", sa.String(36), primary_key=True),
+    sa.Column("owner_id", sa.String(36), sa.ForeignKey("users.user_id"), nullable=False),
+    sa.Column("namespace_id", sa.String(36), nullable=False),
+    sa.Column("template_code", sa.String(64), nullable=False),
+    sa.Column("template_version", sa.String(64), nullable=False),
+    sa.Column("title", sa.String(160), nullable=False),
+    sa.Column("description", sa.String(500), nullable=False),
+    sa.Column("history_version", sa.Integer(), nullable=False),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    sa.UniqueConstraint(
+        "owner_id", "namespace_id", "template_code", name="uq_financial_profiles_owner_template"
+    ),
+    sa.CheckConstraint("history_version >= 1", name="history_version_positive"),
+)
+
+completed_operations = sa.Table(
+    "completed_operations",
+    metadata,
+    sa.Column("operation_id", sa.String(36), primary_key=True),
+    sa.Column(
+        "profile_id", sa.String(36), sa.ForeignKey("financial_profiles.profile_id"), nullable=False
+    ),
+    sa.Column("ordinal", sa.Integer(), nullable=False),
+    sa.Column("amount_minor", sa.Integer(), nullable=False),
+    sa.Column("currency", sa.String(3), nullable=False),
+    sa.Column("recipient_code", sa.String(64), nullable=False),
+    sa.Column("completed_at", sa.DateTime(timezone=True), nullable=False),
+    sa.UniqueConstraint("profile_id", "ordinal", name="uq_completed_operations_profile_ordinal"),
+    sa.CheckConstraint("ordinal >= 0", name="ordinal_non_negative"),
+    sa.CheckConstraint("amount_minor BETWEEN 1 AND 100000000", name="amount_minor_valid"),
+    sa.CheckConstraint("currency = 'RUB'", name="currency_rub"),
+)
+
+sa.Index(
+    "ix_completed_operations_profile_time",
+    completed_operations.c.profile_id,
+    completed_operations.c.completed_at,
+)

@@ -21,6 +21,7 @@ from alpha_defense.application.shared import (
     ResourceNotFoundError,
     SessionRequiredError,
 )
+from alpha_defense.application.transfers import FinancialProfiles
 from alpha_defense.application.workflows import CompleteContactAnalysis
 
 SESSION_COOKIE_NAME = "alpha_defense_session"
@@ -74,6 +75,13 @@ def warning_service(request: Request) -> WarningService:
     service = getattr(request.app.state, "warning_service", None)
     if not isinstance(service, WarningService):
         raise RuntimeError("warning service was not configured")
+    return service
+
+
+def financial_profiles_service(request: Request) -> FinancialProfiles:
+    service = getattr(request.app.state, "financial_profiles", None)
+    if not isinstance(service, FinancialProfiles):
+        raise RuntimeError("financial profiles service was not configured")
     return service
 
 

@@ -32,6 +32,7 @@ from alpha_defense.application.threats import (
     LookupThreatIndicators,
     RefreshThreatRegistry,
 )
+from alpha_defense.application.transfers import FinancialProfiles
 from alpha_defense.application.workflows import (
     AnalyzeContact,
     CompleteContactAnalysis,
@@ -45,6 +46,7 @@ from alpha_defense.infrastructure.analysis.mock import (
     DeterministicUrlAnalyzer,
 )
 from alpha_defense.infrastructure.content import LocalCatalogLoader
+from alpha_defense.infrastructure.finance import StaticProfileTemplates
 from alpha_defense.infrastructure.identity.credentials import Argon2Credentials
 from alpha_defense.infrastructure.identity.mock import HmacSecurityTokens, SyntheticIdentityProvider
 from alpha_defense.infrastructure.observability import (
@@ -90,6 +92,7 @@ class Container:
     publish_warning: PublishWarning
     list_cards: ListCards
     get_card: GetCard
+    financial_profiles: FinancialProfiles
 
     def close(self) -> None:
         self.engine.dispose()
@@ -226,6 +229,12 @@ def build_container(settings: Settings) -> Container:
         publish_warning=PublishWarning(guidance=guidance, warnings=warnings),
         list_cards=ListCards(catalog),
         get_card=GetCard(catalog),
+        financial_profiles=FinancialProfiles(
+            unit_of_work=factory,
+            templates=StaticProfileTemplates(),
+            clock=clock,
+            id_generator=id_generator,
+        ),
     )
 
 

@@ -10,6 +10,9 @@ from alpha_defense.infrastructure.persistence.in_memory.assessments import (
 from alpha_defense.infrastructure.persistence.in_memory.communications import (
     InMemoryObservationRepository,
 )
+from alpha_defense.infrastructure.persistence.in_memory.financial_profiles import (
+    InMemoryProfileRepository,
+)
 from alpha_defense.infrastructure.persistence.in_memory.incidents import (
     InMemoryIncidentRepository,
     InMemoryNamespaceRiskStateRepository,
@@ -45,6 +48,7 @@ class InMemoryUnitOfWork:
         self._namespace_risk_states: InMemoryNamespaceRiskStateRepository | None = None
         self._warnings: InMemoryWarningRepository | None = None
         self._assessments: InMemoryAssessmentRepository | None = None
+        self._profiles: InMemoryProfileRepository | None = None
 
     @property
     def idempotency(self) -> InMemoryIdempotencyRepository:
@@ -112,6 +116,12 @@ class InMemoryUnitOfWork:
             raise RuntimeError("UnitOfWork is not active")
         return self._assessments
 
+    @property
+    def profiles(self) -> InMemoryProfileRepository:
+        if self._profiles is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._profiles
+
     def begin(self) -> None:
         if self._active:
             raise RuntimeError("UnitOfWork is already active")
@@ -128,6 +138,7 @@ class InMemoryUnitOfWork:
         self._namespace_risk_states = InMemoryNamespaceRiskStateRepository(self._state)
         self._warnings = InMemoryWarningRepository(self._state)
         self._assessments = InMemoryAssessmentRepository(self._state)
+        self._profiles = InMemoryProfileRepository(self._state)
         self._active = True
         self._finished = False
 

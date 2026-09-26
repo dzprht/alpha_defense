@@ -27,6 +27,7 @@ from alpha_defense.domain.incidents import Incident, NamespaceRiskState
 from alpha_defense.domain.protection import Warning
 from alpha_defense.domain.shared import EntityId
 from alpha_defense.domain.threats import RegistrySnapshot
+from alpha_defense.domain.transfers import FinancialProfile
 
 
 @dataclass(slots=True)
@@ -60,6 +61,8 @@ class InMemoryState:
     assessments: dict[EntityId, RiskAssessment] = field(default_factory=dict)
     warnings: dict[EntityId, Warning] = field(default_factory=dict)
     warning_by_assessment: dict[EntityId, EntityId] = field(default_factory=dict)
+    financial_profiles: dict[EntityId, FinancialProfile] = field(default_factory=dict)
+    profile_templates: dict[tuple[EntityId, EntityId, str], EntityId] = field(default_factory=dict)
 
     def clone(self) -> InMemoryState:
         return deepcopy(self)

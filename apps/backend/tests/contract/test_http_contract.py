@@ -78,6 +78,9 @@ def test_openapi_contains_only_implemented_endpoints_and_problem_media() -> None
         "/api/v1/observations",
         "/api/v1/observations/{observation_id}",
         "/api/v1/observations/{observation_id}/reassess",
+        "/api/v1/profile-templates",
+        "/api/v1/profiles",
+        "/api/v1/profiles/{profile_id}",
         "/api/v1/session",
         "/api/v1/sessions",
         "/api/v1/sessions/demo",
@@ -131,3 +134,6 @@ def test_generated_web_types_cover_implemented_routes() -> None:
     assert '"/api/v1/observations/{observation_id}/reassess"' in generated
     assert '"/api/v1/incidents/{incident_id}"' in generated
     assert '"/api/v1/assessments/{assessment_id}/guidance"' in generated
+    assert '"/api/v1/profile-templates"' in generated
+    assert '"/api/v1/profiles"' in generated
+    assert '"/api/v1/profiles/{profile_id}"' in generated

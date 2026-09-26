@@ -45,9 +45,10 @@ test("message and URL checks show saved guidance and present a warning after ren
     }
   });
   let presentCount = 0;
+  const renderedBeforePresent: boolean[] = [];
   await page.route("**/api/v1/warnings/*/present", async (route) => {
+    renderedBeforePresent.push(await page.locator(".warning-panel").isVisible());
     presentCount += 1;
-    await expect(page.locator(".warning-panel")).toBeVisible();
     await route.continue();
   });
   await page.getByRole("button", { name: "Проверить", exact: true }).click();
@@ -63,6 +64,8 @@ test("message and URL checks show saved guidance and present a warning after ren
   await education.getByRole("button").first().click();
   await expect(education.locator("article h3")).toBeVisible();
   await expect.poll(() => presentCount).toBe(1);
+  expect(renderedBeforePresent).toEqual([true]);
+  await page.unroute("**/api/v1/warnings/*/present");
   expect(keys).toHaveLength(2);
   expect(keys[0]).toBe(keys[1]);
   expect(submitCount).toBe(2);
