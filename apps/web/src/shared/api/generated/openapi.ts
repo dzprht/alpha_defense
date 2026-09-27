@@ -345,6 +345,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/transfer-checks/{check_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Transfer Check */
+        get: operations["get_transfer_check"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/transfer-intents": {
         parameters: {
             query?: never;
@@ -379,6 +396,24 @@ export interface paths {
         head?: never;
         /** Revise Transfer Intent */
         patch: operations["revise_transfer_intent"];
+        trace?: never;
+    };
+    "/api/v1/transfer-intents/{intent_id}/checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Transfer Checks */
+        get: operations["list_transfer_checks"];
+        put?: never;
+        /** Create Transfer Check */
+        post: operations["create_transfer_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/warnings/{warning_id}/present": {
@@ -589,6 +624,13 @@ export interface components {
         CreateProfileBody: {
             /** Template Code */
             template_code: string;
+        };
+        /** CreateTransferCheckBody */
+        CreateTransferCheckBody: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Linked Incident Id */
+            linked_incident_id?: string | null;
         };
         /** CreateTransferIntentBody */
         CreateTransferIntentBody: {
@@ -1080,6 +1122,88 @@ export interface components {
             start_ms?: number | null;
             /** Text */
             text: string;
+        };
+        /** TransferCheckResponse */
+        TransferCheckResponse: {
+            /** Amount Is Outlier */
+            amount_is_outlier: boolean | null;
+            /** Behavior Status */
+            behavior_status: string;
+            /** Catalog Policy Version */
+            catalog_policy_version: string;
+            /** Check Id */
+            check_id: string;
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+            /** Completeness */
+            completeness: string;
+            /** Consent Revision */
+            consent_revision: number;
+            /** Contact Assessment Id */
+            contact_assessment_id: string | null;
+            /** Contact Status */
+            contact_status: string;
+            /** Context Version */
+            context_version: number | null;
+            /** Decision */
+            decision: string;
+            /** Execution Mode */
+            execution_mode: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Fresh */
+            fresh: boolean;
+            /** History Version */
+            history_version: number;
+            /** Ingress Epoch */
+            ingress_epoch: number;
+            /** Intent Fingerprint */
+            intent_fingerprint: string;
+            /** Intent Id */
+            intent_id: string;
+            /** Intent Revision */
+            intent_revision: number;
+            /** Linked Incident Id */
+            linked_incident_id: string | null;
+            /** Model Version */
+            model_version: string | null;
+            /** Policy Version */
+            policy_version: string;
+            /** Profile Id */
+            profile_id: string;
+            /** Reason Codes */
+            reason_codes: string[];
+            /** Recipient Is New */
+            recipient_is_new: boolean | null;
+            /** Recipient Lookup */
+            recipient_lookup: string;
+            /** Registry Snapshot Id */
+            registry_snapshot_id: string | null;
+            /** Registry Valid Until */
+            registry_valid_until: string | null;
+            /** Registry Version */
+            registry_version: string | null;
+            /** Sample Size */
+            sample_size: number;
+            /** Score */
+            score: number | null;
+            /** Severity */
+            severity: string;
+            /** Signal Codes */
+            signal_codes: string[];
+            /** Stale Reasons */
+            stale_reasons: string[];
+        };
+        /** TransferChecksResponse */
+        TransferChecksResponse: {
+            /** Items */
+            items: components["schemas"]["TransferCheckResponse"][];
         };
         /** TransferIntentResponse */
         TransferIntentResponse: {
@@ -2740,6 +2864,91 @@ export interface operations {
             };
         };
     };
+    get_transfer_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                check_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferCheckResponse"];
+                };
+            };
+            /** @description Problem Details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     list_transfer_intents: {
         parameters: {
             query?: never;
@@ -3017,6 +3226,180 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TransferIntentResponse"];
+                };
+            };
+            /** @description Problem Details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    list_transfer_checks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                intent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferChecksResponse"];
+                };
+            };
+            /** @description Problem Details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    create_transfer_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                intent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTransferCheckBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferCheckResponse"];
                 };
             };
             /** @description Problem Details */

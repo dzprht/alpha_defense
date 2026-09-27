@@ -10,6 +10,7 @@ from alpha_defense.domain.transfers import (
     DemoBankResult,
     DemoBankStatus,
     IntentStatus,
+    TransferCheck,
     TransferIntent,
 )
 from alpha_defense.infrastructure.persistence.in_memory.store import InMemoryState
@@ -47,6 +48,44 @@ class InMemoryTransferIntentRepository:
             raise StaleRevisionError("Transfer intent revision is stale")
         current.assert_successor(intent)
         self._state.transfer_intents[intent.intent_id] = intent
+
+    def mark_checked(self, intent: TransferIntent, *, expected_revision: int) -> None:
+        current = self.get(intent.intent_id)
+        if current is None or current.revision != expected_revision:
+            raise StaleRevisionError("Transfer intent revision is stale")
+        current.assert_checked_successor(intent)
+        self._state.transfer_intents[intent.intent_id] = intent
+
+
+class InMemoryTransferCheckRepository:
+    def __init__(self, state: InMemoryState) -> None:
+        self._state = state
+
+    def get(self, check_id: EntityId) -> TransferCheck | None:
+        return self._state.transfer_checks.get(check_id)
+
+    def get_latest_for_intent(self, intent_id: EntityId) -> TransferCheck | None:
+        for check in reversed(tuple(self._state.transfer_checks.values())):
+            if check.intent_id == intent_id:
+                return check
+        return None
+
+    def list_for_intent(self, intent_id: EntityId) -> tuple[TransferCheck, ...]:
+        return tuple(
+            sorted(
+                (
+                    item
+                    for item in self._state.transfer_checks.values()
+                    if item.intent_id == intent_id
+                ),
+                key=lambda item: (item.checked_at, str(item.check_id)),
+            )
+        )
+
+    def add(self, check: TransferCheck) -> None:
+        if check.check_id in self._state.transfer_checks:
+            raise ValueError("transfer check already exists")
+        self._state.transfer_checks[check.check_id] = check
 
 
 class InMemoryDemoBank:

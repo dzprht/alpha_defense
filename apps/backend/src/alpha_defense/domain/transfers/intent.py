@@ -122,6 +122,31 @@ class TransferIntent:
             updated_at=now,
         )
 
+    def mark_checked(self, *, now: datetime) -> TransferIntent:
+        if self.status not in (IntentStatus.DRAFT, IntentStatus.CHECKED):
+            raise ValueError("a terminal intent cannot be checked")
+        _require_utc(now, "now")
+        if now < self.updated_at:
+            raise ValueError("check time cannot move backwards")
+        return replace(self, status=IntentStatus.CHECKED, updated_at=now)
+
+    def assert_checked_successor(self, newer: TransferIntent) -> None:
+        if (
+            self.status not in (IntentStatus.DRAFT, IntentStatus.CHECKED)
+            or newer.intent_id != self.intent_id
+            or newer.owner_id != self.owner_id
+            or newer.namespace_id != self.namespace_id
+            or newer.created_at != self.created_at
+            or newer.revision != self.revision
+            or newer.fingerprint != self.fingerprint
+            or newer.profile_id != self.profile_id
+            or newer.amount != self.amount
+            or newer.recipient_code != self.recipient_code
+            or newer.status is not IntentStatus.CHECKED
+            or newer.updated_at < self.updated_at
+        ):
+            raise ValueError("check may only mark the same intent revision checked")
+
     def assert_successor(self, newer: TransferIntent) -> None:
         if (
             self.status not in (IntentStatus.DRAFT, IntentStatus.CHECKED)

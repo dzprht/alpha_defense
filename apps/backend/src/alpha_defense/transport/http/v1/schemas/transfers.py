@@ -7,7 +7,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from alpha_defense.application.transfers import FinancialProfile, ProfileTemplate, TransferIntent
+from alpha_defense.application.transfers import (
+    FinancialProfile,
+    ProfileTemplate,
+    TransferCheckView,
+    TransferIntent,
+)
 
 
 class CreateProfileBody(BaseModel):
@@ -143,3 +148,99 @@ class TransferIntentsResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     items: list[TransferIntentResponse]
+
+
+class CreateTransferCheckBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    expected_revision: int = Field(strict=True, ge=1)
+    linked_incident_id: UUID | None = None
+
+
+class TransferCheckResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    check_id: str
+    intent_id: str
+    intent_revision: int
+    intent_fingerprint: str
+    profile_id: str
+    history_version: int
+    consent_revision: int
+    ingress_epoch: int
+    linked_incident_id: str | None
+    context_version: int | None
+    contact_assessment_id: str | None
+    model_version: str | None
+    policy_version: str
+    catalog_policy_version: str
+    registry_snapshot_id: str | None
+    registry_version: str | None
+    registry_valid_until: datetime | None
+    behavior_status: str
+    sample_size: int
+    recipient_is_new: bool | None
+    amount_is_outlier: bool | None
+    recipient_lookup: str
+    contact_status: str
+    severity: str
+    score: int | None
+    completeness: str
+    decision: str
+    signal_codes: list[str]
+    reason_codes: list[str]
+    checked_at: datetime
+    expires_at: datetime
+    fresh: bool
+    stale_reasons: list[str]
+    execution_mode: str
+
+    @classmethod
+    def from_view(cls, view: TransferCheckView) -> TransferCheckResponse:
+        check = view.check
+        return cls(
+            check_id=str(check.check_id),
+            intent_id=str(check.intent_id),
+            intent_revision=check.intent_revision,
+            intent_fingerprint=check.intent_fingerprint,
+            profile_id=str(check.profile_id),
+            history_version=check.history_version,
+            consent_revision=check.consent_revision,
+            ingress_epoch=check.ingress_epoch,
+            linked_incident_id=str(check.linked_incident_id) if check.linked_incident_id else None,
+            context_version=check.context_version,
+            contact_assessment_id=str(check.contact_assessment_id)
+            if check.contact_assessment_id
+            else None,
+            model_version=check.model_version,
+            policy_version=check.policy_version,
+            catalog_policy_version=check.catalog_policy_version,
+            registry_snapshot_id=str(check.registry_snapshot_id)
+            if check.registry_snapshot_id
+            else None,
+            registry_version=check.registry_version,
+            registry_valid_until=check.registry_valid_until,
+            behavior_status=check.behavior_status.value,
+            sample_size=check.sample_size,
+            recipient_is_new=check.recipient_is_new,
+            amount_is_outlier=check.amount_is_outlier,
+            recipient_lookup=check.recipient_lookup.value,
+            contact_status=check.contact_status.value,
+            severity=check.severity.value,
+            score=check.score,
+            completeness=check.completeness.value,
+            decision=check.decision.value,
+            signal_codes=list(check.signal_codes),
+            reason_codes=list(check.reason_codes),
+            checked_at=check.checked_at,
+            expires_at=check.expires_at,
+            fresh=view.fresh,
+            stale_reasons=list(view.stale_reasons),
+            execution_mode="mock",
+        )
+
+
+class TransferChecksResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[TransferCheckResponse]

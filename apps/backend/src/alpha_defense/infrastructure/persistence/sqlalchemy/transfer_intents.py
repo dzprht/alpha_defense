@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import fields
 from datetime import datetime
 from typing import Any, cast
 
@@ -12,16 +13,23 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from alpha_defense.application.shared import ServiceUnavailableError, StaleRevisionError
-from alpha_defense.domain.shared import Currency, EntityId, Money
+from alpha_defense.domain.shared import Currency, EntityId, Money, Severity
 from alpha_defense.domain.transfers import (
+    CheckCompleteness,
+    ContactEvidenceStatus,
     DemoBankResult,
     DemoBankStatus,
+    HistoryStatus,
     IntentStatus,
+    RecipientLookupStatus,
+    TransferCheck,
+    TransferDecision,
     TransferIntent,
 )
 from alpha_defense.infrastructure.persistence.sqlalchemy.mappers import as_utc
 from alpha_defense.infrastructure.persistence.sqlalchemy.schema import (
     demo_bank_results,
+    transfer_checks,
     transfer_intents,
 )
 
@@ -81,6 +89,129 @@ class SqlAlchemyTransferIntentRepository:
             raise ServiceUnavailableError("Local transfer persistence failed") from exc
         if cast(CursorResult[Any], result).rowcount != 1:
             raise StaleRevisionError("Transfer intent revision is stale")
+
+    def mark_checked(self, intent: TransferIntent, *, expected_revision: int) -> None:
+        current = self.get(intent.intent_id)
+        if current is None or current.revision != expected_revision:
+            raise StaleRevisionError("Transfer intent revision is stale")
+        current.assert_checked_successor(intent)
+        try:
+            result = self._session.execute(
+                sa.update(transfer_intents)
+                .where(
+                    transfer_intents.c.intent_id == str(intent.intent_id),
+                    transfer_intents.c.revision == expected_revision,
+                    transfer_intents.c.fingerprint == intent.fingerprint,
+                    transfer_intents.c.status.in_(("draft", "checked")),
+                )
+                .values(status="checked", updated_at=intent.updated_at)
+            )
+        except SQLAlchemyError as exc:
+            raise ServiceUnavailableError("Local transfer persistence failed") from exc
+        if cast(CursorResult[Any], result).rowcount != 1:
+            raise StaleRevisionError("Transfer intent changed before check")
+
+
+class SqlAlchemyTransferCheckRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def get(self, check_id: EntityId) -> TransferCheck | None:
+        row = (
+            self._session.execute(
+                sa.select(transfer_checks).where(transfer_checks.c.check_id == str(check_id))
+            )
+            .mappings()
+            .one_or_none()
+        )
+        return None if row is None else _check_from_row(row)
+
+    def get_latest_for_intent(self, intent_id: EntityId) -> TransferCheck | None:
+        row = (
+            self._session.execute(
+                sa.select(transfer_checks)
+                .where(transfer_checks.c.intent_id == str(intent_id))
+                .order_by(sa.literal_column("rowid").desc())
+                .limit(1)
+            )
+            .mappings()
+            .one_or_none()
+        )
+        return None if row is None else _check_from_row(row)
+
+    def list_for_intent(self, intent_id: EntityId) -> tuple[TransferCheck, ...]:
+        rows = (
+            self._session.execute(
+                sa.select(transfer_checks)
+                .where(transfer_checks.c.intent_id == str(intent_id))
+                .order_by(transfer_checks.c.checked_at, transfer_checks.c.check_id)
+            )
+            .mappings()
+            .all()
+        )
+        return tuple(_check_from_row(row) for row in rows)
+
+    def add(self, check: TransferCheck) -> None:
+        snapshot: dict[str, object] = {}
+        for field in fields(check):
+            value = getattr(check, field.name)
+            if isinstance(value, (EntityId, datetime)):
+                value = str(value) if isinstance(value, EntityId) else value.isoformat()
+            elif isinstance(value, tuple):
+                value = list(value)
+            snapshot[field.name] = value
+        try:
+            self._session.execute(
+                sa.insert(transfer_checks).values(
+                    check_id=str(check.check_id),
+                    intent_id=str(check.intent_id),
+                    owner_id=str(check.owner_id),
+                    namespace_id=str(check.namespace_id),
+                    checked_at=check.checked_at,
+                    snapshot=snapshot,
+                )
+            )
+        except SQLAlchemyError as exc:
+            raise ServiceUnavailableError("Local transfer check persistence failed") from exc
+
+
+def _check_from_row(row: RowMapping) -> TransferCheck:
+    try:
+        raw = dict(row["snapshot"])
+        for name in (
+            "check_id",
+            "intent_id",
+            "owner_id",
+            "namespace_id",
+            "profile_id",
+            "linked_incident_id",
+            "contact_assessment_id",
+            "registry_snapshot_id",
+        ):
+            if raw[name] is not None:
+                raw[name] = EntityId.from_string(raw[name])
+        for name in ("checked_at", "expires_at", "registry_valid_until"):
+            if raw[name] is not None:
+                raw[name] = datetime.fromisoformat(raw[name])
+        for name in ("signal_codes", "reason_codes"):
+            raw[name] = tuple(raw[name])
+        raw["behavior_status"] = HistoryStatus(raw["behavior_status"])
+        raw["recipient_lookup"] = RecipientLookupStatus(raw["recipient_lookup"])
+        raw["contact_status"] = ContactEvidenceStatus(raw["contact_status"])
+        raw["severity"] = Severity(raw["severity"])
+        raw["completeness"] = CheckCompleteness(raw["completeness"])
+        raw["decision"] = TransferDecision(raw["decision"])
+        check = TransferCheck(**raw)
+        if (
+            str(check.check_id) != row["check_id"]
+            or str(check.intent_id) != row["intent_id"]
+            or str(check.owner_id) != row["owner_id"]
+            or str(check.namespace_id) != row["namespace_id"]
+        ):
+            raise ValueError("check snapshot scope differs from indexed columns")
+        return check
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ServiceUnavailableError("Stored transfer check is invalid") from exc
 
 
 class SqlAlchemyDemoBank:

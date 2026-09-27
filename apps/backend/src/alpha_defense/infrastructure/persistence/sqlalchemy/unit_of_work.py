@@ -37,6 +37,7 @@ from alpha_defense.infrastructure.persistence.sqlalchemy.threat_registry import 
 )
 from alpha_defense.infrastructure.persistence.sqlalchemy.transfer_intents import (
     SqlAlchemyDemoBank,
+    SqlAlchemyTransferCheckRepository,
     SqlAlchemyTransferIntentRepository,
 )
 
@@ -62,6 +63,7 @@ class SqlAlchemyUnitOfWork:
         self._assessments: SqlAlchemyAssessmentRepository | None = None
         self._profiles: SqlAlchemyProfileRepository | None = None
         self._transfer_intents: SqlAlchemyTransferIntentRepository | None = None
+        self._transfer_checks: SqlAlchemyTransferCheckRepository | None = None
         self._demo_bank: SqlAlchemyDemoBank | None = None
 
     @property
@@ -143,6 +145,12 @@ class SqlAlchemyUnitOfWork:
         return self._transfer_intents
 
     @property
+    def transfer_checks(self) -> SqlAlchemyTransferCheckRepository:
+        if self._transfer_checks is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._transfer_checks
+
+    @property
     def demo_bank(self) -> SqlAlchemyDemoBank:
         if self._demo_bank is None:
             raise RuntimeError("UnitOfWork is not active")
@@ -166,6 +174,7 @@ class SqlAlchemyUnitOfWork:
         self._assessments = SqlAlchemyAssessmentRepository(self._session)
         self._profiles = SqlAlchemyProfileRepository(self._session)
         self._transfer_intents = SqlAlchemyTransferIntentRepository(self._session)
+        self._transfer_checks = SqlAlchemyTransferCheckRepository(self._session)
         self._demo_bank = SqlAlchemyDemoBank(self._session)
         self._active = True
         self._finished = False

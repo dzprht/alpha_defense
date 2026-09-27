@@ -87,6 +87,8 @@ def test_openapi_contains_only_implemented_endpoints_and_problem_media() -> None
         "/api/v1/sessions/logout",
         "/api/v1/transfer-intents",
         "/api/v1/transfer-intents/{intent_id}",
+        "/api/v1/transfer-intents/{intent_id}/checks",
+        "/api/v1/transfer-checks/{check_id}",
         "/api/v1/warnings/{warning_id}/present",
     }
     unavailable = contract["paths"]["/api/v1/health/ready"]["get"]["responses"]["503"]
@@ -141,3 +143,5 @@ def test_generated_web_types_cover_implemented_routes() -> None:
     assert '"/api/v1/profiles/{profile_id}"' in generated
     assert '"/api/v1/transfer-intents"' in generated
     assert '"/api/v1/transfer-intents/{intent_id}"' in generated
+    assert '"/api/v1/transfer-intents/{intent_id}/checks"' in generated
+    assert '"/api/v1/transfer-checks/{check_id}"' in generated

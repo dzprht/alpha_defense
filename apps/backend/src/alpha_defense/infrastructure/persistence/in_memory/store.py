@@ -27,7 +27,12 @@ from alpha_defense.domain.incidents import Incident, NamespaceRiskState
 from alpha_defense.domain.protection import Warning
 from alpha_defense.domain.shared import EntityId
 from alpha_defense.domain.threats import RegistrySnapshot
-from alpha_defense.domain.transfers import DemoBankResult, FinancialProfile, TransferIntent
+from alpha_defense.domain.transfers import (
+    DemoBankResult,
+    FinancialProfile,
+    TransferCheck,
+    TransferIntent,
+)
 
 
 @dataclass(slots=True)
@@ -64,6 +69,7 @@ class InMemoryState:
     financial_profiles: dict[EntityId, FinancialProfile] = field(default_factory=dict)
     profile_templates: dict[tuple[EntityId, EntityId, str], EntityId] = field(default_factory=dict)
     transfer_intents: dict[EntityId, TransferIntent] = field(default_factory=dict)
+    transfer_checks: dict[EntityId, TransferCheck] = field(default_factory=dict)
     demo_bank_results: dict[EntityId, DemoBankResult] = field(default_factory=dict)
     demo_bank_by_intent: dict[EntityId, EntityId] = field(default_factory=dict)
 

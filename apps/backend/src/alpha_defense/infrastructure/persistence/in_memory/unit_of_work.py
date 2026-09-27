@@ -31,6 +31,7 @@ from alpha_defense.infrastructure.persistence.in_memory.threat_registry import (
 )
 from alpha_defense.infrastructure.persistence.in_memory.transfer_intents import (
     InMemoryDemoBank,
+    InMemoryTransferCheckRepository,
     InMemoryTransferIntentRepository,
 )
 
@@ -54,6 +55,7 @@ class InMemoryUnitOfWork:
         self._assessments: InMemoryAssessmentRepository | None = None
         self._profiles: InMemoryProfileRepository | None = None
         self._transfer_intents: InMemoryTransferIntentRepository | None = None
+        self._transfer_checks: InMemoryTransferCheckRepository | None = None
         self._demo_bank: InMemoryDemoBank | None = None
 
     @property
@@ -135,6 +137,12 @@ class InMemoryUnitOfWork:
         return self._transfer_intents
 
     @property
+    def transfer_checks(self) -> InMemoryTransferCheckRepository:
+        if self._transfer_checks is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._transfer_checks
+
+    @property
     def demo_bank(self) -> InMemoryDemoBank:
         if self._demo_bank is None:
             raise RuntimeError("UnitOfWork is not active")
@@ -158,6 +166,7 @@ class InMemoryUnitOfWork:
         self._assessments = InMemoryAssessmentRepository(self._state)
         self._profiles = InMemoryProfileRepository(self._state)
         self._transfer_intents = InMemoryTransferIntentRepository(self._state)
+        self._transfer_checks = InMemoryTransferCheckRepository(self._state)
         self._demo_bank = InMemoryDemoBank(self._state)
         self._active = True
         self._finished = False

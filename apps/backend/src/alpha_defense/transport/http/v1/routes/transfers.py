@@ -12,17 +12,21 @@ from alpha_defense.application.transfers import Currency, EntityId, Money
 from alpha_defense.transport.http.v1.dependencies import (
     current_actor,
     financial_profiles_service,
+    transfer_checks_service,
     transfer_intents_service,
 )
 from alpha_defense.transport.http.v1.guards import require_csrf, require_idempotency_key
 from alpha_defense.transport.http.v1.schemas.transfers import (
     CreateProfileBody,
+    CreateTransferCheckBody,
     CreateTransferIntentBody,
     FinancialProfileResponse,
     FinancialProfilesResponse,
     ProfileTemplateResponse,
     ProfileTemplatesResponse,
     ReviseTransferIntentBody,
+    TransferCheckResponse,
+    TransferChecksResponse,
     TransferIntentResponse,
     TransferIntentsResponse,
 )
@@ -181,3 +185,62 @@ def revise_transfer_intent(
         idempotency_key=key,
     )
     return TransferIntentResponse.from_intent(intent)
+
+
+@router.post(
+    "/transfer-intents/{intent_id}/checks",
+    operation_id="create_transfer_check",
+    status_code=status.HTTP_201_CREATED,
+    response_model=TransferCheckResponse,
+    responses=PROBLEM_RESPONSES,
+)
+def create_transfer_check(
+    intent_id: UUID,
+    payload: CreateTransferCheckBody,
+    request: Request,
+    actor: Annotated[ActorContext, Depends(current_actor)],
+) -> TransferCheckResponse:
+    require_csrf(request)
+    key = require_idempotency_key(request)
+    view = transfer_checks_service(request).create(
+        actor=actor,
+        intent_id=EntityId(intent_id),
+        expected_revision=payload.expected_revision,
+        linked_incident_id=EntityId(payload.linked_incident_id)
+        if payload.linked_incident_id
+        else None,
+        idempotency_key=key,
+    )
+    return TransferCheckResponse.from_view(view)
+
+
+@router.get(
+    "/transfer-intents/{intent_id}/checks",
+    operation_id="list_transfer_checks",
+    response_model=TransferChecksResponse,
+    responses=PROBLEM_RESPONSES,
+)
+def list_transfer_checks(
+    intent_id: UUID,
+    request: Request,
+    actor: Annotated[ActorContext, Depends(current_actor)],
+) -> TransferChecksResponse:
+    views = transfer_checks_service(request).list_for_intent(
+        actor=actor, intent_id=EntityId(intent_id)
+    )
+    return TransferChecksResponse(items=[TransferCheckResponse.from_view(view) for view in views])
+
+
+@router.get(
+    "/transfer-checks/{check_id}",
+    operation_id="get_transfer_check",
+    response_model=TransferCheckResponse,
+    responses=PROBLEM_RESPONSES,
+)
+def get_transfer_check(
+    check_id: UUID,
+    request: Request,
+    actor: Annotated[ActorContext, Depends(current_actor)],
+) -> TransferCheckResponse:
+    view = transfer_checks_service(request).get(actor=actor, check_id=EntityId(check_id))
+    return TransferCheckResponse.from_view(view)

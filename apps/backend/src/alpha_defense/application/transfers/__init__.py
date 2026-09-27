@@ -1,5 +1,6 @@
 """Application boundary for synthetic financial profiles."""
 
+from alpha_defense.application.transfers.checks import TransferChecks, TransferCheckView
 from alpha_defense.application.transfers.intents import TransferIntents
 from alpha_defense.application.transfers.profiles import (
     FinancialProfiles,
@@ -19,6 +20,8 @@ __all__ = [
     "ProfileTemplate",
     "TemplateOperation",
     "TemplatePort",
+    "TransferCheckView",
+    "TransferChecks",
     "TransferIntent",
     "TransferIntents",
 ]

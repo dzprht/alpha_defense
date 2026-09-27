@@ -719,6 +719,22 @@ sa.Index(
     transfer_intents.c.created_at,
 )
 
+transfer_checks = sa.Table(
+    "transfer_checks",
+    metadata,
+    sa.Column("check_id", sa.String(36), primary_key=True),
+    sa.Column(
+        "intent_id", sa.String(36), sa.ForeignKey("transfer_intents.intent_id"), nullable=False
+    ),
+    sa.Column("owner_id", sa.String(36), sa.ForeignKey("users.user_id"), nullable=False),
+    sa.Column("namespace_id", sa.String(36), nullable=False),
+    sa.Column("checked_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("snapshot", sa.JSON(), nullable=False),
+)
+sa.Index(
+    "ix_transfer_checks_intent_time", transfer_checks.c.intent_id, transfer_checks.c.checked_at
+)
+
 demo_bank_results = sa.Table(
     "demo_bank_results",
     metadata,

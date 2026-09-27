@@ -139,6 +139,7 @@ def test_migration_creates_only_technical_tables(tmp_path: Path) -> None:
         "consents",
         "financial_profiles",
         "transfer_intents",
+        "transfer_checks",
         "idempotency_records",
         "incident_assessments",
         "incident_correlation_keys",
