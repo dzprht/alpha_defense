@@ -687,3 +687,61 @@ sa.Index(
     completed_operations.c.profile_id,
     completed_operations.c.completed_at,
 )
+
+transfer_intents = sa.Table(
+    "transfer_intents",
+    metadata,
+    sa.Column("intent_id", sa.String(36), primary_key=True),
+    sa.Column("owner_id", sa.String(36), sa.ForeignKey("users.user_id"), nullable=False),
+    sa.Column("namespace_id", sa.String(36), nullable=False),
+    sa.Column(
+        "profile_id", sa.String(36), sa.ForeignKey("financial_profiles.profile_id"), nullable=False
+    ),
+    sa.Column("amount_minor", sa.Integer(), nullable=False),
+    sa.Column("currency", sa.String(3), nullable=False),
+    sa.Column("recipient_code", sa.String(64), nullable=False),
+    sa.Column("revision", sa.Integer(), nullable=False),
+    sa.Column("fingerprint", sa.String(64), nullable=False),
+    sa.Column("status", sa.String(16), nullable=False),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+    sa.CheckConstraint("revision >= 1", name="revision_positive"),
+    sa.CheckConstraint("amount_minor BETWEEN 1 AND 100000000", name="amount_minor_valid"),
+    sa.CheckConstraint("currency = 'RUB'", name="currency_rub"),
+    sa.CheckConstraint(
+        "status IN ('draft', 'checked', 'executed', 'cancelled')", name="status_valid"
+    ),
+)
+sa.Index(
+    "ix_transfer_intents_owner_namespace_created",
+    transfer_intents.c.owner_id,
+    transfer_intents.c.namespace_id,
+    transfer_intents.c.created_at,
+)
+
+demo_bank_results = sa.Table(
+    "demo_bank_results",
+    metadata,
+    sa.Column("operation_id", sa.String(36), primary_key=True),
+    sa.Column(
+        "intent_id",
+        sa.String(36),
+        sa.ForeignKey("transfer_intents.intent_id"),
+        nullable=False,
+        unique=True,
+    ),
+    sa.Column("intent_revision", sa.Integer(), nullable=False),
+    sa.Column("intent_fingerprint", sa.String(64), nullable=False),
+    sa.Column(
+        "profile_id", sa.String(36), sa.ForeignKey("financial_profiles.profile_id"), nullable=False
+    ),
+    sa.Column("amount_minor", sa.Integer(), nullable=False),
+    sa.Column("currency", sa.String(3), nullable=False),
+    sa.Column("recipient_code", sa.String(64), nullable=False),
+    sa.Column("status", sa.String(16), nullable=False),
+    sa.Column("recorded_at", sa.DateTime(timezone=True), nullable=False),
+    sa.CheckConstraint("intent_revision >= 1", name="intent_revision_positive"),
+    sa.CheckConstraint("amount_minor BETWEEN 1 AND 100000000", name="amount_minor_valid"),
+    sa.CheckConstraint("currency = 'RUB'", name="currency_rub"),
+    sa.CheckConstraint("status = 'executed'", name="status_executed"),
+)

@@ -32,7 +32,7 @@ from alpha_defense.application.threats import (
     LookupThreatIndicators,
     RefreshThreatRegistry,
 )
-from alpha_defense.application.transfers import FinancialProfiles
+from alpha_defense.application.transfers import FinancialProfiles, TransferIntents
 from alpha_defense.application.workflows import (
     AnalyzeContact,
     CompleteContactAnalysis,
@@ -93,6 +93,7 @@ class Container:
     list_cards: ListCards
     get_card: GetCard
     financial_profiles: FinancialProfiles
+    transfer_intents: TransferIntents
 
     def close(self) -> None:
         self.engine.dispose()
@@ -232,6 +233,11 @@ def build_container(settings: Settings) -> Container:
         financial_profiles=FinancialProfiles(
             unit_of_work=factory,
             templates=StaticProfileTemplates(),
+            clock=clock,
+            id_generator=id_generator,
+        ),
+        transfer_intents=TransferIntents(
+            unit_of_work=factory,
             clock=clock,
             id_generator=id_generator,
         ),

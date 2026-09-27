@@ -29,6 +29,10 @@ from alpha_defense.infrastructure.persistence.in_memory.store import InMemoryDat
 from alpha_defense.infrastructure.persistence.in_memory.threat_registry import (
     InMemoryThreatRegistryRepository,
 )
+from alpha_defense.infrastructure.persistence.in_memory.transfer_intents import (
+    InMemoryDemoBank,
+    InMemoryTransferIntentRepository,
+)
 
 
 class InMemoryUnitOfWork:
@@ -49,6 +53,8 @@ class InMemoryUnitOfWork:
         self._warnings: InMemoryWarningRepository | None = None
         self._assessments: InMemoryAssessmentRepository | None = None
         self._profiles: InMemoryProfileRepository | None = None
+        self._transfer_intents: InMemoryTransferIntentRepository | None = None
+        self._demo_bank: InMemoryDemoBank | None = None
 
     @property
     def idempotency(self) -> InMemoryIdempotencyRepository:
@@ -122,6 +128,18 @@ class InMemoryUnitOfWork:
             raise RuntimeError("UnitOfWork is not active")
         return self._profiles
 
+    @property
+    def transfer_intents(self) -> InMemoryTransferIntentRepository:
+        if self._transfer_intents is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._transfer_intents
+
+    @property
+    def demo_bank(self) -> InMemoryDemoBank:
+        if self._demo_bank is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._demo_bank
+
     def begin(self) -> None:
         if self._active:
             raise RuntimeError("UnitOfWork is already active")
@@ -139,6 +157,8 @@ class InMemoryUnitOfWork:
         self._warnings = InMemoryWarningRepository(self._state)
         self._assessments = InMemoryAssessmentRepository(self._state)
         self._profiles = InMemoryProfileRepository(self._state)
+        self._transfer_intents = InMemoryTransferIntentRepository(self._state)
+        self._demo_bank = InMemoryDemoBank(self._state)
         self._active = True
         self._finished = False
 

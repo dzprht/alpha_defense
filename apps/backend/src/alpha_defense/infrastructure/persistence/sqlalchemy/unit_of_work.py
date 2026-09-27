@@ -35,6 +35,10 @@ from alpha_defense.infrastructure.persistence.sqlalchemy.repositories import (
 from alpha_defense.infrastructure.persistence.sqlalchemy.threat_registry import (
     SqlAlchemyThreatRegistryRepository,
 )
+from alpha_defense.infrastructure.persistence.sqlalchemy.transfer_intents import (
+    SqlAlchemyDemoBank,
+    SqlAlchemyTransferIntentRepository,
+)
 
 
 class SqlAlchemyUnitOfWork:
@@ -57,6 +61,8 @@ class SqlAlchemyUnitOfWork:
         self._warnings: SqlAlchemyWarningRepository | None = None
         self._assessments: SqlAlchemyAssessmentRepository | None = None
         self._profiles: SqlAlchemyProfileRepository | None = None
+        self._transfer_intents: SqlAlchemyTransferIntentRepository | None = None
+        self._demo_bank: SqlAlchemyDemoBank | None = None
 
     @property
     def idempotency(self) -> SqlAlchemyIdempotencyRepository:
@@ -130,6 +136,18 @@ class SqlAlchemyUnitOfWork:
             raise RuntimeError("UnitOfWork is not active")
         return self._profiles
 
+    @property
+    def transfer_intents(self) -> SqlAlchemyTransferIntentRepository:
+        if self._transfer_intents is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._transfer_intents
+
+    @property
+    def demo_bank(self) -> SqlAlchemyDemoBank:
+        if self._demo_bank is None:
+            raise RuntimeError("UnitOfWork is not active")
+        return self._demo_bank
+
     def begin(self) -> None:
         if self._active:
             raise RuntimeError("UnitOfWork is already active")
@@ -147,6 +165,8 @@ class SqlAlchemyUnitOfWork:
         self._warnings = SqlAlchemyWarningRepository(self._session)
         self._assessments = SqlAlchemyAssessmentRepository(self._session)
         self._profiles = SqlAlchemyProfileRepository(self._session)
+        self._transfer_intents = SqlAlchemyTransferIntentRepository(self._session)
+        self._demo_bank = SqlAlchemyDemoBank(self._session)
         self._active = True
         self._finished = False
 

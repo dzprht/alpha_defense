@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from alpha_defense.application.transfers import FinancialProfile, ProfileTemplate
+from alpha_defense.application.transfers import FinancialProfile, ProfileTemplate, TransferIntent
 
 
 class CreateProfileBody(BaseModel):
@@ -92,3 +93,53 @@ class FinancialProfilesResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     items: list[FinancialProfileResponse]
+
+
+class CreateTransferIntentBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    profile_id: UUID
+    amount_minor: int = Field(strict=True, ge=1, le=100_000_000)
+    recipient_code: str = Field(pattern=r"^[a-z][a-z0-9-]{0,63}$")
+
+
+class ReviseTransferIntentBody(CreateTransferIntentBody):
+    expected_revision: int = Field(strict=True, ge=1)
+
+
+class TransferIntentResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    intent_id: str
+    profile_id: str
+    amount_minor: int
+    currency: str
+    recipient_code: str
+    revision: int
+    fingerprint: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    execution_mode: str
+
+    @classmethod
+    def from_intent(cls, intent: TransferIntent) -> TransferIntentResponse:
+        return cls(
+            intent_id=str(intent.intent_id),
+            profile_id=str(intent.profile_id),
+            amount_minor=intent.amount.amount_minor,
+            currency=intent.amount.currency.value,
+            recipient_code=intent.recipient_code,
+            revision=intent.revision,
+            fingerprint=intent.fingerprint,
+            status=intent.status.value,
+            created_at=intent.created_at,
+            updated_at=intent.updated_at,
+            execution_mode="mock",
+        )
+
+
+class TransferIntentsResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[TransferIntentResponse]

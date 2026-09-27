@@ -8,18 +8,23 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Request, status
 
 from alpha_defense.application.shared import ActorContext
-from alpha_defense.application.transfers import EntityId
+from alpha_defense.application.transfers import Currency, EntityId, Money
 from alpha_defense.transport.http.v1.dependencies import (
     current_actor,
     financial_profiles_service,
+    transfer_intents_service,
 )
 from alpha_defense.transport.http.v1.guards import require_csrf, require_idempotency_key
 from alpha_defense.transport.http.v1.schemas.transfers import (
     CreateProfileBody,
+    CreateTransferIntentBody,
     FinancialProfileResponse,
     FinancialProfilesResponse,
     ProfileTemplateResponse,
     ProfileTemplatesResponse,
+    ReviseTransferIntentBody,
+    TransferIntentResponse,
+    TransferIntentsResponse,
 )
 
 router = APIRouter(tags=["transfers"])
@@ -98,3 +103,81 @@ def get_financial_profile(
 ) -> FinancialProfileResponse:
     profile = financial_profiles_service(request).get(actor=actor, profile_id=EntityId(profile_id))
     return FinancialProfileResponse.from_profile(profile)
+
+
+@router.post(
+    "/transfer-intents",
+    operation_id="create_transfer_intent",
+    status_code=status.HTTP_201_CREATED,
+    response_model=TransferIntentResponse,
+    responses=PROBLEM_RESPONSES,
+)
+def create_transfer_intent(
+    payload: CreateTransferIntentBody,
+    request: Request,
+    actor: Annotated[ActorContext, Depends(current_actor)],
+) -> TransferIntentResponse:
+    require_csrf(request)
+    key = require_idempotency_key(request)
+    intent = transfer_intents_service(request).create(
+        actor=actor,
+        profile_id=EntityId(payload.profile_id),
+        amount=Money(payload.amount_minor, Currency.RUB),
+        recipient_code=payload.recipient_code,
+        idempotency_key=key,
+    )
+    return TransferIntentResponse.from_intent(intent)
+
+
+@router.get(
+    "/transfer-intents",
+    operation_id="list_transfer_intents",
+    response_model=TransferIntentsResponse,
+    responses=PROBLEM_RESPONSES,
+)
+def list_transfer_intents(
+    request: Request, actor: Annotated[ActorContext, Depends(current_actor)]
+) -> TransferIntentsResponse:
+    intents = transfer_intents_service(request).list_owned(actor=actor)
+    return TransferIntentsResponse(items=[TransferIntentResponse.from_intent(x) for x in intents])
+
+
+@router.get(
+    "/transfer-intents/{intent_id}",
+    operation_id="get_transfer_intent",
+    response_model=TransferIntentResponse,
+    responses=PROBLEM_RESPONSES,
+)
+def get_transfer_intent(
+    intent_id: UUID,
+    request: Request,
+    actor: Annotated[ActorContext, Depends(current_actor)],
+) -> TransferIntentResponse:
+    intent = transfer_intents_service(request).get(actor=actor, intent_id=EntityId(intent_id))
+    return TransferIntentResponse.from_intent(intent)
+
+
+@router.patch(
+    "/transfer-intents/{intent_id}",
+    operation_id="revise_transfer_intent",
+    response_model=TransferIntentResponse,
+    responses=PROBLEM_RESPONSES,
+)
+def revise_transfer_intent(
+    intent_id: UUID,
+    payload: ReviseTransferIntentBody,
+    request: Request,
+    actor: Annotated[ActorContext, Depends(current_actor)],
+) -> TransferIntentResponse:
+    require_csrf(request)
+    key = require_idempotency_key(request)
+    intent = transfer_intents_service(request).revise(
+        actor=actor,
+        intent_id=EntityId(intent_id),
+        expected_revision=payload.expected_revision,
+        profile_id=EntityId(payload.profile_id),
+        amount=Money(payload.amount_minor, Currency.RUB),
+        recipient_code=payload.recipient_code,
+        idempotency_key=key,
+    )
+    return TransferIntentResponse.from_intent(intent)

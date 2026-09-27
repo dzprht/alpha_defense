@@ -37,10 +37,14 @@ from alpha_defense.transport.http.v1.schemas.protection import (
 from alpha_defense.transport.http.v1.schemas.transfers import (
     CompletedOperationResponse,
     CreateProfileBody,
+    CreateTransferIntentBody,
     FinancialProfileResponse,
     FinancialProfilesResponse,
     ProfileTemplateResponse,
     ProfileTemplatesResponse,
+    ReviseTransferIntentBody,
+    TransferIntentResponse,
+    TransferIntentsResponse,
 )
 
 __all__ = [
@@ -51,6 +55,7 @@ __all__ = [
     "ConsentResponse",
     "ContactAnalysisResponse",
     "CreateProfileBody",
+    "CreateTransferIntentBody",
     "DependencyStatus",
     "EducationCardPageResponse",
     "EducationCardResponse",
@@ -68,8 +73,11 @@ __all__ = [
     "ProfileTemplateResponse",
     "ProfileTemplatesResponse",
     "ReadinessResponse",
+    "ReviseTransferIntentBody",
     "SessionResponse",
     "StartDemoSessionRequest",
+    "TransferIntentResponse",
+    "TransferIntentsResponse",
     "UpdateConsentRequest",
     "WarningLookupResponse",
     "WarningResponse",

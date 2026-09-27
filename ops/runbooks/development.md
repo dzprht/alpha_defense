@@ -1,6 +1,6 @@
 # Локальная разработка
 
-Статус: проверено для P01–P13, P15–P16, P19 и A01–A02 2026-09-26. Здесь зафиксированы инструменты и команды;
+Статус: проверено для P01–P13, P15–P16, P19, P21 и A01–A02 2026-09-27. Здесь зафиксированы инструменты и команды;
 backend HTTP-контур, synthetic demo-сессии, onboarding web-shell и валидатор обязательного
 каталога исполнимы. Синтетический threat registry можно идемпотентно заполнить и обновить
 отдельной операторской командой.
@@ -250,6 +250,26 @@ URL выводится как текст и приложением не откр
 к P22/P24. Примеры и проверки: `tests/unit/test_financial_profile_domain.py`,
 `tests/contract/test_financial_profile_contract.py` и
 `tests/integration/test_financial_profiles_http.py`.
+
+### Черновик перевода P21
+
+Миграция `20260927_0010` добавляет `transfer_intents` и `demo_bank_results`.
+После создания своего профиля аккаунт может отправить `POST /api/v1/transfer-intents`
+с телом `{"profile_id":"<UUID>","amount_minor":150000,"recipient_code":"family"}`.
+Команда требует session cookie, CSRF и `Idempotency-Key`; сумму передавать только
+целым числом копеек, получателя — синтетическим кодом. `GET /api/v1/transfer-intents`
+и `GET /api/v1/transfer-intents/{id}` возвращают только свои черновики.
+`PATCH /api/v1/transfer-intents/{id}` получает те же поля и `expected_revision`;
+изменение повышает revision и меняет fingerprint, устаревшая версия даёт 409.
+
+`demo_bank_results` пока доступна только через внутренний порт в одной UoW.
+Порт отклоняет draft и сохраняет не более одного неизменяемого результата на intent;
+результат становится подтверждённым только после commit всей транзакции.
+Публичного `check/execute/cancel` здесь нет. Проверка решения P22 и исполнение P23
+будут отдельными шагами, поэтому созданный черновик не двигает деньги даже в
+демонстрационном банке. Контракты и HTTP-поток проверяются в
+`tests/contract/test_transfer_intent_contract.py` и
+`tests/integration/test_transfer_intents_http.py`.
 
 ### Проверка demo-сессии и согласий
 

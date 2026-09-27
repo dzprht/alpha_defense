@@ -15,7 +15,7 @@ from alpha_defense.application.identity import AccountServicePort, IdentityServi
 from alpha_defense.application.incidents import GetIncident
 from alpha_defense.application.ports import ReadinessPort
 from alpha_defense.application.protection import WarningService
-from alpha_defense.application.transfers import FinancialProfiles
+from alpha_defense.application.transfers import FinancialProfiles, TransferIntents
 from alpha_defense.application.workflows import CompleteContactAnalysis
 from alpha_defense.bootstrap.container import build_container
 from alpha_defense.bootstrap.settings import AppEnvironment, Settings
@@ -40,6 +40,7 @@ def create_http_app(
     complete_contact: CompleteContactAnalysis | None = None,
     warning_service: WarningService | None = None,
     financial_profiles: FinancialProfiles | None = None,
+    transfer_intents: TransferIntents | None = None,
     secure_cookies: bool = False,
     lifespan: Lifespan[FastAPI] | None = None,
 ) -> FastAPI:
@@ -64,6 +65,7 @@ def create_http_app(
     app.state.complete_contact = complete_contact
     app.state.warning_service = warning_service
     app.state.financial_profiles = financial_profiles
+    app.state.transfer_intents = transfer_intents
     app.state.cookie_policy = CookiePolicy(secure=secure_cookies)
     app.include_router(api_v1_router)
     install_exception_handlers(app)
@@ -109,6 +111,7 @@ def create_app() -> FastAPI:
         complete_contact=container.complete_contact,
         warning_service=container.warnings,
         financial_profiles=container.financial_profiles,
+        transfer_intents=container.transfer_intents,
         secure_cookies=settings.app_env is AppEnvironment.PRODUCTION,
         lifespan=lifespan,
     )
