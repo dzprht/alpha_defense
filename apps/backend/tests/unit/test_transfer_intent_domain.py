@@ -125,3 +125,30 @@ def test_invalid_values_terminal_states_and_mismatched_bank_result() -> None:
     assert result.amount.amount_minor == 120_000
     with pytest.raises(ValueError, match="differs"):
         replace(result, amount=Money(200_000, Currency.RUB))
+
+
+def test_terminal_transitions_keep_material_fields_and_forbid_reversal() -> None:
+    draft = _draft()
+    checked = draft.mark_checked(now=NOW + timedelta(seconds=1))
+    executed = checked.finish(status=IntentStatus.EXECUTED, now=NOW + timedelta(seconds=2))
+    checked.assert_terminal_successor(executed)
+    assert executed.revision == checked.revision
+    assert executed.fingerprint == checked.fingerprint
+    cancelled = draft.finish(status=IntentStatus.CANCELLED, now=NOW + timedelta(seconds=1))
+    draft.assert_terminal_successor(cancelled)
+    with pytest.raises(ValueError, match="checked"):
+        draft.finish(status=IntentStatus.EXECUTED, now=NOW)
+    with pytest.raises(ValueError, match="unfinished"):
+        executed.finish(status=IntentStatus.CANCELLED, now=NOW + timedelta(seconds=3))
+    with pytest.raises(ValueError, match="unfinished"):
+        cancelled.finish(status=IntentStatus.CANCELLED, now=NOW + timedelta(seconds=2))
+    with pytest.raises(ValueError, match="unfinished"):
+        checked.assert_terminal_successor(
+            replace(
+                executed,
+                amount=Money(99_000, Currency.RUB),
+                fingerprint=transfer_fingerprint(
+                    executed.profile_id, Money(99_000, Currency.RUB), executed.recipient_code
+                ),
+            )
+        )

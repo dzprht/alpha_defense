@@ -11,6 +11,7 @@ from alpha_defense.application.transfers import (
     FinancialProfile,
     ProfileTemplate,
     TransferCheckView,
+    TransferCompletion,
     TransferIntent,
 )
 
@@ -148,6 +149,38 @@ class TransferIntentsResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     items: list[TransferIntentResponse]
+
+
+class ExecuteTransferBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    check_id: UUID
+    expected_revision: int = Field(strict=True, ge=1)
+    acknowledge_warning: bool = Field(strict=True)
+
+
+class CancelTransferBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    expected_revision: int = Field(strict=True, ge=1)
+
+
+class TransferCompletionResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    intent: TransferIntentResponse
+    operation_id: str | None
+    completed_at: datetime | None
+    execution_mode: str
+
+    @classmethod
+    def from_result(cls, result: TransferCompletion) -> TransferCompletionResponse:
+        return cls(
+            intent=TransferIntentResponse.from_intent(result.intent),
+            operation_id=str(result.bank_result.operation_id) if result.bank_result else None,
+            completed_at=result.bank_result.recorded_at if result.bank_result else None,
+            execution_mode="mock",
+        )
 
 
 class CreateTransferCheckBody(BaseModel):

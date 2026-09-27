@@ -111,6 +111,27 @@ class SqlAlchemyTransferIntentRepository:
         if cast(CursorResult[Any], result).rowcount != 1:
             raise StaleRevisionError("Transfer intent changed before check")
 
+    def finish(self, intent: TransferIntent, *, expected_revision: int) -> None:
+        current = self.get(intent.intent_id)
+        if current is None or current.revision != expected_revision:
+            raise StaleRevisionError("Transfer intent revision is stale")
+        current.assert_terminal_successor(intent)
+        try:
+            result = self._session.execute(
+                sa.update(transfer_intents)
+                .where(
+                    transfer_intents.c.intent_id == str(intent.intent_id),
+                    transfer_intents.c.revision == expected_revision,
+                    transfer_intents.c.fingerprint == intent.fingerprint,
+                    transfer_intents.c.status == current.status.value,
+                )
+                .values(status=intent.status.value, updated_at=intent.updated_at)
+            )
+        except SQLAlchemyError as exc:
+            raise ServiceUnavailableError("Local transfer persistence failed") from exc
+        if cast(CursorResult[Any], result).rowcount != 1:
+            raise StaleRevisionError("Transfer intent changed before completion")
+
 
 class SqlAlchemyTransferCheckRepository:
     def __init__(self, session: Session) -> None:

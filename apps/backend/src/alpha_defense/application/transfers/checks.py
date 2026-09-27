@@ -322,29 +322,40 @@ class TransferChecks:
         now: datetime,
         policy_identity: str,
     ) -> TransferCheckView:
-        profile = uow.profiles.get(check.profile_id)
-        consent = uow.identity.get_consent(check.owner_id, ConsentScope.USE_TRANSACTION_HISTORY)
-        risk_state = uow.namespace_risk_states.get(check.namespace_id)
-        incident = uow.incidents.get(check.linked_incident_id) if check.linked_incident_id else None
-        snapshot = uow.threat_registry.get_current()
-        latest = uow.transfer_checks.get_latest_for_intent(check.intent_id)
-        latest_check_id = latest.check_id if latest else None
-        reasons = check.stale_reasons(
-            now=now,
-            intent=intent,
-            history_version=profile.history_version if profile else -1,
-            consent_revision=consent.revision
-            if consent and consent.status is ConsentStatus.GRANTED
-            else -1,
-            ingress_epoch=risk_state.ingress_risk_epoch if risk_state else 0,
-            analysis_pending=risk_state.analysis_pending if risk_state else False,
-            context_version=incident.context_version if incident else None,
-            contact_assessment_id=incident.latest_assessment_id if incident else None,
-            registry_snapshot_id=snapshot.snapshot_id if snapshot else None,
-            catalog_policy_version=policy_identity,
-            latest_check_id=latest_check_id,
-        )
-        return TransferCheckView(check, reasons)
+        return current_check_view(uow, check, intent, now, policy_identity)
+
+
+def current_check_view(
+    uow: TransferUnitOfWorkPort,
+    check: TransferCheck,
+    intent: TransferIntent,
+    now: datetime,
+    policy_identity: str,
+) -> TransferCheckView:
+    """Use the same freshness rules for display and the atomic execution guard."""
+
+    profile = uow.profiles.get(check.profile_id)
+    consent = uow.identity.get_consent(check.owner_id, ConsentScope.USE_TRANSACTION_HISTORY)
+    risk_state = uow.namespace_risk_states.get(check.namespace_id)
+    incident = uow.incidents.get(check.linked_incident_id) if check.linked_incident_id else None
+    snapshot = uow.threat_registry.get_current()
+    latest = uow.transfer_checks.get_latest_for_intent(check.intent_id)
+    reasons = check.stale_reasons(
+        now=now,
+        intent=intent,
+        history_version=profile.history_version if profile else -1,
+        consent_revision=consent.revision
+        if consent and consent.status is ConsentStatus.GRANTED
+        else -1,
+        ingress_epoch=risk_state.ingress_risk_epoch if risk_state else 0,
+        analysis_pending=risk_state.analysis_pending if risk_state else False,
+        context_version=incident.context_version if incident else None,
+        contact_assessment_id=incident.latest_assessment_id if incident else None,
+        registry_snapshot_id=snapshot.snapshot_id if snapshot else None,
+        catalog_policy_version=policy_identity,
+        latest_check_id=latest.check_id if latest else None,
+    )
+    return TransferCheckView(check, reasons)
 
 
 def _owned_intent(

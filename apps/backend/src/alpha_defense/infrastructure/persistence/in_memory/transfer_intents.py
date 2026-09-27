@@ -56,6 +56,13 @@ class InMemoryTransferIntentRepository:
         current.assert_checked_successor(intent)
         self._state.transfer_intents[intent.intent_id] = intent
 
+    def finish(self, intent: TransferIntent, *, expected_revision: int) -> None:
+        current = self.get(intent.intent_id)
+        if current is None or current.revision != expected_revision:
+            raise StaleRevisionError("Transfer intent revision is stale")
+        current.assert_terminal_successor(intent)
+        self._state.transfer_intents[intent.intent_id] = intent
+
 
 class InMemoryTransferCheckRepository:
     def __init__(self, state: InMemoryState) -> None:

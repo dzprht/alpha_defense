@@ -130,6 +130,27 @@ class TransferIntent:
             raise ValueError("check time cannot move backwards")
         return replace(self, status=IntentStatus.CHECKED, updated_at=now)
 
+    def finish(self, *, status: IntentStatus, now: datetime) -> TransferIntent:
+        if status is IntentStatus.EXECUTED and self.status is not IntentStatus.CHECKED:
+            raise ValueError("only a checked intent can be executed")
+        if status is IntentStatus.CANCELLED and self.status not in (
+            IntentStatus.DRAFT,
+            IntentStatus.CHECKED,
+        ):
+            raise ValueError("only an unfinished intent can be cancelled")
+        if status not in (IntentStatus.EXECUTED, IntentStatus.CANCELLED):
+            raise ValueError("unsupported terminal status")
+        _require_utc(now, "now")
+        if now < self.updated_at:
+            raise ValueError("completion time cannot move backwards")
+        return replace(self, status=status, updated_at=now)
+
+    def assert_terminal_successor(self, newer: TransferIntent) -> None:
+        if self.status not in (IntentStatus.DRAFT, IntentStatus.CHECKED) or newer != self.finish(
+            status=newer.status, now=newer.updated_at
+        ):
+            raise ValueError("only an unfinished intent can reach a terminal status")
+
     def assert_checked_successor(self, newer: TransferIntent) -> None:
         if (
             self.status not in (IntentStatus.DRAFT, IntentStatus.CHECKED)

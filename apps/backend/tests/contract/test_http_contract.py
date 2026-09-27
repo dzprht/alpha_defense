@@ -88,6 +88,8 @@ def test_openapi_contains_only_implemented_endpoints_and_problem_media() -> None
         "/api/v1/transfer-intents",
         "/api/v1/transfer-intents/{intent_id}",
         "/api/v1/transfer-intents/{intent_id}/checks",
+        "/api/v1/transfer-intents/{intent_id}/execute",
+        "/api/v1/transfer-intents/{intent_id}/cancel",
         "/api/v1/transfer-checks/{check_id}",
         "/api/v1/warnings/{warning_id}/present",
     }

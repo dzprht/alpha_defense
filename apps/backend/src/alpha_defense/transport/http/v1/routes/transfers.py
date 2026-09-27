@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Request, status
 from alpha_defense.application.shared import ActorContext
 from alpha_defense.application.transfers import Currency, EntityId, Money
 from alpha_defense.transport.http.v1.dependencies import (
+    complete_transfer_service,
     current_actor,
     financial_profiles_service,
     transfer_checks_service,
@@ -17,9 +18,11 @@ from alpha_defense.transport.http.v1.dependencies import (
 )
 from alpha_defense.transport.http.v1.guards import require_csrf, require_idempotency_key
 from alpha_defense.transport.http.v1.schemas.transfers import (
+    CancelTransferBody,
     CreateProfileBody,
     CreateTransferCheckBody,
     CreateTransferIntentBody,
+    ExecuteTransferBody,
     FinancialProfileResponse,
     FinancialProfilesResponse,
     ProfileTemplateResponse,
@@ -27,6 +30,7 @@ from alpha_defense.transport.http.v1.schemas.transfers import (
     ReviseTransferIntentBody,
     TransferCheckResponse,
     TransferChecksResponse,
+    TransferCompletionResponse,
     TransferIntentResponse,
     TransferIntentsResponse,
 )
@@ -244,3 +248,51 @@ def get_transfer_check(
 ) -> TransferCheckResponse:
     view = transfer_checks_service(request).get(actor=actor, check_id=EntityId(check_id))
     return TransferCheckResponse.from_view(view)
+
+
+@router.post(
+    "/transfer-intents/{intent_id}/execute",
+    operation_id="execute_transfer_intent",
+    response_model=TransferCompletionResponse,
+    responses=PROBLEM_RESPONSES,
+)
+def execute_transfer_intent(
+    intent_id: UUID,
+    payload: ExecuteTransferBody,
+    request: Request,
+    actor: Annotated[ActorContext, Depends(current_actor)],
+) -> TransferCompletionResponse:
+    require_csrf(request)
+    key = require_idempotency_key(request)
+    result = complete_transfer_service(request).execute(
+        actor=actor,
+        intent_id=EntityId(intent_id),
+        check_id=EntityId(payload.check_id),
+        expected_revision=payload.expected_revision,
+        acknowledge_warning=payload.acknowledge_warning,
+        idempotency_key=key,
+    )
+    return TransferCompletionResponse.from_result(result)
+
+
+@router.post(
+    "/transfer-intents/{intent_id}/cancel",
+    operation_id="cancel_transfer_intent",
+    response_model=TransferCompletionResponse,
+    responses=PROBLEM_RESPONSES,
+)
+def cancel_transfer_intent(
+    intent_id: UUID,
+    payload: CancelTransferBody,
+    request: Request,
+    actor: Annotated[ActorContext, Depends(current_actor)],
+) -> TransferCompletionResponse:
+    require_csrf(request)
+    key = require_idempotency_key(request)
+    result = complete_transfer_service(request).cancel(
+        actor=actor,
+        intent_id=EntityId(intent_id),
+        expected_revision=payload.expected_revision,
+        idempotency_key=key,
+    )
+    return TransferCompletionResponse.from_result(result)

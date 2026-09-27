@@ -151,6 +151,25 @@ def test_bank_result_is_local_once_and_rolls_back(factory: Factory) -> None:
             )
 
 
+def test_terminal_intent_transition_rolls_back_and_rejects_second_finish(factory: Factory) -> None:
+    draft = _draft(31)
+    checked = draft.mark_checked(now=NOW)
+    with factory() as uow:
+        uow.transfer_intents.add(checked)
+        uow.commit()
+    executed = checked.finish(status=IntentStatus.EXECUTED, now=NOW + timedelta(seconds=1))
+    with factory() as uow:
+        uow.transfer_intents.finish(executed, expected_revision=1)
+    with factory() as uow:
+        assert uow.transfer_intents.get(draft.intent_id) == checked
+        uow.transfer_intents.finish(executed, expected_revision=1)
+        uow.commit()
+    with factory() as uow:
+        assert uow.transfer_intents.get(draft.intent_id) == executed
+        with pytest.raises(ValueError, match="unfinished"):
+            uow.transfer_intents.finish(executed, expected_revision=1)
+
+
 def test_sqlite_bank_result_survives_restart_and_cannot_be_rewritten(tmp_path: Path) -> None:
     path = tmp_path / "bank-restart.db"
     migrate(path)

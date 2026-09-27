@@ -398,6 +398,23 @@ export interface paths {
         patch: operations["revise_transfer_intent"];
         trace?: never;
     };
+    "/api/v1/transfer-intents/{intent_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Transfer Intent */
+        post: operations["cancel_transfer_intent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/transfer-intents/{intent_id}/checks": {
         parameters: {
             query?: never;
@@ -410,6 +427,23 @@ export interface paths {
         put?: never;
         /** Create Transfer Check */
         post: operations["create_transfer_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transfer-intents/{intent_id}/execute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Execute Transfer Intent */
+        post: operations["execute_transfer_intent"];
         delete?: never;
         options?: never;
         head?: never;
@@ -563,6 +597,11 @@ export interface components {
             sequence: number;
             /** Transcript */
             transcript: string;
+        };
+        /** CancelTransferBody */
+        CancelTransferBody: {
+            /** Expected Revision */
+            expected_revision: number;
         };
         /** CompletedOperationResponse */
         CompletedOperationResponse: {
@@ -726,6 +765,18 @@ export interface components {
             title: string;
             /** Version */
             version: string;
+        };
+        /** ExecuteTransferBody */
+        ExecuteTransferBody: {
+            /** Acknowledge Warning */
+            acknowledge_warning: boolean;
+            /**
+             * Check Id
+             * Format: uuid
+             */
+            check_id: string;
+            /** Expected Revision */
+            expected_revision: number;
         };
         /** FieldError */
         FieldError: {
@@ -1204,6 +1255,16 @@ export interface components {
         TransferChecksResponse: {
             /** Items */
             items: components["schemas"]["TransferCheckResponse"][];
+        };
+        /** TransferCompletionResponse */
+        TransferCompletionResponse: {
+            /** Completed At */
+            completed_at: string | null;
+            /** Execution Mode */
+            execution_mode: string;
+            intent: components["schemas"]["TransferIntentResponse"];
+            /** Operation Id */
+            operation_id: string | null;
         };
         /** TransferIntentResponse */
         TransferIntentResponse: {
@@ -3293,6 +3354,95 @@ export interface operations {
             };
         };
     };
+    cancel_transfer_intent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                intent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelTransferBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferCompletionResponse"];
+                };
+            };
+            /** @description Problem Details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     list_transfer_checks: {
         parameters: {
             query?: never;
@@ -3400,6 +3550,95 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TransferCheckResponse"];
+                };
+            };
+            /** @description Problem Details */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Problem Details */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    execute_transfer_intent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                intent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExecuteTransferBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferCompletionResponse"];
                 };
             };
             /** @description Problem Details */
